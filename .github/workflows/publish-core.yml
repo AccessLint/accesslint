@@ -8,7 +8,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       id-token: write
     steps:
       - uses: actions/checkout@v4
@@ -31,6 +31,11 @@ jobs:
         working-directory: core
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/core v${GITHUB_REF_NAME#core/v}"
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - run: npx playwright install chromium --with-deps
 
