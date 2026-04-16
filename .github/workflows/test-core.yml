@@ -1,0 +1,63 @@
+name: Test @accesslint/core
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Run unit tests with coverage
+        run: bun run test:coverage
+        working-directory: core
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - run: npx playwright install chromium --with-deps
+
+      - name: Cache ACT fixtures
+        uses: actions/cache@v4
+        with:
+          path: core/act-fixtures
+          key: act-fixtures-${{ hashFiles('core/src/act/act-mapping.ts') }}
+
+      - name: Download ACT fixtures
+        run: bun run act:download
+        working-directory: core
+
+      - name: Build IIFE
+        run: npx turbo run build --filter=@accesslint/core
+
+      - name: Run browser ACT tests
+        run: bun run test:browser
+        working-directory: core
+
+      - name: Upload EARL report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: earl-report-browser
+          path: core/act-fixtures/earl-report-browser.json
+
+      - name: Check ACT conformance
+        run: bun run act:check
+        working-directory: core

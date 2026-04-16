@@ -1,0 +1,21 @@
+{
+  "name": "accesslint",
+  "private": true,
+  "packageManager": "bun@1.3.12",
+  "workspaces": [
+    "core",
+    "cli",
+    "mcp",
+    "playwright",
+    "storybook-addon",
+    "vitest"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "devDependencies": {
+    "turbo": "latest"
+  }
+}
