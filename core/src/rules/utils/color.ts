@@ -1,6 +1,18 @@
 let _computedStyleCache = new WeakMap<Element, CSSStyleDeclaration>();
 let _effectiveBgCache = new WeakMap<Element, [number, number, number] | null>();
 let _overImageCache = new WeakMap<Element, boolean>();
+// null = not yet tested; real browsers return 'none', jsdom returns '' (not implemented)
+let _pseudoElementStylesSupported: boolean | null = null;
+
+function supportsPseudoElementStyles(): boolean {
+  if (_pseudoElementStylesSupported !== null) return _pseudoElementStylesSupported;
+  if (typeof getComputedStyle !== "function" || typeof document === "undefined") {
+    return (_pseudoElementStylesSupported = false);
+  }
+  const div = document.createElement("div");
+  _pseudoElementStylesSupported = getComputedStyle(div, "::before").content !== "";
+  return _pseudoElementStylesSupported;
+}
 
 export function clearColorCaches(): void {
   _computedStyleCache = new WeakMap();
@@ -395,6 +407,7 @@ export function getAccumulatedOpacity(el: Element): number {
 }
 
 export function hasPseudoElementBackground(el: Element): boolean {
+  if (!supportsPseudoElementStyles()) return false;
   let current: Element | null = el;
   while (current) {
     for (const pseudo of ["::before", "::after"] as const) {
