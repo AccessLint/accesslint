@@ -1,0 +1,21 @@
+<!-- role="presentation" suppresses img-alt -->
+<img src="decorative.png" role="presentation">
+
+<!-- aria-label provides accessible name -->
+<button aria-label="Close dialog"><span class="icon-x"></span></button>
+
+<!-- sr-only text provides link name -->
+<a href="/settings"><span class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Settings</span><span aria-hidden="true">⚙</span></a>
+
+<!-- Empty alt is valid for decorative images -->
+<img src="spacer.gif" alt="">
+
+<!-- aria-labelledby provides form label -->
+<span id="phone-label">Phone number</span>
+<input type="tel" aria-labelledby="phone-label">
+
+<!-- Table with proper headers -->
+<table>
+  <thead><tr><th>Name</th><th>Value</th></tr></thead>
+  <tbody><tr><td>Foo</td><td>Bar</td></tr></tbody>
+</table>

@@ -1,0 +1,65 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run unit tests with coverage
+        run: npm run test:coverage
+
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx playwright install chromium --with-deps
+
+      - name: Cache ACT fixtures
+        uses: actions/cache@v4
+        with:
+          path: act-fixtures
+          key: act-fixtures-${{ hashFiles('src/act/act-mapping.ts') }}
+
+      - name: Download ACT fixtures
+        run: npm run act:download
+
+      - name: Build IIFE
+        run: npm run build
+
+      - name: Run browser ACT tests
+        run: npm run test:browser
+
+      - name: Upload EARL report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: earl-report-browser
+          path: act-fixtures/earl-report-browser.json
+
+      - name: Check ACT conformance
+        run: npm run act:check

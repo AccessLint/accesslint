@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.claude/
+act-fixtures/
+test-results/
+coverage/
+.env

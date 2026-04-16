@@ -1,0 +1,65 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "r01-img-no-alt",
+      "file": "render-cases/01-img-no-alt.tsx",
+      "description": "Image missing alt attribute",
+      "difficulty": "easy"
+    },
+    {
+      "id": "r02-form-no-labels",
+      "file": "render-cases/02-form-no-labels.tsx",
+      "description": "Unlabeled form inputs",
+      "difficulty": "easy"
+    },
+    {
+      "id": "r03-clean-card",
+      "file": "render-cases/03-clean-card.tsx",
+      "description": "Fully accessible card (false positive test)",
+      "difficulty": "easy"
+    },
+    {
+      "id": "r04-conditional-render",
+      "file": "render-cases/04-conditional-render.tsx",
+      "description": "Ternary and && conditionals with static values",
+      "difficulty": "medium"
+    },
+    {
+      "id": "r05-list-items",
+      "file": "render-cases/05-list-items.tsx",
+      "description": ".map() with empty link text",
+      "difficulty": "medium"
+    },
+    {
+      "id": "r06-button-variants",
+      "file": "render-cases/06-button-variants.tsx",
+      "description": "className/style objects and boolean attrs",
+      "difficulty": "medium"
+    },
+    {
+      "id": "r07-fragment-spread",
+      "file": "render-cases/07-fragment-spread.tsx",
+      "description": "React fragments and sub-component expansion",
+      "difficulty": "hard"
+    },
+    {
+      "id": "r08-data-table",
+      "file": "render-cases/08-data-table.tsx",
+      "description": "Table from .map() with invalid scope",
+      "difficulty": "hard"
+    },
+    {
+      "id": "r09-aria-hidden-inputs",
+      "file": "render-cases/09-aria-hidden-inputs.tsx",
+      "description": "aria-hidden with focusable children, omit onClick",
+      "difficulty": "hard"
+    },
+    {
+      "id": "r10-complex-form",
+      "file": "render-cases/10-complex-form.tsx",
+      "description": "htmlFor/for, template literals, tabIndex/tabindex",
+      "difficulty": "hard"
+    }
+  ]
+}

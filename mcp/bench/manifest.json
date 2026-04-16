@@ -1,0 +1,319 @@
+{
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "01-img-no-alt",
+      "file": "cases/01-img-no-alt.html",
+      "description": "Image without alt attribute",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": ["text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "02-img-decorative",
+      "file": "cases/02-img-decorative.html",
+      "description": "Images with suspicious alt text words",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/image-alt-words", "selectorPattern": "img:nth-of-type(1)", "impact": "minor" },
+        { "ruleId": "text-alternatives/image-alt-words", "selectorPattern": "img:nth-of-type(2)", "impact": "minor" }
+      ]
+    },
+    {
+      "id": "03-form-no-labels",
+      "file": "cases/03-form-no-labels.html",
+      "description": "Form inputs without labels",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": ["labels-and-names"],
+      "expectedViolations": [
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"first\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"email\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "select[name=\"country\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "textarea[name=\"bio\"]", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "04-aria-misuse",
+      "file": "cases/04-aria-misuse.html",
+      "description": "Invalid ARIA roles, attributes, and unlabeled input",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["aria", "labels-and-names"],
+      "expectedViolations": [
+        { "ruleId": "aria/aria-roles", "selectorPattern": "div:nth-of-type(1)", "impact": "critical" },
+        { "ruleId": "aria/aria-valid-attr-value", "selectorPattern": "div:nth-of-type(3)", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "05-clean-fragment",
+      "file": "cases/05-clean-fragment.html",
+      "description": "Clean accessible fragment (false positive test)",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": [],
+      "expectedViolations": []
+    },
+    {
+      "id": "06-doc-missing-lang",
+      "file": "cases/06-doc-missing-lang.html",
+      "description": "Document missing lang, title, landmarks, heading, and bypass",
+      "mode": "document",
+      "difficulty": "easy",
+      "categories": ["readable", "navigable", "landmarks"],
+      "expectedViolations": [
+        { "ruleId": "readable/html-has-lang", "selectorPattern": "html", "impact": "serious" },
+        { "ruleId": "navigable/document-title", "selectorPattern": "html", "impact": "serious" },
+        { "ruleId": "navigable/bypass", "selectorPattern": "html", "impact": "serious" },
+        { "ruleId": "navigable/page-has-heading-one", "selectorPattern": "html", "impact": "moderate" },
+        { "ruleId": "landmarks/landmark-main", "selectorPattern": "html", "impact": "moderate" },
+        { "ruleId": "landmarks/region", "selectorPattern": "p", "impact": "moderate" }
+      ]
+    },
+    {
+      "id": "07-heading-hierarchy",
+      "file": "cases/07-heading-hierarchy.html",
+      "description": "Broken heading hierarchy and empty heading",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["navigable"],
+      "expectedViolations": [
+        { "ruleId": "navigable/heading-order", "selectorPattern": "h3", "impact": "moderate" },
+        { "ruleId": "navigable/heading-order", "selectorPattern": "h6", "impact": "moderate" },
+        { "ruleId": "navigable/empty-heading", "selectorPattern": "h2", "impact": "minor" }
+      ]
+    },
+    {
+      "id": "08-button-no-name",
+      "file": "cases/08-button-no-name.html",
+      "description": "Buttons and inputs without accessible names",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["labels-and-names", "text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img", "impact": "critical" },
+        { "ruleId": "text-alternatives/input-image-alt", "selectorPattern": "input:nth-of-type(2)", "impact": "critical" },
+        { "ruleId": "labels-and-names/input-button-name", "selectorPattern": "input:nth-of-type(1)", "impact": "critical" },
+        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(1)", "impact": "critical" },
+        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(2)", "impact": "critical" },
+        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(3)", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "09-link-no-text",
+      "file": "cases/09-link-no-text.html",
+      "description": "Links without accessible text",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": ["navigable", "text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img", "impact": "critical" },
+        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page1\"]", "impact": "serious" },
+        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page2\"]", "impact": "serious" },
+        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page3\"]", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "10-presentation-role-conflict",
+      "file": "cases/10-color-contrast.html",
+      "description": "Presentational images with conflicting focusability",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["aria", "text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img:nth-of-type(1)", "impact": "critical" },
+        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img:nth-of-type(2)", "impact": "critical" },
+        { "ruleId": "aria/presentation-role-conflict", "selectorPattern": "img:nth-of-type(1)", "impact": "serious" },
+        { "ruleId": "aria/presentation-role-conflict", "selectorPattern": "img:nth-of-type(2)", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "11-nested-interactive",
+      "file": "cases/11-nested-interactive.html",
+      "description": "Nested interactive elements with presentational children",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["aria"],
+      "expectedViolations": [
+        { "ruleId": "aria/presentational-children-focusable", "selectorPattern": "button", "impact": "serious" },
+        { "ruleId": "aria/presentational-children-focusable", "selectorPattern": "a[href=\"/link2\"]", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "12-landmark-structure",
+      "file": "cases/12-landmark-structure.html",
+      "description": "Improperly nested landmarks with role conflicts",
+      "mode": "document",
+      "difficulty": "medium",
+      "categories": ["landmarks", "navigable", "aria"],
+      "expectedViolations": [
+        { "ruleId": "navigable/page-has-heading-one", "selectorPattern": "html", "impact": "moderate" },
+        { "ruleId": "landmarks/banner-is-top-level", "selectorPattern": "header", "impact": "moderate" },
+        { "ruleId": "landmarks/contentinfo-is-top-level", "selectorPattern": "footer", "impact": "moderate" },
+        { "ruleId": "landmarks/complementary-is-top-level", "selectorPattern": "aside", "impact": "moderate" },
+        { "ruleId": "aria/aria-allowed-role", "selectorPattern": "header", "impact": "minor" },
+        { "ruleId": "aria/aria-allowed-role", "selectorPattern": "footer", "impact": "minor" }
+      ]
+    },
+    {
+      "id": "13-list-structure",
+      "file": "cases/13-list-structure.html",
+      "description": "Invalid list and definition list structure",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["adaptable"],
+      "expectedViolations": [
+        { "ruleId": "adaptable/list-children", "selectorPattern": "div", "impact": "serious" },
+        { "ruleId": "adaptable/listitem-parent", "selectorPattern": "li", "impact": "serious" },
+        { "ruleId": "adaptable/definition-list", "selectorPattern": "span", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "14-table-headers",
+      "file": "cases/14-table-headers.html",
+      "description": "Table with empty header and invalid scope attribute",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["adaptable"],
+      "expectedViolations": [
+        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(3)", "impact": "moderate" },
+        { "ruleId": "adaptable/empty-table-header", "selectorPattern": "th:nth-of-type(2)", "impact": "minor" }
+      ]
+    },
+    {
+      "id": "15-clean-full-doc",
+      "file": "cases/15-clean-full-doc.html",
+      "description": "Fully accessible document (false positive test)",
+      "mode": "document",
+      "difficulty": "easy",
+      "categories": [],
+      "expectedViolations": []
+    },
+    {
+      "id": "16-meta-viewport",
+      "file": "cases/16-meta-viewport.html",
+      "description": "Meta viewport disables user scaling",
+      "mode": "document",
+      "difficulty": "easy",
+      "categories": ["distinguishable"],
+      "expectedViolations": [
+        { "ruleId": "distinguishable/meta-viewport", "selectorPattern": "meta[name=\"viewport\"]", "impact": "critical" },
+        { "ruleId": "distinguishable/meta-viewport", "selectorPattern": "meta[name=\"viewport\"]", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "17-dialog-no-name",
+      "file": "cases/17-duplicate-id-aria.html",
+      "description": "Dialog and alertdialog without accessible names",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["labels-and-names"],
+      "expectedViolations": [
+        { "ruleId": "labels-and-names/aria-dialog-name", "selectorPattern": "div:nth-of-type(1)", "impact": "serious" },
+        { "ruleId": "labels-and-names/aria-dialog-name", "selectorPattern": "div:nth-of-type(2)", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "18-role-img-no-alt",
+      "file": "cases/18-role-img-no-alt.html",
+      "description": "Elements with role=img missing alt text",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["text-alternatives"],
+      "expectedViolations": [
+        { "ruleId": "text-alternatives/role-img-alt", "selectorPattern": "div", "impact": "serious" },
+        { "ruleId": "text-alternatives/svg-img-alt", "selectorPattern": "svg", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "19-aria-hidden-focus",
+      "file": "cases/19-aria-hidden-focus.html",
+      "description": "Focusable elements inside aria-hidden",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["aria"],
+      "expectedViolations": [
+        { "ruleId": "aria/aria-hidden-focus", "selectorPattern": "button", "impact": "serious" },
+        { "ruleId": "aria/aria-hidden-focus", "selectorPattern": "a", "impact": "serious" },
+        { "ruleId": "aria/aria-hidden-focus", "selectorPattern": "input", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "20-multi-violation-form",
+      "file": "cases/20-multi-violation-form.html",
+      "description": "Form with many different violations",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": ["labels-and-names", "keyboard-accessible"],
+      "expectedViolations": [
+        { "ruleId": "keyboard-accessible/tabindex", "selectorPattern": "div", "impact": "serious" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"first\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"email\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"pass\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "select[name=\"role\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/form-label", "selectorPattern": "textarea[name=\"notes\"]", "impact": "critical" },
+        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button", "impact": "critical" }
+      ]
+    },
+    {
+      "id": "21-svg-accessibility",
+      "file": "cases/21-svg-accessibility.html",
+      "description": "Properly labeled SVGs (false positive test)",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["text-alternatives"],
+      "expectedViolations": []
+    },
+    {
+      "id": "22-frame-no-title",
+      "file": "cases/22-frame-no-title.html",
+      "description": "Iframes without title attribute",
+      "mode": "fragment",
+      "difficulty": "medium",
+      "categories": ["labels-and-names"],
+      "expectedViolations": [
+        { "ruleId": "labels-and-names/frame-title", "selectorPattern": "iframe:nth-of-type(1)", "impact": "serious" },
+        { "ruleId": "labels-and-names/frame-title", "selectorPattern": "iframe:nth-of-type(2)", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "23-blink-marquee",
+      "file": "cases/23-blink-marquee.html",
+      "description": "Blink and marquee elements",
+      "mode": "fragment",
+      "difficulty": "easy",
+      "categories": ["enough-time"],
+      "expectedViolations": [
+        { "ruleId": "enough-time/blink", "selectorPattern": "blink", "impact": "serious" },
+        { "ruleId": "enough-time/marquee", "selectorPattern": "marquee", "impact": "serious" }
+      ]
+    },
+    {
+      "id": "24-scope-attr-invalid",
+      "file": "cases/24-autocomplete-invalid.html",
+      "description": "Table headers with invalid scope attributes",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": ["adaptable"],
+      "expectedViolations": [
+        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(1)", "impact": "moderate" },
+        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(2)", "impact": "moderate" }
+      ]
+    },
+    {
+      "id": "25-tricky-false-positives",
+      "file": "cases/25-tricky-false-positives.html",
+      "description": "Accessible patterns that should not trigger violations (false positive test)",
+      "mode": "fragment",
+      "difficulty": "hard",
+      "categories": [],
+      "expectedViolations": []
+    }
+  ]
+}

@@ -1,0 +1,84 @@
+name: Publish to npm
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install -g npm@latest
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - run: npm publish --provenance
+
+      - run: npx playwright install chromium --with-deps
+
+      - name: Cache ACT fixtures
+        uses: actions/cache@v4
+        with:
+          path: act-fixtures
+          key: act-fixtures-${{ hashFiles('src/act/act-mapping.ts') }}
+
+      - name: Download ACT fixtures
+        run: npm run act:download
+
+      - name: Run browser ACT tests
+        run: npm run test:browser
+
+      - name: Upload EARL report
+        uses: actions/upload-artifact@v4
+        with:
+          name: earl-report-browser
+          path: act-fixtures/earl-report-browser.json
+
+      - name: Check ACT conformance
+        run: npm run act:check
+
+      - name: Notify a11y-agent
+        run: |
+          gh api repos/AccessLint/a11y-agent/dispatches \
+            -f event_type=core-published \
+            -f 'client_payload[version]'="${GITHUB_REF_NAME#v}"
+        env:
+          GH_TOKEN: ${{ secrets.A11Y_AGENT_DISPATCH_TOKEN }}
+
+      - name: Notify accesslint-bench
+        run: |
+          gh api repos/AccessLint/accesslint-bench/dispatches \
+            -f event_type=core-published \
+            -f 'client_payload[version]'="${GITHUB_REF_NAME#v}"
+        env:
+          GH_TOKEN: ${{ secrets.BENCH_DISPATCH_TOKEN }}
+
+  deploy-earl:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: earl-report-browser
+
+      - name: Commit and push EARL report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add earl-report-browser.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update EARL report"
+          git push

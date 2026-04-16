@@ -1,0 +1,62 @@
+{
+  "name": "@accesslint/vitest",
+  "version": "0.1.9",
+  "description": "Accessibility assertions for Vitest — toBeAccessible() matcher powered by AccessLint",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/vitest.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AccessLint/vitest/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./matchers": {
+      "types": "./dist/matchers.d.ts",
+      "import": "./dist/matchers.js",
+      "require": "./dist/matchers.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.6.1",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {
+    "vitest": ">=2.0.0"
+  },
+  "keywords": [
+    "vitest",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "aria",
+    "accesslint",
+    "matcher",
+    "testing"
+  ]
+}

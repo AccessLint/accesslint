@@ -1,0 +1,106 @@
+{
+  "name": "@accesslint/storybook-addon",
+  "version": "0.8.10",
+  "description": "Catch accessibility violations in your Storybook stories as you develop",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "homepage": "https://www.accesslint.com/storybook?ref=npm_storybook",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/storybook-addon.git"
+  },
+  "bugs": {
+    "url": "https://github.com/AccessLint/core/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./manager": "./dist/manager.js",
+    "./preview": {
+      "import": "./dist/preview.js",
+      "require": "./dist/preview.cjs"
+    },
+    "./vitest-plugin": {
+      "import": "./dist/vitest-plugin.js",
+      "require": "./dist/vitest-plugin.cjs"
+    },
+    "./vitest-setup": {
+      "types": "./dist/vitest-setup.d.ts",
+      "import": "./dist/vitest-setup.js",
+      "require": "./dist/vitest-setup.cjs"
+    },
+    "./matchers": {
+      "import": "./dist/matchers.js",
+      "require": "./dist/matchers.cjs"
+    },
+    "./portable": {
+      "import": "./dist/portable.js",
+      "require": "./dist/portable.cjs"
+    }
+  },
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*",
+    "README.md",
+    "*.js",
+    "*.d.ts"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*",
+    "@accesslint/vitest": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "storybook": "^10.2.0",
+    "tsup": "^8.4.0",
+    "typescript": "^5.7.0",
+    "vitest": "^4.0.18"
+  },
+  "peerDependencies": {
+    "storybook": "^9.0.0 || ^10.0.0",
+    "vitest": ">=3.0.0"
+  },
+  "keywords": [
+    "storybook-addon",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "aria",
+    "accesslint",
+    "test",
+    "component",
+    "react",
+    "vue",
+    "angular",
+    "svelte",
+    "web-components"
+  ],
+  "storybook": {
+    "displayName": "AccessLint",
+    "icon": "https://accesslint.com/icon.png"
+  },
+  "bundler": {
+    "managerEntries": [
+      "./src/manager.tsx"
+    ],
+    "previewEntries": [
+      "./src/preview.ts",
+      "./src/index.ts"
+    ]
+  }
+}
