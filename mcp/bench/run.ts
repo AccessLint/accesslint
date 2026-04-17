@@ -59,7 +59,7 @@ function buildPrompt(html: string, mode: "fragment" | "document"): string {
       ? "This is an HTML fragment (a component or partial). Do NOT flag missing <html>, <head>, <title>, lang attribute, landmarks, or skip navigation — those are expected to be absent in fragments."
       : "This is a complete HTML document. Check all document-level requirements including <html lang>, <title>, landmarks, skip navigation, and heading structure.";
 
-  return `You are an accessibility auditor. Analyze the following HTML for WCAG 2.1 Level A and AA violations.
+  return `You are an accessibility auditor. Analyze the following HTML for WCAG 2.2 Level A and AA violations.
 
 ${modeInstruction}
 
@@ -79,7 +79,7 @@ Field definitions:
 If there are no violations, respond with: {"violations": []}
 
 Rules:
-- Only report actual WCAG 2.1 Level A or AA violations, not best practices.
+- Only report actual WCAG 2.2 Level A or AA violations, not best practices.
 - Do not flag valid accessible patterns (e.g., aria-label on buttons, role="presentation" on decorative images without focusability, visually hidden text).
 - Be specific about which element has the violation using precise selectors.
 
@@ -107,7 +107,7 @@ function buildHybridFixPrompt(
       ? "This is an HTML fragment (a component or partial). Do NOT add <html>, <head>, <title>, lang attribute, landmarks, or skip navigation — those belong in the parent document, not in fragments."
       : "This is a complete HTML document. Fix all document-level requirements including <html lang>, <title>, landmarks, skip navigation, and heading structure.";
 
-  return `You are an accessibility remediation expert. The following HTML was audited and these WCAG 2.1 Level A/AA violations were found. Fix all of them.
+  return `You are an accessibility remediation expert. The following HTML was audited and these WCAG 2.2 Level A/AA violations were found. Fix all of them.
 
 ${modeInstruction}
 
@@ -129,7 +129,7 @@ function buildFixPrompt(html: string, mode: "fragment" | "document"): string {
       ? "This is an HTML fragment (a component or partial). Do NOT add <html>, <head>, <title>, lang attribute, landmarks, or skip navigation — those belong in the parent document, not in fragments."
       : "This is a complete HTML document. Fix all document-level requirements including <html lang>, <title>, landmarks, skip navigation, and heading structure.";
 
-  return `You are an accessibility remediation expert. Fix all WCAG 2.1 Level A and AA violations in the following HTML.
+  return `You are an accessibility remediation expert. Fix all WCAG 2.2 Level A and AA violations in the following HTML.
 
 ${modeInstruction}
 

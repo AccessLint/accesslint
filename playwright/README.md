@@ -1,6 +1,6 @@
 # @accesslint/playwright
 
-Accessibility assertions for Playwright. Adds a `toBeAccessible()` matcher powered by [AccessLint](https://www.accesslint.com?ref=readme_playwright) that checks for WCAG 2.1 Level A and AA violations.
+Accessibility assertions for Playwright. Adds a `toBeAccessible()` matcher powered by [AccessLint](https://www.accesslint.com?ref=readme_playwright) that checks for WCAG 2.2 Level A and AA violations.
 
 ## Installation
 
@@ -112,7 +112,7 @@ Expected no accessibility violations, but found 2:
 
 ## What it checks
 
-The matcher runs 93 WCAG 2.1 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
+The matcher runs 94 WCAG 2.2 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
 
 ## TypeScript
 

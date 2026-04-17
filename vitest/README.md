@@ -1,6 +1,6 @@
 # @accesslint/vitest
 
-Accessibility assertions for Vitest. Adds a `toBeAccessible()` matcher powered by [AccessLint](https://www.accesslint.com?ref=readme_vitest) that checks for WCAG 2.1 Level A and AA violations.
+Accessibility assertions for Vitest. Adds a `toBeAccessible()` matcher powered by [AccessLint](https://www.accesslint.com?ref=readme_vitest) that checks for WCAG 2.2 Level A and AA violations.
 
 ## Installation
 
@@ -136,7 +136,7 @@ Types are included. Importing the package augments Vitest's `expect` with `toBeA
 
 ## What it checks
 
-92 WCAG 2.1 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
+94 WCAG 2.2 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
 
 ## License
 
