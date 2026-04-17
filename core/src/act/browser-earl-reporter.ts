@@ -20,28 +20,36 @@ const PACKAGE_JSON_PATH = resolve(import.meta.dirname, "../../package.json");
 /**
  * Playwright reporter that generates a W3C EARL report from browser ACT tests.
  *
- * Test titles encode metadata as: `[expected] title |act:actRuleId|core:coreRuleId|tc:testcaseId`
+ * Each ACT test carries testInfo annotations ({ type, description }) for
+ * expected / actRuleId / coreRuleId / testcaseId.
  */
+function readAnnotation(
+  annotations: readonly { type: string; description?: string }[],
+  type: string,
+): string | undefined {
+  return annotations.find((a) => a.type === type)?.description;
+}
+
 export default class BrowserEarlReporter implements Reporter {
   private outcomes: FixtureOutcome[] = [];
 
   onTestEnd(test: TestCase, result: TestResult): void {
-    const title = test.title;
-    const metaMatch = title.match(
-      /\|act:([^|]+)\|core:([^|]+)\|tc:([^|]+)$/,
-    );
-    if (!metaMatch) return;
-
-    const expectedMatch = title.match(/^\[(passed|failed|inapplicable)\]/);
-    if (!expectedMatch) return;
-
-    const actRuleId = metaMatch[1];
-    const coreRuleId = metaMatch[2];
-    const testcaseId = metaMatch[3];
-    const expected = expectedMatch[1] as "passed" | "failed" | "inapplicable";
+    const annotations = test.annotations;
+    const actRuleId = readAnnotation(annotations, "actRuleId");
+    const coreRuleId = readAnnotation(annotations, "coreRuleId");
+    const testcaseId = readAnnotation(annotations, "testcaseId");
+    const expectedRaw = readAnnotation(annotations, "expected");
+    if (!actRuleId || !coreRuleId || !testcaseId || !expectedRaw) return;
+    if (
+      expectedRaw !== "passed" &&
+      expectedRaw !== "failed" &&
+      expectedRaw !== "inapplicable"
+    )
+      return;
+    const expected = expectedRaw;
 
     const status = result.status; // "passed" | "failed" | "timedOut" | "skipped" | "interrupted"
-    const testcaseTitle = title.replace(/\s*\|act:[^|]+\|core:[^|]+\|tc:[^|]+$/, "").replace(/^\[(passed|failed|inapplicable)\]\s*/, "");
+    const testcaseTitle = test.title.replace(/^\[[^\]]+\]\s*/, "");
 
     // Skipped tests (external stylesheets, Shadow DOM) can't be evaluated
     if (status === "skipped") return;

@@ -61,16 +61,21 @@ for (const [coreRuleId, entries] of byRule) {
   const actRuleIds = [...new Set(entries.map((e) => e.actRuleId))].join(",");
   test.describe(`${coreRuleId} (ACT ${actRuleIds})`, () => {
     for (const entry of entries) {
-      // Encode metadata in test title for the EARL reporter
-      const testName = `[${entry.expected}] ${entry.testcaseTitle} (${entry.testcaseId.slice(0, 8)}) |act:${entry.actRuleId}|core:${coreRuleId}|tc:${entry.testcaseId}`;
+      const testName = `[${entry.expected}] ${entry.testcaseTitle} (${entry.testcaseId.slice(0, 8)})`;
+      const annotations = [
+        { type: "expected", description: entry.expected },
+        { type: "actRuleId", description: entry.actRuleId },
+        { type: "coreRuleId", description: coreRuleId },
+        { type: "testcaseId", description: entry.testcaseId },
+      ];
 
       // Skip tests that depend on external stylesheets or Shadow DOM
       if (usesExternalStylesheets(entry.html) || usesShadowDom(entry.html)) {
-        test.skip(testName, async () => {});
+        test.skip(testName, { annotation: annotations }, async () => {});
         continue;
       }
 
-      test(testName, async ({ page }) => {
+      test(testName, { annotation: annotations }, async ({ page }) => {
         let violations: any[] = [];
         let navigationDestroyed = false;
 
