@@ -46,7 +46,8 @@
   "scripts": {
     "build": "tsdown",
     "test": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
   },
   "dependencies": {
     "@accesslint/core": "workspace:*"

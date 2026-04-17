@@ -33,7 +33,7 @@
     "act:fixtures": "scripts/download-act-fixtures.sh && npx tsx src/act/download-fixtures.ts",
     "act:test": "npx playwright test src/act/act-browser.spec.ts",
     "act:check": "npx tsx src/act/check-conformance.ts",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "bun run build",
     "release": "scripts/release.sh"
   },
   "repository": {
