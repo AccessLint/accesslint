@@ -1,9 +1,10 @@
 import { defineConfig } from "tsdown";
 
 export default defineConfig({
-  entry: ["./src/index.ts", "./src/matchers.ts"],
+  entry: ["./src/index.ts", "./src/matchers.ts", "./src/fixture.ts"],
   format: ["esm", "cjs"],
-  platform: "browser",
+  platform: "node",
+  fixedExtension: false,
   deps: {
     neverBundle: ["vitest"],
   },

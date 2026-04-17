@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/vitest",
-  "version": "0.1.9",
+  "version": "0.2.0",
   "description": "Accessibility assertions for Vitest — toBeAccessible() matcher powered by AccessLint",
   "license": "MIT",
   "publishConfig": {
@@ -33,6 +33,16 @@
       "require": {
         "types": "./dist/matchers.d.cts",
         "default": "./dist/matchers.cjs"
+      }
+    },
+    "./fixture": {
+      "import": {
+        "types": "./dist/fixture.d.ts",
+        "default": "./dist/fixture.js"
+      },
+      "require": {
+        "types": "./dist/fixture.d.cts",
+        "default": "./dist/fixture.cjs"
       }
     }
   },
