@@ -79,17 +79,18 @@ for (const [coreRuleId, entries] of byRule) {
         let violations: any[] = [];
         let navigationDestroyed = false;
 
+        await page.setContent(entry.html, { waitUntil: "domcontentloaded" });
+        const urlAfterSetContent = page.url();
+
         try {
-          await page.setContent(entry.html, { waitUntil: "domcontentloaded" });
           violations = await runRuleByActId(page, entry.actRuleId);
-        } catch (e: any) {
+        } catch (e) {
           // Meta refresh with delay=0 causes instant navigation, destroying
-          // the execution context. This is expected for passing meta-refresh
-          // test cases (instant redirect = no delay = acceptable).
+          // the execution context. Detect deterministically by checking
+          // whether the page URL has changed since setContent.
           if (
             NAVIGATION_RULES.has(coreRuleId) &&
-            (e.message?.includes("Execution context was destroyed") ||
-              e.message?.includes("navigation"))
+            page.url() !== urlAfterSetContent
           ) {
             navigationDestroyed = true;
             violations = []; // No violations = passes
