@@ -18,8 +18,12 @@ function expectViolation(violations: Violation[], selector?: string) {
   const v = violations[0];
   expect(v.ruleId).toBe("distinguishable/color-contrast");
   expect(v.impact).toBe("serious");
-  expect(v.context, "violation context should contain computed ratio").toMatch(/ratio: \d+(?:\.\d+)?:1/);
-  expect(v.context, "violation context should contain required threshold").toMatch(/required: \d+(?:\.\d+)?:1/);
+  expect(v.context, "violation context should contain computed ratio").toMatch(
+    /ratio: \d+(?:\.\d+)?:1/,
+  );
+  expect(v.context, "violation context should contain required threshold").toMatch(
+    /required: \d+(?:\.\d+)?:1/,
+  );
   if (selector) {
     expect(
       violations.some((v) => v.selector?.includes(selector)),

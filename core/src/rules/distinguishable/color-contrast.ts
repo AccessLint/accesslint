@@ -8,8 +8,7 @@ export const colorContrast: Rule = {
   wcag: ["1.4.3"],
   level: "AA",
   fixability: "visual",
-  description:
-    "Text elements must have sufficient color contrast against the background.",
+  description: "Text elements must have sufficient color contrast against the background.",
   browserHint:
     "Violation context includes computed colors and ratio. After changing colors, use JavaScript to read getComputedStyle() on the element and recalculate the contrast ratio. Screenshot the element to verify the fix looks correct in context.",
   guidance:

@@ -9,8 +9,10 @@ export const headingOrder: Rule = {
   level: "A",
   tags: ["best-practice"],
   fixability: "contextual",
-  browserHint: "Screenshot the page to see the visual hierarchy, then take an accessibility tree snapshot to map heading levels to visual sections.",
-  description: "Heading levels should increase by one; skipping levels (e.g. h2 to h4) makes navigation harder.",
+  browserHint:
+    "Screenshot the page to see the visual hierarchy, then take an accessibility tree snapshot to map heading levels to visual sections.",
+  description:
+    "Heading levels should increase by one; skipping levels (e.g. h2 to h4) makes navigation harder.",
   guidance:
     "Screen reader users navigate by headings to understand page structure. Skipping levels (h2 to h4) suggests missing content and creates confusion. Start with h1 for the page title, then use h2 for main sections, h3 for subsections, etc. You can go back up (h3 to h2) when starting a new section.",
   run(doc) {
@@ -34,7 +36,10 @@ export const headingOrder: Rule = {
           impact: "moderate" as const,
           message: `Heading level ${level} skipped from level ${lastLevel}. Use h${lastLevel + 1} instead.`,
           context: lastHeading ? `Previous heading: ${getHtmlSnippet(lastHeading)}` : undefined,
-          fix: { type: "suggest" as const, suggestion: `Change this heading to an h${lastLevel + 1} element to maintain proper heading hierarchy` },
+          fix: {
+            type: "suggest" as const,
+            suggestion: `Change this heading to an h${lastLevel + 1} element to maintain proper heading hierarchy`,
+          },
         });
       }
       lastLevel = level;

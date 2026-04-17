@@ -4,10 +4,7 @@ import { audit as cliAudit } from "@accesslint/cli";
 const MAX_STORED_AUDITS = 10;
 const storedAudits = new Map<string, AuditResult>();
 
-export function audit(
-  html: string,
-  options?: { name?: string }
-): AuditResult {
+export function audit(html: string, options?: { name?: string }): AuditResult {
   const result = cliAudit(html);
 
   if (options?.name) {

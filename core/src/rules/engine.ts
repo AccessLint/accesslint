@@ -63,25 +63,31 @@ function validateCheckFields(check: Record<string, unknown>): string | null {
     case "selector-exists":
       return null;
     case "attribute-value":
-      if (typeof check.attribute !== "string") return "attribute-value check requires attribute string";
-      if (![">" , "<", "=", "!=", "in", "not-in"].includes(check.operator as string)) {
+      if (typeof check.attribute !== "string")
+        return "attribute-value check requires attribute string";
+      if (![">", "<", "=", "!=", "in", "not-in"].includes(check.operator as string)) {
         return "attribute-value check requires valid operator";
       }
       if (check.value === undefined) return "attribute-value check requires value";
       return null;
     case "attribute-missing":
-      if (typeof check.attribute !== "string") return "attribute-missing check requires attribute string";
+      if (typeof check.attribute !== "string")
+        return "attribute-missing check requires attribute string";
       return null;
     case "attribute-regex":
-      if (typeof check.attribute !== "string") return "attribute-regex check requires attribute string";
+      if (typeof check.attribute !== "string")
+        return "attribute-regex check requires attribute string";
       if (typeof check.pattern !== "string") return "attribute-regex check requires pattern string";
-      if (typeof check.shouldMatch !== "boolean") return "attribute-regex check requires shouldMatch boolean";
+      if (typeof check.shouldMatch !== "boolean")
+        return "attribute-regex check requires shouldMatch boolean";
       return null;
     case "child-required":
-      if (typeof check.childSelector !== "string") return "child-required check requires childSelector string";
+      if (typeof check.childSelector !== "string")
+        return "child-required check requires childSelector string";
       return null;
     case "child-invalid":
-      if (!Array.isArray(check.allowedChildren)) return "child-invalid check requires allowedChildren array";
+      if (!Array.isArray(check.allowedChildren))
+        return "child-invalid check requires allowedChildren array";
       return null;
     default:
       return `Unknown check type: ${String(check.type)}`;
@@ -240,9 +246,7 @@ export function compileDeclarativeRule(spec: DeclarativeRule): Rule {
         }
 
         case "child-invalid": {
-          const allowedSet = new Set(
-            spec.check.allowedChildren.map((t) => t.toLowerCase()),
-          );
+          const allowedSet = new Set(spec.check.allowedChildren.map((t) => t.toLowerCase()));
           const allowedRoleSet = spec.check.allowedChildRoles
             ? new Set(spec.check.allowedChildRoles.map((r) => r.toLowerCase()))
             : null;

@@ -2,10 +2,7 @@ import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
 import { isAriaHidden, isComputedHidden } from "../utils/aria";
 
-const VALID_PASSWORD_AUTOCOMPLETE = new Set([
-  "current-password",
-  "new-password",
-]);
+const VALID_PASSWORD_AUTOCOMPLETE = new Set(["current-password", "new-password"]);
 
 export const accessibleAuthentication: Rule = {
   id: "input-assistance/accessible-authentication",
@@ -14,9 +11,9 @@ export const accessibleAuthentication: Rule = {
   level: "AA",
   fixability: "mechanical",
   description:
-    "Password inputs must not block password managers. Avoid autocomplete=\"off\" and allow pasting.",
+    'Password inputs must not block password managers. Avoid autocomplete="off" and allow pasting.',
   guidance:
-    "WCAG 2.2 SC 3.3.8 requires that authentication steps either avoid cognitive function tests or provide a mechanism to assist users. Password managers are a key assistive mechanism. Setting autocomplete=\"off\" on password fields prevents password managers from filling credentials. Blocking paste via onpaste attributes prevents users from pasting stored passwords. Set autocomplete to \"current-password\" for login forms or \"new-password\" for registration/change-password forms, and do not block paste on password fields.",
+    'WCAG 2.2 SC 3.3.8 requires that authentication steps either avoid cognitive function tests or provide a mechanism to assist users. Password managers are a key assistive mechanism. Setting autocomplete="off" on password fields prevents password managers from filling credentials. Blocking paste via onpaste attributes prevents users from pasting stored passwords. Set autocomplete to "current-password" for login forms or "new-password" for registration/change-password forms, and do not block paste on password fields.',
   run(doc) {
     const violations = [];
 
@@ -34,8 +31,7 @@ export const accessibleAuthentication: Rule = {
           selector: getSelector(el),
           html: getHtmlSnippet(el),
           impact: "critical" as const,
-          message:
-            'Password field has autocomplete="off" which blocks password managers.',
+          message: 'Password field has autocomplete="off" which blocks password managers.',
           fix: {
             type: "set-attribute",
             attribute: "autocomplete",
@@ -53,8 +49,7 @@ export const accessibleAuthentication: Rule = {
           selector: getSelector(el),
           html: getHtmlSnippet(el),
           impact: "critical" as const,
-          message:
-            "Password field blocks pasting, preventing password manager use.",
+          message: "Password field blocks pasting, preventing password manager use.",
           fix: {
             type: "remove-attribute",
             attribute: "onpaste",

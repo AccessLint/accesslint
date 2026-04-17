@@ -17,11 +17,7 @@ export default function ButtonVariants() {
       >
         Delete
       </button>
-      <button
-        className="btn btn-icon"
-        aria-label="Close dialog"
-        style={{ padding: "4px" }}
-      >
+      <button className="btn btn-icon" aria-label="Close dialog" style={{ padding: "4px" }}>
         <span aria-hidden="true">&times;</span>
       </button>
     </div>

@@ -1,20 +1,19 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
 import { isAriaHidden, getAccessibleTextContent } from "../utils/aria";
-import {
-  getCachedComputedStyle,
-  parseColor,
-  getLuminance,
-  getContrastRatio,
-} from "../utils/color";
+import { getCachedComputedStyle, parseColor, getLuminance, getContrastRatio } from "../utils/color";
 
 const BLOCK_DISPLAYS = new Set([
-  "block", "flex", "grid", "table", "table-cell", "list-item", "flow-root",
+  "block",
+  "flex",
+  "grid",
+  "table",
+  "table-cell",
+  "list-item",
+  "flow-root",
 ]);
 
-const INLINE_DISPLAYS = new Set([
-  "inline", "inline-block", "inline-flex", "inline-grid",
-]);
+const INLINE_DISPLAYS = new Set(["inline", "inline-block", "inline-flex", "inline-grid"]);
 
 /**
  * Walk up from `link` to its nearest block-level ancestor.  When that block
@@ -42,7 +41,10 @@ function getTextBlockContext(
     let cur: Element | null = node.parentElement;
     let insideLink = false;
     while (cur && cur !== block) {
-      if (cur.tagName === "A") { insideLink = true; break; }
+      if (cur.tagName === "A") {
+        insideLink = true;
+        break;
+      }
       cur = cur.parentElement;
     }
     if (insideLink) continue;
@@ -83,9 +85,11 @@ export const linkInTextBlock: Rule = {
   wcag: ["1.4.1"],
   level: "A",
   fixability: "visual",
-  browserHint: "Screenshot the text block to see how the link blends with surrounding text, then verify your fix (e.g., underline or border) makes the link visually distinct.",
+  browserHint:
+    "Screenshot the text block to see how the link blends with surrounding text, then verify your fix (e.g., underline or border) makes the link visually distinct.",
   description: "Links within text blocks must be distinguishable by more than color alone.",
-  guidance: "Users who cannot perceive color differences need other visual cues to identify links. Links in text should have underlines or other non-color indicators. If using color alone, ensure 3:1 contrast with surrounding text AND provide additional indication on focus/hover.",
+  guidance:
+    "Users who cannot perceive color differences need other visual cues to identify links. Links in text should have underlines or other non-color indicators. If using color alone, ensure 3:1 contrast with surrounding text AND provide additional indication on focus/hover.",
   run(doc) {
     const violations = [];
 
@@ -93,7 +97,12 @@ export const linkInTextBlock: Rule = {
       if (isAriaHidden(link)) continue;
       if (!getAccessibleTextContent(link).trim()) continue;
       if (_hasOnlyMediaContent(link)) continue;
-      if (link.closest('nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"]')) continue;
+      if (
+        link.closest(
+          'nav, header, footer, aside, [role="navigation"], [role="banner"], [role="contentinfo"], [role="complementary"]',
+        )
+      )
+        continue;
 
       const linkStyle = getCachedComputedStyle(link);
       if (!INLINE_DISPLAYS.has(linkStyle.display || "inline")) continue;
@@ -108,9 +117,15 @@ export const linkInTextBlock: Rule = {
       if (hasDistinctDecoration(linkStyle, parentDeco)) continue;
 
       const bw = parseFloat(linkStyle.borderBottomWidth) || 0;
-      if (bw > 0 && linkStyle.borderBottomStyle !== "none" && linkStyle.borderBottomStyle !== "hidden") continue;
+      if (
+        bw > 0 &&
+        linkStyle.borderBottomStyle !== "none" &&
+        linkStyle.borderBottomStyle !== "hidden"
+      )
+        continue;
 
-      if (Math.abs(fontWeight(linkStyle.fontWeight) - fontWeight(blockStyle.fontWeight)) >= 300) continue;
+      if (Math.abs(fontWeight(linkStyle.fontWeight) - fontWeight(blockStyle.fontWeight)) >= 300)
+        continue;
       if (linkStyle.fontStyle !== blockStyle.fontStyle) continue;
 
       const linkSize = parseFloat(linkStyle.fontSize) || 16;
@@ -121,8 +136,10 @@ export const linkInTextBlock: Rule = {
       let descendantDistinct = false;
       for (const desc of link.querySelectorAll("*")) {
         const ds = getCachedComputedStyle(desc);
-        if (hasDistinctDecoration(ds, parentDeco) ||
-            Math.abs(fontWeight(ds.fontWeight) - fontWeight(blockStyle.fontWeight)) >= 300) {
+        if (
+          hasDistinctDecoration(ds, parentDeco) ||
+          Math.abs(fontWeight(ds.fontWeight) - fontWeight(blockStyle.fontWeight)) >= 300
+        ) {
           descendantDistinct = true;
           break;
         }
@@ -153,7 +170,11 @@ export const linkInTextBlock: Rule = {
           `link color: ${hex(linkColor)} rgb(${linkColor.join(", ")}), ` +
           `surrounding text: ${hex(ctx.textColor)} rgb(${ctx.textColor.join(", ")}), ` +
           `ratio: ${ratio.toFixed(2)}:1`,
-        fix: { type: "suggest", suggestion: "Add text-decoration: underline to the link, or add a visible border-bottom. If relying on color contrast alone, ensure at least 3:1 ratio between the link color and surrounding text color." } as const,
+        fix: {
+          type: "suggest",
+          suggestion:
+            "Add text-decoration: underline to the link, or add a visible border-bottom. If relying on color contrast alone, ensure at least 3:1 ratio between the link color and surrounding text color.",
+        } as const,
       });
     }
 

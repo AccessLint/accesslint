@@ -9,24 +9,20 @@ function forceGC(): void {
 }
 
 describe("memory", () => {
-  it(
-    "does not leak across repeated audits on the same document",
-    () => {
-      const doc = generateDoc(SMALL_SIZE);
+  it("does not leak across repeated audits on the same document", () => {
+    const doc = generateDoc(SMALL_SIZE);
 
-      // Warm up: populate caches, JIT-compile hot paths
-      for (let i = 0; i < 5; i++) runAudit(doc);
-      forceGC();
-      const baseline = process.memoryUsage().heapUsed;
+    // Warm up: populate caches, JIT-compile hot paths
+    for (let i = 0; i < 5; i++) runAudit(doc);
+    forceGC();
+    const baseline = process.memoryUsage().heapUsed;
 
-      // Second batch — should add near-zero retained memory
-      for (let i = 0; i < 5; i++) runAudit(doc);
-      forceGC();
-      const after = process.memoryUsage().heapUsed;
+    // Second batch — should add near-zero retained memory
+    for (let i = 0; i < 5; i++) runAudit(doc);
+    forceGC();
+    const after = process.memoryUsage().heapUsed;
 
-      const growth = after - baseline;
-      expect(growth).toBeLessThan(16 * 1024 * 1024); // 16 MB
-    },
-    300_000,
-  );
+    const growth = after - baseline;
+    expect(growth).toBeLessThan(16 * 1024 * 1024); // 16 MB
+  }, 300_000);
 });

@@ -24,7 +24,8 @@ export const svgImgAlt: Rule = {
   wcag: ["1.1.1"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the SVG to understand its content, then add a title element or aria-label.",
+  browserHint:
+    "Screenshot the SVG to understand its content, then add a title element or aria-label.",
   description:
     "SVG elements with an img, graphics-document, or graphics-symbol role must have an accessible name via a <title> element, aria-label, or aria-labelledby.",
   guidance:

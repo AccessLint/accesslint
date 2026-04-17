@@ -7,9 +7,7 @@ if (!resultsPath) {
   process.exit(1);
 }
 
-const results: RenderBenchmarkResults = JSON.parse(
-  readFileSync(resultsPath, "utf-8")
-);
+const results: RenderBenchmarkResults = JSON.parse(readFileSync(resultsPath, "utf-8"));
 
 function mean(arr: number[]): number {
   if (arr.length === 0) return 0;
@@ -69,7 +67,7 @@ for (const [caseId, caseData] of Object.entries(results.cases)) {
   const durations: number[] = [];
 
   for (const run of validRuns) {
-    const parity = gtCount > 0 ? run.matched / gtCount : (run.claudeViolations.length === 0 ? 1 : 0);
+    const parity = gtCount > 0 ? run.matched / gtCount : run.claudeViolations.length === 0 ? 1 : 0;
     const extra = gtCount > 0 ? run.extra / gtCount : run.extra;
     const exact = run.missing === 0 && run.extra === 0;
 
@@ -100,7 +98,8 @@ for (const [caseId, caseData] of Object.entries(results.cases)) {
     durations,
     meanParity: mean(parityRates),
     meanExtra: mean(extraRates),
-    exactMatchRate: exactMatches.length > 0 ? exactMatches.filter(Boolean).length / exactMatches.length : 0,
+    exactMatchRate:
+      exactMatches.length > 0 ? exactMatches.filter(Boolean).length / exactMatches.length : 0,
     meanDuration: mean(durations),
   });
 }
@@ -120,9 +119,13 @@ console.log(`  Config: ${results.config.runs} runs, model=${results.config.model
 console.log(`  Cases: ${results.manifest.caseCount}`);
 if (totalRuns > 0) {
   console.log(`  Total runs: ${totalRuns}, Total cost: $${totalCostUsd.toFixed(4)}`);
-  console.log(`  Tokens — input: ${totalInputTokens.toLocaleString()}, output: ${totalOutputTokens.toLocaleString()}, cache read: ${totalCacheReadTokens.toLocaleString()}, cache write: ${totalCacheCreationTokens.toLocaleString()}`);
+  console.log(
+    `  Tokens — input: ${totalInputTokens.toLocaleString()}, output: ${totalOutputTokens.toLocaleString()}, cache read: ${totalCacheReadTokens.toLocaleString()}, cache write: ${totalCacheCreationTokens.toLocaleString()}`,
+  );
   if (totalRuns > 0) {
-    console.log(`  Per-call avg — input: ${Math.round(totalInputTokens / totalRuns).toLocaleString()}, output: ${Math.round(totalOutputTokens / totalRuns).toLocaleString()}, cost: $${(totalCostUsd / totalRuns).toFixed(4)}`);
+    console.log(
+      `  Per-call avg — input: ${Math.round(totalInputTokens / totalRuns).toLocaleString()}, output: ${Math.round(totalOutputTokens / totalRuns).toLocaleString()}, cost: $${(totalCostUsd / totalRuns).toFixed(4)}`,
+    );
   }
 }
 console.log("=".repeat(70));
@@ -132,7 +135,9 @@ console.log("");
 console.log("AGGREGATE RESULTS");
 console.log("  " + pad("Metric", 22) + "| Value");
 console.log("  " + "-".repeat(22) + "|" + "-".repeat(30));
-console.log("  " + pad("Violation Parity", 22) + "| " + `${pct(aggParity)} +/- ${pct(aggParityStd)}`);
+console.log(
+  "  " + pad("Violation Parity", 22) + "| " + `${pct(aggParity)} +/- ${pct(aggParityStd)}`,
+);
 console.log("  " + pad("Extra Rate", 22) + "| " + `${pct(aggExtra)} +/- ${pct(aggExtraStd)}`);
 console.log("  " + pad("Exact Match Rate", 22) + "| " + pct(aggExactMatch));
 console.log("  " + pad("Mean Latency", 22) + "| " + `${Math.round(aggDuration)}ms`);
@@ -149,7 +154,7 @@ for (const diff of ["easy", "medium", "hard"] as const) {
   const dParityStd = stddev(subset.map((s) => s.meanParity));
 
   console.log(
-    `  ${pad(diff, 8)} (${subset.length} cases) | Parity: ${pct(dParity)} +/- ${pct(dParityStd)} | Exact: ${pct(dExact)}`
+    `  ${pad(diff, 8)} (${subset.length} cases) | Parity: ${pct(dParity)} +/- ${pct(dParityStd)} | Exact: ${pct(dExact)}`,
   );
 }
 console.log("");
@@ -157,11 +162,18 @@ console.log("");
 // Per-case table
 console.log("PER-CASE RESULTS");
 console.log(
-  "  " + pad("Case", 28) + "| " + pad("GT", 3) + "| " +
-  pad("Parity", 10) + "| " +
-  pad("Extra", 10) + "| " +
-  pad("Exact", 8) + "| " +
-  "Latency | Tokens (in/out) Cost"
+  "  " +
+    pad("Case", 28) +
+    "| " +
+    pad("GT", 3) +
+    "| " +
+    pad("Parity", 10) +
+    "| " +
+    pad("Extra", 10) +
+    "| " +
+    pad("Exact", 8) +
+    "| " +
+    "Latency | Tokens (in/out) Cost",
 );
 console.log("  " + "-".repeat(100));
 
@@ -179,35 +191,39 @@ for (const s of scores) {
   }
 
   console.log(
-    "  " + pad(s.caseId, 28) + "| " + padL(String(s.groundTruthCount), 2) + " | " +
-    pad(pct(s.meanParity), 10) + "| " +
-    pad(pct(s.meanExtra), 10) + "| " +
-    pad(pct(s.exactMatchRate), 8) + "| " +
-    pad(`${Math.round(s.meanDuration)}ms`, 8) + "| " +
-    tokenInfo
+    "  " +
+      pad(s.caseId, 28) +
+      "| " +
+      padL(String(s.groundTruthCount), 2) +
+      " | " +
+      pad(pct(s.meanParity), 10) +
+      "| " +
+      pad(pct(s.meanExtra), 10) +
+      "| " +
+      pad(pct(s.exactMatchRate), 8) +
+      "| " +
+      pad(`${Math.round(s.meanDuration)}ms`, 8) +
+      "| " +
+      tokenInfo,
   );
 }
 console.log("");
 
 // Consistency report
-const inconsistent = scores.filter(
-  (s) => s.parityRates.length > 1 && stddev(s.parityRates) > 0.1
-);
+const inconsistent = scores.filter((s) => s.parityRates.length > 1 && stddev(s.parityRates) > 0.1);
 if (inconsistent.length > 0) {
   console.log("CONSISTENCY WARNINGS (parity stddev > 10%)");
   for (const s of inconsistent) {
     console.log(
       `  ${s.caseId}: parity stddev = ${pct(stddev(s.parityRates))} ` +
-      `(runs: ${s.parityRates.map((r) => pct(r)).join(", ")})`
+        `(runs: ${s.parityRates.map((r) => pct(r)).join(", ")})`,
     );
   }
   console.log("");
 }
 
 // Error report
-const errorCases = Object.entries(results.cases).filter(
-  ([, c]) => c.runs.some((r) => r.error)
-);
+const errorCases = Object.entries(results.cases).filter(([, c]) => c.runs.some((r) => r.error));
 if (errorCases.length > 0) {
   console.log("ERRORS");
   for (const [caseId, caseData] of errorCases) {

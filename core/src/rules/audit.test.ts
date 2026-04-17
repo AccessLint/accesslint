@@ -3,40 +3,33 @@ import { makeDoc } from "../test-helpers";
 import { runAudit, diffAudit, configureRules, getActiveRules, createChunkedAudit } from "./index";
 import { generateDoc, SMALL_SIZE } from "../bench/fixtures";
 
-
 afterEach(() => {
   configureRules({ componentMode: false, disabledRules: [], includeAAA: false });
 });
 
 describe("runAudit integration", () => {
-  it(
-    "returns violations on a realistic document",
-    () => {
-      const doc = generateDoc(SMALL_SIZE);
-      const result = runAudit(doc);
+  it("returns violations on a realistic document", () => {
+    const doc = generateDoc(SMALL_SIZE);
+    const result = runAudit(doc);
 
-      expect(result.violations.length).toBeGreaterThan(0);
-      expect(result.ruleCount).toBeGreaterThan(20);
-      expect(result.timestamp).toBeGreaterThan(0);
+    expect(result.violations.length).toBeGreaterThan(0);
+    expect(result.ruleCount).toBeGreaterThan(20);
+    expect(result.timestamp).toBeGreaterThan(0);
 
-      // Every violation should have required fields
-      for (const v of result.violations) {
-        expect(v.ruleId).toBeTruthy();
-        expect(v.selector).toBeTruthy();
-        expect(v.message).toBeTruthy();
-        expect(["critical", "serious", "moderate", "minor"]).toContain(
-          v.impact,
-        );
-      }
+    // Every violation should have required fields
+    for (const v of result.violations) {
+      expect(v.ruleId).toBeTruthy();
+      expect(v.selector).toBeTruthy();
+      expect(v.message).toBeTruthy();
+      expect(["critical", "serious", "moderate", "minor"]).toContain(v.impact);
+    }
 
-      // Should find violations from multiple rule categories
-      const ruleIds = new Set(result.violations.map((v) => v.ruleId));
-      expect(ruleIds.has("text-alternatives/img-alt")).toBe(true);
-      expect(ruleIds.has("navigable/link-name")).toBe(true);
-      expect(ruleIds.has("navigable/empty-heading")).toBe(true);
-    },
-    30_000,
-  );
+    // Should find violations from multiple rule categories
+    const ruleIds = new Set(result.violations.map((v) => v.ruleId));
+    expect(ruleIds.has("text-alternatives/img-alt")).toBe(true);
+    expect(ruleIds.has("navigable/link-name")).toBe(true);
+    expect(ruleIds.has("navigable/empty-heading")).toBe(true);
+  }, 30_000);
 
   it("returns no violations on a clean document", () => {
     const doc = makeDoc(
@@ -46,20 +39,14 @@ describe("runAudit integration", () => {
     expect(result.violations).toHaveLength(0);
   });
 
-  it(
-    "is deterministic across runs",
-    () => {
-      const doc = generateDoc(SMALL_SIZE);
-      const a = runAudit(doc);
-      const b = runAudit(doc);
+  it("is deterministic across runs", () => {
+    const doc = generateDoc(SMALL_SIZE);
+    const a = runAudit(doc);
+    const b = runAudit(doc);
 
-      expect(a.violations.length).toBe(b.violations.length);
-      expect(a.violations.map((v) => v.ruleId)).toEqual(
-        b.violations.map((v) => v.ruleId),
-      );
-    },
-    30_000,
-  );
+    expect(a.violations.length).toBe(b.violations.length);
+    expect(a.violations.map((v) => v.ruleId)).toEqual(b.violations.map((v) => v.ruleId));
+  }, 30_000);
 });
 
 describe("componentMode", () => {
@@ -140,8 +127,16 @@ describe("componentMode", () => {
 
 describe("diffAudit", () => {
   it("detects added violations", () => {
-    const before = runAudit(makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>'));
-    const after = runAudit(makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>'));
+    const before = runAudit(
+      makeDoc(
+        '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
+      ),
+    );
+    const after = runAudit(
+      makeDoc(
+        '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>',
+      ),
+    );
 
     const diff = diffAudit(before, after);
     expect(diff.added.length).toBeGreaterThan(0);
@@ -150,8 +145,16 @@ describe("diffAudit", () => {
   });
 
   it("detects fixed violations", () => {
-    const before = runAudit(makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>'));
-    const after = runAudit(makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg" alt="A red barn"></main></body></html>'));
+    const before = runAudit(
+      makeDoc(
+        '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>',
+      ),
+    );
+    const after = runAudit(
+      makeDoc(
+        '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg" alt="A red barn"></main></body></html>',
+      ),
+    );
 
     const diff = diffAudit(before, after);
     expect(diff.fixed.some((v) => v.ruleId === "text-alternatives/img-alt")).toBe(true);
@@ -159,8 +162,12 @@ describe("diffAudit", () => {
   });
 
   it("detects unchanged violations", () => {
-    const doc1 = makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>');
-    const doc2 = makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>');
+    const doc1 = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>',
+    );
+    const doc2 = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1><img src="x.jpg"></main></body></html>',
+    );
     const before = runAudit(doc1);
     const after = runAudit(doc2);
 
@@ -208,14 +215,18 @@ describe("skippedRules", () => {
     };
 
     configureRules({ additionalRules: [throwingRule] });
-    const doc = makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>');
+    const doc = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
+    );
     const result = runAudit(doc);
 
     expect(result.skippedRules).toEqual([{ ruleId: "test/throws", error: "boom" }]);
   });
 
   it("returns empty skippedRules when no rules throw", () => {
-    const doc = makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>');
+    const doc = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
+    );
     const result = runAudit(doc);
 
     expect(result.skippedRules).toEqual([]);
@@ -234,12 +245,16 @@ describe("skippedRules", () => {
     };
 
     configureRules({ additionalRules: [throwingRule] });
-    const doc = makeDoc('<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>');
+    const doc = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
+    );
     const audit = createChunkedAudit(doc);
 
     // Process all rules in one chunk
     while (audit.processChunk(10_000)) {}
 
-    expect(audit.getSkippedRules()).toEqual([{ ruleId: "test/chunked-throws", error: "chunked boom" }]);
+    expect(audit.getSkippedRules()).toEqual([
+      { ruleId: "test/chunked-throws", error: "chunked boom" },
+    ]);
   });
 });

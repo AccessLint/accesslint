@@ -14,10 +14,14 @@ describe(RULE_ID, () => {
   });
 
   it("reports aria-labelledby on role=presentation", () => {
-    expectViolations(ariaProhibitedAttr, '<img role="presentation" aria-labelledby="desc" src="bg.png">', {
-      count: 1,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      ariaProhibitedAttr,
+      '<img role="presentation" aria-labelledby="desc" src="bg.png">',
+      {
+        count: 1,
+        ruleId: RULE_ID,
+      },
+    );
   });
 
   it("reports aria-label on role=generic", () => {
@@ -75,7 +79,10 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(ariaProhibitedAttr, '<span aria-label="Hidden" aria-hidden="true">Text</span>');
+    expectNoViolations(
+      ariaProhibitedAttr,
+      '<span aria-label="Hidden" aria-hidden="true">Text</span>',
+    );
   });
 
   it("allows aria-describedby on paragraph (global attr)", () => {

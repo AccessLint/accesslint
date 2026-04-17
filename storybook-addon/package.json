@@ -86,12 +86,24 @@
   "types": "dist/index.d.cts",
   "typesVersions": {
     "*": {
-      "manager": ["./dist/manager.d.ts"],
-      "preview": ["./dist/preview.d.ts"],
-      "vitest-plugin": ["./dist/vitest-plugin.d.ts"],
-      "vitest-setup": ["./dist/vitest-setup.d.ts"],
-      "matchers": ["./dist/matchers.d.ts"],
-      "portable": ["./dist/portable.d.ts"]
+      "manager": [
+        "./dist/manager.d.ts"
+      ],
+      "preview": [
+        "./dist/preview.d.ts"
+      ],
+      "vitest-plugin": [
+        "./dist/vitest-plugin.d.ts"
+      ],
+      "vitest-setup": [
+        "./dist/vitest-setup.d.ts"
+      ],
+      "matchers": [
+        "./dist/matchers.d.ts"
+      ],
+      "portable": [
+        "./dist/portable.d.ts"
+      ]
     }
   },
   "files": [

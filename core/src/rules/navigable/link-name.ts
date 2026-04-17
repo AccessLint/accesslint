@@ -31,7 +31,8 @@ export const linkName: Rule = {
   wcag: ["2.4.4", "4.1.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the link in context to understand its destination, then write descriptive link text.",
+  browserHint:
+    "Screenshot the link in context to understand its destination, then write descriptive link text.",
   description: "Links must have discernible text via content, aria-label, or aria-labelledby.",
   guidance:
     "Screen reader users need to know where a link goes. Add descriptive text content, aria-label, or use aria-labelledby. For image links, ensure the image has alt text describing the link destination. Avoid generic text like 'click here' or 'read more'—link text should make sense out of context.",

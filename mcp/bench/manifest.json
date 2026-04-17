@@ -20,8 +20,16 @@
       "difficulty": "medium",
       "categories": ["text-alternatives"],
       "expectedViolations": [
-        { "ruleId": "text-alternatives/image-alt-words", "selectorPattern": "img:nth-of-type(1)", "impact": "minor" },
-        { "ruleId": "text-alternatives/image-alt-words", "selectorPattern": "img:nth-of-type(2)", "impact": "minor" }
+        {
+          "ruleId": "text-alternatives/image-alt-words",
+          "selectorPattern": "img:nth-of-type(1)",
+          "impact": "minor"
+        },
+        {
+          "ruleId": "text-alternatives/image-alt-words",
+          "selectorPattern": "img:nth-of-type(2)",
+          "impact": "minor"
+        }
       ]
     },
     {
@@ -32,10 +40,26 @@
       "difficulty": "easy",
       "categories": ["labels-and-names"],
       "expectedViolations": [
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"first\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"email\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "select[name=\"country\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "textarea[name=\"bio\"]", "impact": "critical" }
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input[name=\"first\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input[name=\"email\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "select[name=\"country\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "textarea[name=\"bio\"]",
+          "impact": "critical"
+        }
       ]
     },
     {
@@ -46,9 +70,21 @@
       "difficulty": "medium",
       "categories": ["aria", "labels-and-names"],
       "expectedViolations": [
-        { "ruleId": "aria/aria-roles", "selectorPattern": "div:nth-of-type(1)", "impact": "critical" },
-        { "ruleId": "aria/aria-valid-attr-value", "selectorPattern": "div:nth-of-type(3)", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input", "impact": "critical" }
+        {
+          "ruleId": "aria/aria-roles",
+          "selectorPattern": "div:nth-of-type(1)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "aria/aria-valid-attr-value",
+          "selectorPattern": "div:nth-of-type(3)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input",
+          "impact": "critical"
+        }
       ]
     },
     {
@@ -71,7 +107,11 @@
         { "ruleId": "readable/html-has-lang", "selectorPattern": "html", "impact": "serious" },
         { "ruleId": "navigable/document-title", "selectorPattern": "html", "impact": "serious" },
         { "ruleId": "navigable/bypass", "selectorPattern": "html", "impact": "serious" },
-        { "ruleId": "navigable/page-has-heading-one", "selectorPattern": "html", "impact": "moderate" },
+        {
+          "ruleId": "navigable/page-has-heading-one",
+          "selectorPattern": "html",
+          "impact": "moderate"
+        },
         { "ruleId": "landmarks/landmark-main", "selectorPattern": "html", "impact": "moderate" },
         { "ruleId": "landmarks/region", "selectorPattern": "p", "impact": "moderate" }
       ]
@@ -98,11 +138,31 @@
       "categories": ["labels-and-names", "text-alternatives"],
       "expectedViolations": [
         { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img", "impact": "critical" },
-        { "ruleId": "text-alternatives/input-image-alt", "selectorPattern": "input:nth-of-type(2)", "impact": "critical" },
-        { "ruleId": "labels-and-names/input-button-name", "selectorPattern": "input:nth-of-type(1)", "impact": "critical" },
-        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(1)", "impact": "critical" },
-        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(2)", "impact": "critical" },
-        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button:nth-of-type(3)", "impact": "critical" }
+        {
+          "ruleId": "text-alternatives/input-image-alt",
+          "selectorPattern": "input:nth-of-type(2)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/input-button-name",
+          "selectorPattern": "input:nth-of-type(1)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/button-name",
+          "selectorPattern": "button:nth-of-type(1)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/button-name",
+          "selectorPattern": "button:nth-of-type(2)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/button-name",
+          "selectorPattern": "button:nth-of-type(3)",
+          "impact": "critical"
+        }
       ]
     },
     {
@@ -114,9 +174,21 @@
       "categories": ["navigable", "text-alternatives"],
       "expectedViolations": [
         { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img", "impact": "critical" },
-        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page1\"]", "impact": "serious" },
-        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page2\"]", "impact": "serious" },
-        { "ruleId": "navigable/link-name", "selectorPattern": "a[href=\"/page3\"]", "impact": "serious" }
+        {
+          "ruleId": "navigable/link-name",
+          "selectorPattern": "a[href=\"/page1\"]",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "navigable/link-name",
+          "selectorPattern": "a[href=\"/page2\"]",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "navigable/link-name",
+          "selectorPattern": "a[href=\"/page3\"]",
+          "impact": "serious"
+        }
       ]
     },
     {
@@ -127,10 +199,26 @@
       "difficulty": "hard",
       "categories": ["aria", "text-alternatives"],
       "expectedViolations": [
-        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img:nth-of-type(1)", "impact": "critical" },
-        { "ruleId": "text-alternatives/img-alt", "selectorPattern": "img:nth-of-type(2)", "impact": "critical" },
-        { "ruleId": "aria/presentation-role-conflict", "selectorPattern": "img:nth-of-type(1)", "impact": "serious" },
-        { "ruleId": "aria/presentation-role-conflict", "selectorPattern": "img:nth-of-type(2)", "impact": "serious" }
+        {
+          "ruleId": "text-alternatives/img-alt",
+          "selectorPattern": "img:nth-of-type(1)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "text-alternatives/img-alt",
+          "selectorPattern": "img:nth-of-type(2)",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "aria/presentation-role-conflict",
+          "selectorPattern": "img:nth-of-type(1)",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "aria/presentation-role-conflict",
+          "selectorPattern": "img:nth-of-type(2)",
+          "impact": "serious"
+        }
       ]
     },
     {
@@ -141,8 +229,16 @@
       "difficulty": "hard",
       "categories": ["aria"],
       "expectedViolations": [
-        { "ruleId": "aria/presentational-children-focusable", "selectorPattern": "button", "impact": "serious" },
-        { "ruleId": "aria/presentational-children-focusable", "selectorPattern": "a[href=\"/link2\"]", "impact": "serious" }
+        {
+          "ruleId": "aria/presentational-children-focusable",
+          "selectorPattern": "button",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "aria/presentational-children-focusable",
+          "selectorPattern": "a[href=\"/link2\"]",
+          "impact": "serious"
+        }
       ]
     },
     {
@@ -153,10 +249,26 @@
       "difficulty": "medium",
       "categories": ["landmarks", "navigable", "aria"],
       "expectedViolations": [
-        { "ruleId": "navigable/page-has-heading-one", "selectorPattern": "html", "impact": "moderate" },
-        { "ruleId": "landmarks/banner-is-top-level", "selectorPattern": "header", "impact": "moderate" },
-        { "ruleId": "landmarks/contentinfo-is-top-level", "selectorPattern": "footer", "impact": "moderate" },
-        { "ruleId": "landmarks/complementary-is-top-level", "selectorPattern": "aside", "impact": "moderate" },
+        {
+          "ruleId": "navigable/page-has-heading-one",
+          "selectorPattern": "html",
+          "impact": "moderate"
+        },
+        {
+          "ruleId": "landmarks/banner-is-top-level",
+          "selectorPattern": "header",
+          "impact": "moderate"
+        },
+        {
+          "ruleId": "landmarks/contentinfo-is-top-level",
+          "selectorPattern": "footer",
+          "impact": "moderate"
+        },
+        {
+          "ruleId": "landmarks/complementary-is-top-level",
+          "selectorPattern": "aside",
+          "impact": "moderate"
+        },
         { "ruleId": "aria/aria-allowed-role", "selectorPattern": "header", "impact": "minor" },
         { "ruleId": "aria/aria-allowed-role", "selectorPattern": "footer", "impact": "minor" }
       ]
@@ -182,8 +294,16 @@
       "difficulty": "medium",
       "categories": ["adaptable"],
       "expectedViolations": [
-        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(3)", "impact": "moderate" },
-        { "ruleId": "adaptable/empty-table-header", "selectorPattern": "th:nth-of-type(2)", "impact": "minor" }
+        {
+          "ruleId": "adaptable/scope-attr-valid",
+          "selectorPattern": "th:nth-of-type(3)",
+          "impact": "moderate"
+        },
+        {
+          "ruleId": "adaptable/empty-table-header",
+          "selectorPattern": "th:nth-of-type(2)",
+          "impact": "minor"
+        }
       ]
     },
     {
@@ -203,8 +323,16 @@
       "difficulty": "easy",
       "categories": ["distinguishable"],
       "expectedViolations": [
-        { "ruleId": "distinguishable/meta-viewport", "selectorPattern": "meta[name=\"viewport\"]", "impact": "critical" },
-        { "ruleId": "distinguishable/meta-viewport", "selectorPattern": "meta[name=\"viewport\"]", "impact": "critical" }
+        {
+          "ruleId": "distinguishable/meta-viewport",
+          "selectorPattern": "meta[name=\"viewport\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "distinguishable/meta-viewport",
+          "selectorPattern": "meta[name=\"viewport\"]",
+          "impact": "critical"
+        }
       ]
     },
     {
@@ -215,8 +343,16 @@
       "difficulty": "hard",
       "categories": ["labels-and-names"],
       "expectedViolations": [
-        { "ruleId": "labels-and-names/aria-dialog-name", "selectorPattern": "div:nth-of-type(1)", "impact": "serious" },
-        { "ruleId": "labels-and-names/aria-dialog-name", "selectorPattern": "div:nth-of-type(2)", "impact": "serious" }
+        {
+          "ruleId": "labels-and-names/aria-dialog-name",
+          "selectorPattern": "div:nth-of-type(1)",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "labels-and-names/aria-dialog-name",
+          "selectorPattern": "div:nth-of-type(2)",
+          "impact": "serious"
+        }
       ]
     },
     {
@@ -227,7 +363,11 @@
       "difficulty": "hard",
       "categories": ["text-alternatives"],
       "expectedViolations": [
-        { "ruleId": "text-alternatives/role-img-alt", "selectorPattern": "div", "impact": "serious" },
+        {
+          "ruleId": "text-alternatives/role-img-alt",
+          "selectorPattern": "div",
+          "impact": "serious"
+        },
         { "ruleId": "text-alternatives/svg-img-alt", "selectorPattern": "svg", "impact": "serious" }
       ]
     },
@@ -253,12 +393,36 @@
       "categories": ["labels-and-names", "keyboard-accessible"],
       "expectedViolations": [
         { "ruleId": "keyboard-accessible/tabindex", "selectorPattern": "div", "impact": "serious" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"first\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"email\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "input[name=\"pass\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "select[name=\"role\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/form-label", "selectorPattern": "textarea[name=\"notes\"]", "impact": "critical" },
-        { "ruleId": "labels-and-names/button-name", "selectorPattern": "button", "impact": "critical" }
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input[name=\"first\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input[name=\"email\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "input[name=\"pass\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "select[name=\"role\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/form-label",
+          "selectorPattern": "textarea[name=\"notes\"]",
+          "impact": "critical"
+        },
+        {
+          "ruleId": "labels-and-names/button-name",
+          "selectorPattern": "button",
+          "impact": "critical"
+        }
       ]
     },
     {
@@ -278,8 +442,16 @@
       "difficulty": "medium",
       "categories": ["labels-and-names"],
       "expectedViolations": [
-        { "ruleId": "labels-and-names/frame-title", "selectorPattern": "iframe:nth-of-type(1)", "impact": "serious" },
-        { "ruleId": "labels-and-names/frame-title", "selectorPattern": "iframe:nth-of-type(2)", "impact": "serious" }
+        {
+          "ruleId": "labels-and-names/frame-title",
+          "selectorPattern": "iframe:nth-of-type(1)",
+          "impact": "serious"
+        },
+        {
+          "ruleId": "labels-and-names/frame-title",
+          "selectorPattern": "iframe:nth-of-type(2)",
+          "impact": "serious"
+        }
       ]
     },
     {
@@ -302,8 +474,16 @@
       "difficulty": "hard",
       "categories": ["adaptable"],
       "expectedViolations": [
-        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(1)", "impact": "moderate" },
-        { "ruleId": "adaptable/scope-attr-valid", "selectorPattern": "th:nth-of-type(2)", "impact": "moderate" }
+        {
+          "ruleId": "adaptable/scope-attr-valid",
+          "selectorPattern": "th:nth-of-type(1)",
+          "impact": "moderate"
+        },
+        {
+          "ruleId": "adaptable/scope-attr-valid",
+          "selectorPattern": "th:nth-of-type(2)",
+          "impact": "moderate"
+        }
       ]
     },
     {

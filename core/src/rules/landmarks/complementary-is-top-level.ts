@@ -9,7 +9,8 @@ export const complementaryIsTopLevel: Rule = {
   tags: ["best-practice", "page-level"],
   fixability: "contextual",
   description: "Aside (complementary) landmark should be top-level or directly inside main.",
-  guidance: "The complementary landmark (aside) should be top-level or a direct child of main. Nesting aside deep within other landmarks reduces its discoverability for screen reader users navigating by landmarks.",
+  guidance:
+    "The complementary landmark (aside) should be top-level or a direct child of main. Nesting aside deep within other landmarks reduces its discoverability for screen reader users navigating by landmarks.",
   run(doc) {
     const violations: Violation[] = [];
     const asides = doc.querySelectorAll('aside, [role="complementary"]');
@@ -19,7 +20,11 @@ export const complementaryIsTopLevel: Rule = {
       const parent = aside.parentElement;
       if (parent && !parent.matches('body, main, [role="main"]')) {
         // Check if nested in other sectioning elements
-        if (aside.closest('article, nav, section[aria-label], section[aria-labelledby], [role="article"], [role="navigation"], [role="region"]')) {
+        if (
+          aside.closest(
+            'article, nav, section[aria-label], section[aria-labelledby], [role="article"], [role="navigation"], [role="region"]',
+          )
+        ) {
           violations.push({
             ruleId: "landmarks/complementary-is-top-level",
             selector: getSelector(aside),

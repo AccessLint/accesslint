@@ -21,7 +21,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes when aria-label contains visible text", () => {
-    expectNoViolations(labelContentMismatch, '<button aria-label="Submit order form">Submit</button>');
+    expectNoViolations(
+      labelContentMismatch,
+      '<button aria-label="Submit order form">Submit</button>',
+    );
   });
 
   it("reports link with completely mismatched aria-label", () => {

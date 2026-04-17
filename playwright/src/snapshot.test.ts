@@ -193,9 +193,7 @@ test.describe("compareViolations", () => {
     const baseline: SnapshotViolation[] = [
       { ruleId: "accesslint-011", selector: "html > body > main > img" },
     ];
-    const current: SnapshotViolation[] = [
-      { ruleId: "accesslint-080", selector: "html" },
-    ];
+    const current: SnapshotViolation[] = [{ ruleId: "accesslint-080", selector: "html" }];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(1);
@@ -226,9 +224,7 @@ test.describe("compareViolations", () => {
       { ruleId: "accesslint-011", selector: sel },
       { ruleId: "accesslint-011", selector: sel },
     ];
-    const current: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: sel },
-    ];
+    const current: SnapshotViolation[] = [{ ruleId: "accesslint-011", selector: sel }];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(0);
@@ -284,9 +280,7 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "new.json");
 
-    saveSnapshot(path, [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-    ]);
+    saveSnapshot(path, [{ ruleId: "accesslint-011", selector: "html > body > main > img" }]);
 
     const result = evaluateSnapshot(
       [
@@ -329,15 +323,11 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "force.json");
 
-    saveSnapshot(path, [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-    ]);
+    saveSnapshot(path, [{ ruleId: "accesslint-011", selector: "html > body > main > img" }]);
 
-    const result = evaluateSnapshot(
-      [{ ruleId: "accesslint-080", selector: "html" }],
-      path,
-      { update: true },
-    );
+    const result = evaluateSnapshot([{ ruleId: "accesslint-080", selector: "html" }], path, {
+      update: true,
+    });
 
     expect(result.pass).toBe(true);
     expect(result.updated).toBe(true);
@@ -364,9 +354,7 @@ test.describe("toBeAccessible with snapshot", () => {
     const snapshotPath = join(dir, "first-run.json");
     expect(existsSync(snapshotPath)).toBe(true);
 
-    const snapshot: SnapshotViolation[] = JSON.parse(
-      readFileSync(snapshotPath, "utf-8"),
-    );
+    const snapshot: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     expect(snapshot.length).toBeGreaterThan(0);
 
     rmSync(dir, { recursive: true });
@@ -423,9 +411,7 @@ test.describe("toBeAccessible with snapshot", () => {
     });
 
     const snapshotPath = join(dir, "ratchet.json");
-    const initial: SnapshotViolation[] = JSON.parse(
-      readFileSync(snapshotPath, "utf-8"),
-    );
+    const initial: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     expect(initial.length).toBeGreaterThan(0);
 
     // Fix all violations → snapshot ratchets to empty
@@ -435,9 +421,7 @@ test.describe("toBeAccessible with snapshot", () => {
       snapshotDir: dir,
     });
 
-    const ratcheted: SnapshotViolation[] = JSON.parse(
-      readFileSync(snapshotPath, "utf-8"),
-    );
+    const ratcheted: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     expect(ratcheted).toHaveLength(0);
 
     rmSync(dir, { recursive: true });
@@ -474,9 +458,7 @@ test.describe("toBeAccessible with snapshot", () => {
 
     // Verify empty snapshot (no violations in #good)
     const snapshotPath = join(dir, "locator-good.json");
-    const snapshot: SnapshotViolation[] = JSON.parse(
-      readFileSync(snapshotPath, "utf-8"),
-    );
+    const snapshot: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     expect(snapshot).toHaveLength(0);
 
     rmSync(dir, { recursive: true });
@@ -493,9 +475,7 @@ test.describe("toBeAccessible with snapshot", () => {
     });
 
     const snapshotPath = join(dir, "disabled.json");
-    const snapshot: SnapshotViolation[] = JSON.parse(
-      readFileSync(snapshotPath, "utf-8"),
-    );
+    const snapshot: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     const ruleIds = snapshot.map((v) => v.ruleId);
     expect(ruleIds).not.toContain("accesslint-011");
 

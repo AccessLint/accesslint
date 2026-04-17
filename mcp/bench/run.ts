@@ -6,12 +6,7 @@ import { audit } from "../src/lib/state.js";
 import { formatViolations } from "../src/lib/format.js";
 import { invokeClaude, invokeClaudeFix } from "./lib/claude.js";
 import { claudeToRawViolations } from "./lib/matching.js";
-import type {
-  Manifest,
-  BenchmarkResults,
-  CaseRunResult,
-  FixRunResult,
-} from "./lib/types.js";
+import type { Manifest, BenchmarkResults, CaseRunResult, FixRunResult } from "./lib/types.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -33,9 +28,7 @@ const SKIP_FIX = flags["skip-fix"]!;
 const FIX_ONLY = flags["fix-only"]!;
 const TIMEOUT = parseInt(flags.timeout!, 10);
 
-const manifest: Manifest = JSON.parse(
-  readFileSync(resolve(__dirname, "manifest.json"), "utf-8")
-);
+const manifest: Manifest = JSON.parse(readFileSync(resolve(__dirname, "manifest.json"), "utf-8"));
 
 const CLAUDE_JSON_SCHEMA = {
   type: "object",
@@ -104,7 +97,11 @@ const CLAUDE_FIX_JSON_SCHEMA = {
   required: ["html"],
 };
 
-function buildHybridFixPrompt(html: string, mode: "fragment" | "document", auditReport: string): string {
+function buildHybridFixPrompt(
+  html: string,
+  mode: "fragment" | "document",
+  auditReport: string,
+): string {
   const modeInstruction =
     mode === "fragment"
       ? "This is an HTML fragment (a component or partial). Do NOT add <html>, <head>, <title>, lang attribute, landmarks, or skip navigation — those belong in the parent document, not in fragments."
@@ -150,7 +147,7 @@ function runHybridFix(
   html: string,
   mode: "fragment" | "document",
   runIndex: number,
-  originalViolationCount: number
+  originalViolationCount: number,
 ): FixRunResult {
   const componentMode = mode === "fragment";
 
@@ -192,12 +189,8 @@ function runHybridFix(
     const reaudit = audit(fixedHtml, { componentMode });
     const originalResult = audit(html, { componentMode });
 
-    const originalKeys = new Set(
-      originalResult.violations.map((v) => `${v.ruleId}|${v.selector}`)
-    );
-    const reauditKeys = new Set(
-      reaudit.violations.map((v) => `${v.ruleId}|${v.selector}`)
-    );
+    const originalKeys = new Set(originalResult.violations.map((v) => `${v.ruleId}|${v.selector}`));
+    const reauditKeys = new Set(reaudit.violations.map((v) => `${v.ruleId}|${v.selector}`));
 
     let fixedCount = 0;
     for (const key of originalKeys) {
@@ -243,7 +236,7 @@ function runClaudeFix(
   html: string,
   mode: "fragment" | "document",
   runIndex: number,
-  originalViolationCount: number
+  originalViolationCount: number,
 ): FixRunResult {
   const componentMode = mode === "fragment";
   const prompt = buildFixPrompt(html, mode);
@@ -277,12 +270,8 @@ function runClaudeFix(
     const reaudit = audit(fixedHtml, { componentMode });
     const originalResult = audit(html, { componentMode });
 
-    const originalKeys = new Set(
-      originalResult.violations.map((v) => `${v.ruleId}|${v.selector}`)
-    );
-    const reauditKeys = new Set(
-      reaudit.violations.map((v) => `${v.ruleId}|${v.selector}`)
-    );
+    const originalKeys = new Set(originalResult.violations.map((v) => `${v.ruleId}|${v.selector}`));
+    const reauditKeys = new Set(reaudit.violations.map((v) => `${v.ruleId}|${v.selector}`));
 
     let fixedCount = 0;
     for (const key of originalKeys) {
@@ -323,11 +312,7 @@ function runClaudeFix(
   }
 }
 
-function runMcpCase(
-  caseId: string,
-  html: string,
-  componentMode: boolean
-): CaseRunResult {
+function runMcpCase(caseId: string, html: string, componentMode: boolean): CaseRunResult {
   const start = performance.now();
   try {
     const result = audit(html, { componentMode });
@@ -361,7 +346,7 @@ function runClaudeCase(
   html: string,
   mode: "fragment" | "document",
   runIndex: number,
-  expectedViolations: import("./lib/types.js").ExpectedViolation[]
+  expectedViolations: import("./lib/types.js").ExpectedViolation[],
 ): CaseRunResult {
   const prompt = buildPrompt(html, mode);
   const result = invokeClaude({
@@ -397,10 +382,7 @@ function runClaudeCase(
 
 // Main
 const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-const totalExpected = manifest.cases.reduce(
-  (sum, c) => sum + c.expectedViolations.length,
-  0
-);
+const totalExpected = manifest.cases.reduce((sum, c) => sum + c.expectedViolations.length, 0);
 
 const results: BenchmarkResults = {
   config: {
@@ -418,7 +400,9 @@ const results: BenchmarkResults = {
 };
 
 console.log(`Benchmark: ${manifest.cases.length} cases, ${RUNS} Claude runs per case`);
-console.log(`Model: ${MODEL}, Timeout: ${TIMEOUT}ms, MCP-only: ${MCP_ONLY}, Skip-fix: ${SKIP_FIX}, Fix-only: ${FIX_ONLY}`);
+console.log(
+  `Model: ${MODEL}, Timeout: ${TIMEOUT}ms, MCP-only: ${MCP_ONLY}, Skip-fix: ${SKIP_FIX}, Fix-only: ${FIX_ONLY}`,
+);
 console.log("");
 
 for (const testCase of manifest.cases) {
@@ -441,13 +425,13 @@ for (const testCase of manifest.cases) {
         html,
         testCase.mode,
         i,
-        testCase.expectedViolations
+        testCase.expectedViolations,
       );
       if (claudeResult.error) {
         process.stdout.write(` (ERR: ${claudeResult.error})`);
       } else {
         process.stdout.write(
-          ` (${claudeResult.durationMs}ms, ${claudeResult.raw.length} violations)`
+          ` (${claudeResult.durationMs}ms, ${claudeResult.raw.length} violations)`,
         );
       }
       claudeResults.push(claudeResult);
@@ -470,13 +454,13 @@ for (const testCase of manifest.cases) {
         html,
         testCase.mode,
         i,
-        mcpResult.raw.length
+        mcpResult.raw.length,
       );
       if (hybridFixResult.error) {
         process.stdout.write(` (ERR: ${hybridFixResult.error})`);
       } else {
         process.stdout.write(
-          ` (fixed=${hybridFixResult.fixedCount}, regr=${hybridFixResult.regressionCount})`
+          ` (fixed=${hybridFixResult.fixedCount}, regr=${hybridFixResult.regressionCount})`,
         );
       }
       hybridFixResults.push(hybridFixResult);
@@ -490,13 +474,13 @@ for (const testCase of manifest.cases) {
         html,
         testCase.mode,
         i,
-        mcpResult.raw.length
+        mcpResult.raw.length,
       );
       if (claudeFixResult.error) {
         process.stdout.write(` (ERR: ${claudeFixResult.error})`);
       } else {
         process.stdout.write(
-          ` (fixed=${claudeFixResult.fixedCount}, regr=${claudeFixResult.regressionCount})`
+          ` (fixed=${claudeFixResult.fixedCount}, regr=${claudeFixResult.regressionCount})`,
         );
       }
       claudeFixResults.push(claudeFixResult);

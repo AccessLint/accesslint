@@ -51,10 +51,7 @@ function compileTemplate(template: string): RegExp {
   return new RegExp(regexStr);
 }
 
-function getPatternsForRule(
-  locale: string,
-  ruleId: string,
-): CompiledPattern[] | undefined {
+function getPatternsForRule(locale: string, ruleId: string): CompiledPattern[] | undefined {
   let localeCache = compiledPatterns.get(locale);
   if (!localeCache) {
     localeCache = new Map();
@@ -83,11 +80,7 @@ function getPatternsForRule(
   return patterns;
 }
 
-function translateMessage(
-  ruleId: string,
-  message: string,
-  locale: string,
-): string {
+function translateMessage(ruleId: string, message: string, locale: string): string {
   const patterns = getPatternsForRule(locale, ruleId);
   if (!patterns) return message;
 
@@ -103,10 +96,7 @@ function translateMessage(
   return message;
 }
 
-export function translateViolations(
-  violations: Violation[],
-  locale: string,
-): Violation[] {
+export function translateViolations(violations: Violation[], locale: string): Violation[] {
   if (!locales.has(locale)) return violations;
 
   return violations.map((v) => {

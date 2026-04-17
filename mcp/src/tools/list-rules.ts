@@ -9,18 +9,12 @@ export const listRulesSchema = {
     .string()
     .optional()
     .describe('Filter by category slug (e.g. "aria", "text-alternatives")'),
-  level: z
-    .enum(["A", "AA", "AAA"])
-    .optional()
-    .describe("Filter by WCAG level"),
+  level: z.enum(["A", "AA", "AAA"]).optional().describe("Filter by WCAG level"),
   fixability: z
     .enum(["mechanical", "contextual", "visual"])
     .optional()
     .describe("Filter by fixability"),
-  wcag: z
-    .string()
-    .optional()
-    .describe('Filter by WCAG criterion (e.g. "1.1.1")'),
+  wcag: z.string().optional().describe('Filter by WCAG criterion (e.g. "1.1.1")'),
 };
 
 export function registerListRules(server: McpServer): void {
@@ -47,6 +41,6 @@ export function registerListRules(server: McpServer): void {
       return {
         content: [{ type: "text", text: formatRuleTable(filtered) }],
       };
-    }
+    },
   );
 }

@@ -13,7 +13,8 @@ const server = new McpServer(
     version: "0.1.0",
   },
   {
-    instructions: "When a violation includes a 'Browser hint', use your browser tools (e.g. screenshot, inspect) to follow the hint and improve your fix. To audit React components (.jsx/.tsx), use the audit-react-component prompt for guidance on rendering them to HTML first.",
+    instructions:
+      "When a violation includes a 'Browser hint', use your browser tools (e.g. screenshot, inspect) to follow the hint and improve your fix. To audit React components (.jsx/.tsx), use the audit-react-component prompt for guidance on rendering them to HTML first.",
   },
 );
 

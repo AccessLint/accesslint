@@ -10,9 +10,11 @@ export const emptyHeading: Rule = {
   level: "A",
   tags: ["best-practice"],
   fixability: "contextual",
-  browserHint: "Screenshot the heading area to verify it's visually empty, then add meaningful text or remove the heading element.",
+  browserHint:
+    "Screenshot the heading area to verify it's visually empty, then add meaningful text or remove the heading element.",
   description: "Headings must have discernible text.",
-  guidance: "Screen reader users navigate pages by headings, so empty headings create confusing navigation points. Ensure all headings contain visible text or accessible names. If a heading is used purely for visual styling, use CSS instead of heading elements.",
+  guidance:
+    "Screen reader users navigate pages by headings, so empty headings create confusing navigation points. Ensure all headings contain visible text or accessible names. If a heading is used purely for visual styling, use CSS instead of heading elements.",
   run(doc) {
     const violations = [];
     const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6, [role="heading"]');

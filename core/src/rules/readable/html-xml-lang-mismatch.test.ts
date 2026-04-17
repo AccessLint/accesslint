@@ -2,7 +2,6 @@ import { describe, it } from "vitest";
 import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { htmlXmlLangMismatch } from "./html-xml-lang-mismatch";
 
-
 describe("readable/html-xml-lang-mismatch", () => {
   it("passes when lang and xml:lang match", () => {
     expectNoViolations(htmlXmlLangMismatch, '<html lang="en" xml:lang="en"><body></body></html>');
@@ -24,6 +23,9 @@ describe("readable/html-xml-lang-mismatch", () => {
   });
 
   it("passes when region differs but primary language matches", () => {
-    expectNoViolations(htmlXmlLangMismatch, '<html lang="en-US" xml:lang="en-GB"><body></body></html>');
+    expectNoViolations(
+      htmlXmlLangMismatch,
+      '<html lang="en-US" xml:lang="en-GB"><body></body></html>',
+    );
   });
 });

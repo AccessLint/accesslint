@@ -17,10 +17,14 @@ describe(RULE_ID, () => {
   });
 
   it("reports bare text node in dl", () => {
-    expectViolations(definitionList, "<html><body><dl>Bare text<dt>T</dt><dd>D</dd></dl></body></html>", {
-      count: 1,
-      ruleId: RULE_ID,
-      messageMatches: /<dt>/,
-    });
+    expectViolations(
+      definitionList,
+      "<html><body><dl>Bare text<dt>T</dt><dd>D</dd></dl></body></html>",
+      {
+        count: 1,
+        ruleId: RULE_ID,
+        messageMatches: /<dt>/,
+      },
+    );
   });
 });

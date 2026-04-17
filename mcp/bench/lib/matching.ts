@@ -23,11 +23,7 @@ const WCAG_TO_RULES: Record<string, string[]> = {
   "2.4.1": ["navigable/bypass", "landmarks/region"],
   "2.4.2": ["navigable/document-title"],
   "2.4.4": ["navigable/link-name"],
-  "2.4.6": [
-    "navigable/heading-order",
-    "navigable/empty-heading",
-    "navigable/page-has-heading-one",
-  ],
+  "2.4.6": ["navigable/heading-order", "navigable/empty-heading", "navigable/page-has-heading-one"],
   "3.1.1": ["readable/html-has-lang"],
   "4.1.2": [
     "labels-and-names/button-name",
@@ -36,11 +32,7 @@ const WCAG_TO_RULES: Record<string, string[]> = {
     "labels-and-names/frame-title",
     "labels-and-names/aria-dialog-name",
   ],
-  "4.1.1": [
-    "aria/aria-roles",
-    "aria/aria-valid-attr-value",
-    "aria/aria-allowed-role",
-  ],
+  "4.1.1": ["aria/aria-roles", "aria/aria-valid-attr-value", "aria/aria-allowed-role"],
   "4.1.3": [
     "aria/aria-hidden-focus",
     "aria/presentation-role-conflict",
@@ -60,7 +52,10 @@ const KEYWORD_PATTERNS: Array<{ pattern: RegExp; ruleId: string }> = [
   { pattern: /\balt\b.*\b(missing|attribute|text)\b/i, ruleId: "text-alternatives/img-alt" },
   { pattern: /\bimg\b.*\b(missing|no)\b.*\balt\b/i, ruleId: "text-alternatives/img-alt" },
   { pattern: /\bimage\b.*\b(missing|no)\b.*\balt\b/i, ruleId: "text-alternatives/img-alt" },
-  { pattern: /\balt\b.*\b(suspicious|decorative|placeholder|redundant|filename)\b/i, ruleId: "text-alternatives/image-alt-words" },
+  {
+    pattern: /\balt\b.*\b(suspicious|decorative|placeholder|redundant|filename)\b/i,
+    ruleId: "text-alternatives/image-alt-words",
+  },
   { pattern: /\bimage\b.*\balt\b.*\b(word|text)\b/i, ruleId: "text-alternatives/image-alt-words" },
   { pattern: /\binput.*type.*image\b.*\balt\b/i, ruleId: "text-alternatives/input-image-alt" },
   { pattern: /\brole.*img\b.*\b(alt|label|name)\b/i, ruleId: "text-alternatives/role-img-alt" },
@@ -68,8 +63,14 @@ const KEYWORD_PATTERNS: Array<{ pattern: RegExp; ruleId: string }> = [
 
   // labels-and-names
   { pattern: /\bbutton\b.*\b(name|label|text)\b/i, ruleId: "labels-and-names/button-name" },
-  { pattern: /\b(form|input|select|textarea)\b.*\blabel\b/i, ruleId: "labels-and-names/form-label" },
-  { pattern: /\blabel\b.*\b(form|input|select|textarea)\b/i, ruleId: "labels-and-names/form-label" },
+  {
+    pattern: /\b(form|input|select|textarea)\b.*\blabel\b/i,
+    ruleId: "labels-and-names/form-label",
+  },
+  {
+    pattern: /\blabel\b.*\b(form|input|select|textarea)\b/i,
+    ruleId: "labels-and-names/form-label",
+  },
   { pattern: /\binput.*button\b.*\bname\b/i, ruleId: "labels-and-names/input-button-name" },
   { pattern: /\b(iframe|frame)\b.*\btitle\b/i, ruleId: "labels-and-names/frame-title" },
   { pattern: /\bdialog\b.*\b(name|label)\b/i, ruleId: "labels-and-names/aria-dialog-name" },
@@ -79,7 +80,10 @@ const KEYWORD_PATTERNS: Array<{ pattern: RegExp; ruleId: string }> = [
   { pattern: /\bheading\b.*\b(order|hierarchy|level|skip)\b/i, ruleId: "navigable/heading-order" },
   { pattern: /\bempty\b.*\bheading\b/i, ruleId: "navigable/empty-heading" },
   { pattern: /\bheading\b.*\bempty\b/i, ruleId: "navigable/empty-heading" },
-  { pattern: /\b(page|document)\b.*\bheading\b.*\bone\b/i, ruleId: "navigable/page-has-heading-one" },
+  {
+    pattern: /\b(page|document)\b.*\bheading\b.*\bone\b/i,
+    ruleId: "navigable/page-has-heading-one",
+  },
   { pattern: /\bh1\b.*\bmissing\b/i, ruleId: "navigable/page-has-heading-one" },
   { pattern: /\bmissing\b.*\bh1\b/i, ruleId: "navigable/page-has-heading-one" },
   { pattern: /\blink\b.*\b(name|text|accessible)\b/i, ruleId: "navigable/link-name" },
@@ -95,20 +99,35 @@ const KEYWORD_PATTERNS: Array<{ pattern: RegExp; ruleId: string }> = [
   // aria
   { pattern: /\b(invalid|unknown)\b.*\brole\b/i, ruleId: "aria/aria-roles" },
   { pattern: /\brole\b.*\b(invalid|unknown|not allowed)\b/i, ruleId: "aria/aria-roles" },
-  { pattern: /\baria\b.*\b(attribute|value)\b.*\binvalid\b/i, ruleId: "aria/aria-valid-attr-value" },
-  { pattern: /\binvalid\b.*\baria\b.*\b(attribute|value)\b/i, ruleId: "aria/aria-valid-attr-value" },
+  {
+    pattern: /\baria\b.*\b(attribute|value)\b.*\binvalid\b/i,
+    ruleId: "aria/aria-valid-attr-value",
+  },
+  {
+    pattern: /\binvalid\b.*\baria\b.*\b(attribute|value)\b/i,
+    ruleId: "aria/aria-valid-attr-value",
+  },
   { pattern: /\brole\b.*\bnot\b.*\ballowed\b/i, ruleId: "aria/aria-allowed-role" },
   { pattern: /\ballowed\b.*\brole\b/i, ruleId: "aria/aria-allowed-role" },
   { pattern: /\baria-hidden\b.*\bfocus/i, ruleId: "aria/aria-hidden-focus" },
   { pattern: /\bfocus\b.*\baria-hidden\b/i, ruleId: "aria/aria-hidden-focus" },
   { pattern: /\bpresentation\b.*\b(role|conflict)\b/i, ruleId: "aria/presentation-role-conflict" },
-  { pattern: /\bpresentational\b.*\bchildren\b.*\bfocus/i, ruleId: "aria/presentational-children-focusable" },
+  {
+    pattern: /\bpresentational\b.*\bchildren\b.*\bfocus/i,
+    ruleId: "aria/presentational-children-focusable",
+  },
 
   // landmarks
   { pattern: /\b(main|landmark)\b.*\b(missing|region)\b/i, ruleId: "landmarks/landmark-main" },
   { pattern: /\bbanner\b.*\b(top.level|nested)\b/i, ruleId: "landmarks/banner-is-top-level" },
-  { pattern: /\bcontentinfo\b.*\b(top.level|nested)\b/i, ruleId: "landmarks/contentinfo-is-top-level" },
-  { pattern: /\bcomplementary\b.*\b(top.level|nested)\b/i, ruleId: "landmarks/complementary-is-top-level" },
+  {
+    pattern: /\bcontentinfo\b.*\b(top.level|nested)\b/i,
+    ruleId: "landmarks/contentinfo-is-top-level",
+  },
+  {
+    pattern: /\bcomplementary\b.*\b(top.level|nested)\b/i,
+    ruleId: "landmarks/complementary-is-top-level",
+  },
   { pattern: /\bregion\b.*\b(landmark|outside)\b/i, ruleId: "landmarks/region" },
   { pattern: /\bcontent\b.*\boutside\b.*\blandmark\b/i, ruleId: "landmarks/region" },
 
@@ -156,10 +175,7 @@ function getCandidateRuleIds(violation: ClaudeViolation): string[] {
   return [...candidates];
 }
 
-function elementMatchScore(
-  claudeElement: string,
-  selectorPattern: string
-): number {
+function elementMatchScore(claudeElement: string, selectorPattern: string): number {
   if (!claudeElement || !selectorPattern) return 0;
 
   const ce = claudeElement.toLowerCase().trim();
@@ -221,7 +237,7 @@ export interface MatchResult {
 
 export function matchClaudeViolations(
   claudeViolations: ClaudeViolation[],
-  expectedViolations: ExpectedViolation[]
+  expectedViolations: ExpectedViolation[],
 ): MatchResult {
   const alreadyMatched = new Set<number>();
   const matched: MatchResult["matched"] = [];
@@ -248,10 +264,7 @@ export function matchClaudeViolations(
       const impactBonus =
         cv.impact === ev.impact
           ? 2
-          : Math.abs(
-              (IMPACT_SCORES[cv.impact] ?? 0) -
-                (IMPACT_SCORES[ev.impact] ?? 0)
-            ) <= 1
+          : Math.abs((IMPACT_SCORES[cv.impact] ?? 0) - (IMPACT_SCORES[ev.impact] ?? 0)) <= 1
             ? 1
             : 0;
 
@@ -274,9 +287,7 @@ export function matchClaudeViolations(
     }
   }
 
-  const missed = expectedViolations.filter(
-    (_, i) => !alreadyMatched.has(i)
-  );
+  const missed = expectedViolations.filter((_, i) => !alreadyMatched.has(i));
 
   return {
     tp: matched.length,
@@ -290,7 +301,7 @@ export function matchClaudeViolations(
 
 export function claudeToRawViolations(
   violations: ClaudeViolation[],
-  expectedViolations: ExpectedViolation[]
+  expectedViolations: ExpectedViolation[],
 ): RawViolation[] {
   const matchResult = matchClaudeViolations(violations, expectedViolations);
 

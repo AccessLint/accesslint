@@ -5,5 +5,6 @@ export const contentinfoIsTopLevel = makeNestedLandmarkRule({
   selector: '[role="contentinfo"]',
   landmarkName: "Contentinfo",
   description: "Contentinfo landmark should not be nested within another landmark.",
-  guidance: "The contentinfo landmark should be a top-level landmark. A footer inside article, aside, main, nav, or section becomes a scoped footer, not a contentinfo landmark. Remove explicit role='contentinfo' from nested footers or move the footer outside sectioning elements.",
+  guidance:
+    "The contentinfo landmark should be a top-level landmark. A footer inside article, aside, main, nav, or section becomes a scoped footer, not a contentinfo landmark. Remove explicit role='contentinfo' from nested footers or move the footer outside sectioning elements.",
 });

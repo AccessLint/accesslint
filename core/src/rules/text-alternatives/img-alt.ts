@@ -69,7 +69,8 @@ export const imgAlt: Rule = {
           selector: getSelector(img),
           html: getHtmlSnippet(img),
           impact: "critical" as const,
-          message: "Image has whitespace-only alt text. Use alt=\"\" for decorative images or provide descriptive text.",
+          message:
+            'Image has whitespace-only alt text. Use alt="" for decorative images or provide descriptive text.',
           context: getImageContext(img),
           fix: { type: "set-attribute", attribute: "alt", value: "" } as const,
         });

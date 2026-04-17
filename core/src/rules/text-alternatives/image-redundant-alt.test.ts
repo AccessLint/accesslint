@@ -6,11 +6,10 @@ const RULE_ID = "text-alternatives/image-redundant-alt";
 
 describe(RULE_ID, () => {
   it("reports img alt duplicating parent link text", () => {
-    expectViolations(
-      imageRedundantAlt,
-      '<a href="/home">Home<img src="home.png" alt="Home"></a>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(imageRedundantAlt, '<a href="/home">Home<img src="home.png" alt="Home"></a>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports img alt duplicating parent button text", () => {
@@ -29,24 +28,17 @@ describe(RULE_ID, () => {
   });
 
   it("passes img with empty alt inside link", () => {
-    expectNoViolations(
-      imageRedundantAlt,
-      '<a href="/home">Home<img src="icon.png" alt=""></a>',
-    );
+    expectNoViolations(imageRedundantAlt, '<a href="/home">Home<img src="icon.png" alt=""></a>');
   });
 
   it("passes img not inside link or button", () => {
-    expectNoViolations(
-      imageRedundantAlt,
-      '<div>Hello<img src="photo.jpg" alt="Hello"></div>',
-    );
+    expectNoViolations(imageRedundantAlt, '<div>Hello<img src="photo.jpg" alt="Hello"></div>');
   });
 
   it("comparison is case-insensitive", () => {
-    expectViolations(
-      imageRedundantAlt,
-      '<a href="/home">HOME<img src="icon.png" alt="home"></a>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(imageRedundantAlt, '<a href="/home">HOME<img src="icon.png" alt="home"></a>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 });

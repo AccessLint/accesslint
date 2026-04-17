@@ -3,40 +3,89 @@ import { getSelector, getHtmlSnippet } from "../utils/selector";
 import { isAriaHidden } from "../utils/aria";
 
 export const VALID_ARIA_ATTRS = new Set([
-  "aria-activedescendant", "aria-atomic", "aria-autocomplete", "aria-braillelabel",
-  "aria-brailleroledescription", "aria-busy", "aria-checked", "aria-colcount",
-  "aria-colindex", "aria-colindextext", "aria-colspan", "aria-controls",
-  "aria-current", "aria-describedby", "aria-description", "aria-details",
-  "aria-disabled", "aria-dropeffect", "aria-errormessage", "aria-expanded",
-  "aria-flowto", "aria-grabbed", "aria-haspopup", "aria-hidden",
-  "aria-invalid", "aria-keyshortcuts", "aria-label", "aria-labelledby",
-  "aria-level", "aria-live", "aria-modal", "aria-multiline",
-  "aria-multiselectable", "aria-orientation", "aria-owns", "aria-placeholder",
-  "aria-posinset", "aria-pressed", "aria-readonly", "aria-relevant",
-  "aria-required", "aria-roledescription", "aria-rowcount", "aria-rowindex",
-  "aria-rowindextext", "aria-rowspan", "aria-selected", "aria-setsize",
-  "aria-sort", "aria-valuemax", "aria-valuemin", "aria-valuenow",
+  "aria-activedescendant",
+  "aria-atomic",
+  "aria-autocomplete",
+  "aria-braillelabel",
+  "aria-brailleroledescription",
+  "aria-busy",
+  "aria-checked",
+  "aria-colcount",
+  "aria-colindex",
+  "aria-colindextext",
+  "aria-colspan",
+  "aria-controls",
+  "aria-current",
+  "aria-describedby",
+  "aria-description",
+  "aria-details",
+  "aria-disabled",
+  "aria-dropeffect",
+  "aria-errormessage",
+  "aria-expanded",
+  "aria-flowto",
+  "aria-grabbed",
+  "aria-haspopup",
+  "aria-hidden",
+  "aria-invalid",
+  "aria-keyshortcuts",
+  "aria-label",
+  "aria-labelledby",
+  "aria-level",
+  "aria-live",
+  "aria-modal",
+  "aria-multiline",
+  "aria-multiselectable",
+  "aria-orientation",
+  "aria-owns",
+  "aria-placeholder",
+  "aria-posinset",
+  "aria-pressed",
+  "aria-readonly",
+  "aria-relevant",
+  "aria-required",
+  "aria-roledescription",
+  "aria-rowcount",
+  "aria-rowindex",
+  "aria-rowindextext",
+  "aria-rowspan",
+  "aria-selected",
+  "aria-setsize",
+  "aria-sort",
+  "aria-valuemax",
+  "aria-valuemin",
+  "aria-valuenow",
   "aria-valuetext",
 ]);
 
 const BOOLEAN_ATTRS = new Set([
-  "aria-atomic", "aria-busy", "aria-disabled", "aria-grabbed", "aria-hidden",
-  "aria-modal", "aria-multiline", "aria-multiselectable", "aria-readonly",
+  "aria-atomic",
+  "aria-busy",
+  "aria-disabled",
+  "aria-grabbed",
+  "aria-hidden",
+  "aria-modal",
+  "aria-multiline",
+  "aria-multiselectable",
+  "aria-readonly",
   "aria-required",
 ]);
 
 const TRISTATE_ATTRS = new Set(["aria-checked", "aria-pressed"]);
 
 const INTEGER_ATTRS = new Set([
-  "aria-colcount", "aria-colindex", "aria-colspan",
-  "aria-level", "aria-posinset",
-  "aria-rowcount", "aria-rowindex", "aria-rowspan",
+  "aria-colcount",
+  "aria-colindex",
+  "aria-colspan",
+  "aria-level",
+  "aria-posinset",
+  "aria-rowcount",
+  "aria-rowindex",
+  "aria-rowspan",
   "aria-setsize",
 ]);
 
-const NUMBER_ATTRS = new Set([
-  "aria-valuemax", "aria-valuemin", "aria-valuenow",
-]);
+const NUMBER_ATTRS = new Set(["aria-valuemax", "aria-valuemin", "aria-valuenow"]);
 
 const TOKEN_ATTRS: Record<string, Set<string>> = {
   "aria-autocomplete": new Set(["inline", "list", "both", "none"]),
@@ -52,9 +101,22 @@ const TOKEN_ATTRS: Record<string, Set<string>> = {
 };
 
 const NO_NAME_ROLES = new Set([
-  "caption", "code", "deletion", "emphasis", "generic", "insertion",
-  "mark", "none", "paragraph", "presentation", "strong", "subscript",
-  "superscript", "suggestion", "term", "time",
+  "caption",
+  "code",
+  "deletion",
+  "emphasis",
+  "generic",
+  "insertion",
+  "mark",
+  "none",
+  "paragraph",
+  "presentation",
+  "strong",
+  "subscript",
+  "superscript",
+  "suggestion",
+  "term",
+  "time",
 ]);
 
 // Elements where aria-label/aria-labelledby is prohibited because their
@@ -64,11 +126,32 @@ const NO_NAME_ROLES = new Set([
 // usage treat aria-label on <span>/<i> as valid (commonly used for icon
 // labels).  Flagging them produces many false positives.
 const NO_NAME_ELEMENTS: Record<string, boolean> = {
-  abbr: true, bdi: true, bdo: true, br: true, cite: true,
-  code: true, data: true, del: true, dfn: true, em: true,
-  ins: true, kbd: true, mark: true, q: true, rp: true, rt: true,
-  ruby: true, s: true, samp: true, small: true,
-  strong: true, sub: true, sup: true, time: true, u: true, var: true,
+  abbr: true,
+  bdi: true,
+  bdo: true,
+  br: true,
+  cite: true,
+  code: true,
+  data: true,
+  del: true,
+  dfn: true,
+  em: true,
+  ins: true,
+  kbd: true,
+  mark: true,
+  q: true,
+  rp: true,
+  rt: true,
+  ruby: true,
+  s: true,
+  samp: true,
+  small: true,
+  strong: true,
+  sub: true,
+  sup: true,
+  time: true,
+  u: true,
+  var: true,
   wbr: true,
 };
 
@@ -84,7 +167,15 @@ const PROHIBITED_ATTRS: Record<string, Set<string>> = {
   definition: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
   deletion: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
   emphasis: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
-  generic: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid", "aria-label", "aria-labelledby", "aria-roledescription"]),
+  generic: new Set([
+    "aria-disabled",
+    "aria-errormessage",
+    "aria-haspopup",
+    "aria-invalid",
+    "aria-label",
+    "aria-labelledby",
+    "aria-roledescription",
+  ]),
   img: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
   insertion: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
   main: new Set(["aria-disabled", "aria-errormessage", "aria-haspopup", "aria-invalid"]),
@@ -204,7 +295,10 @@ export function runAriaAttrAudit(doc: Document): AriaAttrAuditResult {
             html: v.html,
             impact: "critical",
             message: `${attr.name} must be an integer, got "${val}".`,
-            fix: { type: "suggest" as const, suggestion: `Set ${attr.name} to a valid integer value` },
+            fix: {
+              type: "suggest" as const,
+              suggestion: `Set ${attr.name} to a valid integer value`,
+            },
           });
         }
       } else if (NUMBER_ATTRS.has(attr.name)) {
@@ -216,7 +310,10 @@ export function runAriaAttrAudit(doc: Document): AriaAttrAuditResult {
             html: v.html,
             impact: "critical",
             message: `${attr.name} must be a number, got "${val}".`,
-            fix: { type: "suggest" as const, suggestion: `Set ${attr.name} to a valid number value` },
+            fix: {
+              type: "suggest" as const,
+              suggestion: `Set ${attr.name} to a valid number value`,
+            },
           });
         }
       } else if (TOKEN_ATTRS[attr.name]) {
@@ -230,7 +327,10 @@ export function runAriaAttrAudit(doc: Document): AriaAttrAuditResult {
               html: v.html,
               impact: "critical",
               message: `Invalid value "${val}" for ${attr.name}.`,
-              fix: { type: "suggest" as const, suggestion: `Set ${attr.name} to one of: ${[...TOKEN_ATTRS[attr.name]].join(", ")}` },
+              fix: {
+                type: "suggest" as const,
+                suggestion: `Set ${attr.name} to one of: ${[...TOKEN_ATTRS[attr.name]].join(", ")}`,
+              },
             });
             break;
           }
@@ -282,8 +382,10 @@ export function runAriaAttrAudit(doc: Document): AriaAttrAuditResult {
         if (prohibited) {
           for (const attr of el.attributes) {
             if (attr.name.startsWith("aria-") && prohibited.has(attr.name)) {
-              if ((attr.name === "aria-label" || attr.name === "aria-labelledby") &&
-                  NO_NAME_ROLES.has(explicitRole)) {
+              if (
+                (attr.name === "aria-label" || attr.name === "aria-labelledby") &&
+                NO_NAME_ROLES.has(explicitRole)
+              ) {
                 continue;
               }
               const v = lazy();

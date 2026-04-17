@@ -8,8 +8,10 @@ export const documentTitle: Rule = {
   level: "A",
   tags: ["page-level"],
   fixability: "contextual",
-  description: "Documents must have a <title> element to provide users with an overview of content.",
-  guidance: "Screen reader users rely on page titles to identify and navigate between tabs/windows. Add a descriptive <title> element in <head> that summarizes the page purpose. Keep titles unique across the site, placing specific content before the site name (e.g., 'Contact Us - Acme Corp').",
+  description:
+    "Documents must have a <title> element to provide users with an overview of content.",
+  guidance:
+    "Screen reader users rely on page titles to identify and navigate between tabs/windows. Add a descriptive <title> element in <head> that summarizes the page purpose. Keep titles unique across the site, placing specific content before the site name (e.g., 'Contact Us - Acme Corp').",
   run(doc) {
     const title = doc.querySelector("title");
     if (!title || !title.textContent?.trim()) {
@@ -22,15 +24,19 @@ export const documentTitle: Rule = {
         const text = doc.body.textContent?.trim().replace(/\s+/g, " ") || "";
         if (text) textSample = `Page text: "${text.slice(0, 150)}"`;
       }
-      return [{
-        ruleId: "navigable/document-title",
-        selector: "html",
-        html: "<html>",
-        impact: "serious" as const,
-        message: title ? "Document <title> element is empty." : "Document is missing a <title> element.",
-        context: textSample,
-        fix: { type: "add-element", tag: "title", parent: "head", textContent: "" } as const,
-      }];
+      return [
+        {
+          ruleId: "navigable/document-title",
+          selector: "html",
+          html: "<html>",
+          impact: "serious" as const,
+          message: title
+            ? "Document <title> element is empty."
+            : "Document is missing a <title> element.",
+          context: textSample,
+          fix: { type: "add-element", tag: "title", parent: "head", textContent: "" } as const,
+        },
+      ];
     }
     return [];
   },

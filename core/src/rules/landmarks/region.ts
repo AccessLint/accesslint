@@ -11,7 +11,8 @@ export const region: Rule = {
   tags: ["best-practice", "page-level"],
   fixability: "contextual",
   description: "All page content should be contained within landmarks.",
-  guidance: "Screen reader users navigate pages by landmarks. Content outside landmarks is harder to find and understand. Wrap all visible content in appropriate landmarks: <header>, <nav>, <main>, <aside>, <footer>, or <section> with a label. Skip links may exist outside landmarks.",
+  guidance:
+    "Screen reader users navigate pages by landmarks. Content outside landmarks is harder to find and understand. Wrap all visible content in appropriate landmarks: <header>, <nav>, <main>, <aside>, <footer>, or <section> with a label. Skip links may exist outside landmarks.",
   run(doc) {
     const violations: Violation[] = [];
     const body = doc.body;

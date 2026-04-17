@@ -50,7 +50,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes tabindex=-1 (not in tab order)", () => {
-    expectNoViolations(nestedInteractive, '<button><span tabindex="-1">Not in tab order</span></button>');
+    expectNoViolations(
+      nestedInteractive,
+      '<button><span tabindex="-1">Not in tab order</span></button>',
+    );
   });
 
   it("skips disabled elements", () => {
@@ -58,21 +61,30 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(nestedInteractive, '<a href="/"><button aria-hidden="true">Hidden</button></a>');
+    expectNoViolations(
+      nestedInteractive,
+      '<a href="/"><button aria-hidden="true">Hidden</button></a>',
+    );
   });
 
   // --- Native composite widgets: child elements belong inside their parent ---
 
   it("passes option inside select", () => {
-    expectNoViolations(nestedInteractive, '<select><option>A</option><option>B</option></select>');
+    expectNoViolations(nestedInteractive, "<select><option>A</option><option>B</option></select>");
   });
 
   it("passes optgroup with options inside select", () => {
-    expectNoViolations(nestedInteractive, '<select><optgroup label="Group"><option>A</option></optgroup></select>');
+    expectNoViolations(
+      nestedInteractive,
+      '<select><optgroup label="Group"><option>A</option></optgroup></select>',
+    );
   });
 
   it("passes summary inside details", () => {
-    expectNoViolations(nestedInteractive, "<details><summary>Toggle</summary><p>Content</p></details>");
+    expectNoViolations(
+      nestedInteractive,
+      "<details><summary>Toggle</summary><p>Content</p></details>",
+    );
   });
 
   // --- ARIA composite widgets: child roles belong inside their parent ---
@@ -128,9 +140,13 @@ describe(RULE_ID, () => {
   });
 
   it("reports contenteditable inside button", () => {
-    expectViolations(nestedInteractive, '<button><span contenteditable="true">Edit</span></button>', {
-      count: 1,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      nestedInteractive,
+      '<button><span contenteditable="true">Edit</span></button>',
+      {
+        count: 1,
+        ruleId: RULE_ID,
+      },
+    );
   });
 });

@@ -1,5 +1,9 @@
 import type { Rule, Violation, AuditResult, DiffResult } from "./types";
-import { clearAriaHiddenCache, clearComputedRoleCache, clearAccessibleNameCache } from "./utils/aria";
+import {
+  clearAriaHiddenCache,
+  clearComputedRoleCache,
+  clearAccessibleNameCache,
+} from "./utils/aria";
 import { clearAriaAttrAuditCache } from "./aria/aria-attr-audit";
 import { clearColorCaches } from "./utils/color";
 import { clearSelectorCache } from "./utils/selector";
@@ -241,9 +245,7 @@ export const rules: Rule[] = [
   ariaProhibitedAttr,
   presentationRoleConflict,
   presentationalChildrenFocusable,
-
 ];
-
 
 export interface ChunkedAudit {
   /** Process rules for up to budgetMs. Returns true if more rules remain. */

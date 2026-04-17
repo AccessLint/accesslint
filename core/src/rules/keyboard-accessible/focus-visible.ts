@@ -9,9 +9,9 @@ export const focusVisible: Rule = {
   wcag: ["2.4.7"],
   level: "AA",
   fixability: "visual",
-  browserHint: "Tab to the element and screenshot to verify a visible focus indicator appears. Check that the indicator has sufficient contrast against the background.",
-  description:
-    "Elements in sequential focus order must have a visible focus indicator.",
+  browserHint:
+    "Tab to the element and screenshot to verify a visible focus indicator appears. Check that the indicator has sufficient contrast against the background.",
+  description: "Elements in sequential focus order must have a visible focus indicator.",
   guidance:
     "Keyboard users need to see which element has focus. Do not remove the default focus outline (outline: none) without providing an alternative visible indicator. Use :focus-visible or :focus styles to ensure focus is always perceivable.",
   run(doc) {
@@ -35,8 +35,7 @@ export const focusVisible: Rule = {
             selector: getSelector(el),
             html: getHtmlSnippet(el),
             impact: "serious" as const,
-            message:
-              "Focusable element has outline removed without a visible focus alternative.",
+            message: "Focusable element has outline removed without a visible focus alternative.",
           });
         }
       }

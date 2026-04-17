@@ -25,9 +25,10 @@ export interface AccessLintTestOptions {
   };
 }
 
-export function accesslintTest(
-  options?: AccessLintTestOptions,
-): { name: string; config: () => Record<string, unknown> } {
+export function accesslintTest(options?: AccessLintTestOptions): {
+  name: string;
+  config: () => Record<string, unknown>;
+} {
   // Allow Vite to serve the setup file even when this package is symlinked
   // outside the consuming project's root (common during local development).
   const distDir = new URL(".", import.meta.url).pathname;
@@ -49,7 +50,7 @@ export function accesslintTest(
       // Pass tags configuration via Vite's define so it's available in browser
       if (options?.tags) {
         (config as Record<string, Record<string, unknown>>).define = {
-          "__ACCESSLINT_SKIP_TAGS__": JSON.stringify(options.tags.skip ?? []),
+          __ACCESSLINT_SKIP_TAGS__: JSON.stringify(options.tags.skip ?? []),
         };
       }
 

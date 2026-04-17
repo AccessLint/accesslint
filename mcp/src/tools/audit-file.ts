@@ -37,10 +37,7 @@ export const auditFileSchema = {
   path: z
     .string()
     .describe("Path to HTML file (relative to workspace root, or absolute but must be inside it)"),
-  name: z
-    .string()
-    .optional()
-    .describe('Store result for later diffing (e.g. "before")'),
+  name: z.string().optional().describe('Store result for later diffing (e.g. "before")'),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
@@ -78,8 +75,7 @@ export function registerAuditFile(server: McpServer): void {
           };
         }
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unknown error reading file";
+        const message = err instanceof Error ? err.message : "Unknown error reading file";
         return {
           content: [{ type: "text", text: `Error reading file: ${message}` }],
           isError: true,
@@ -90,8 +86,7 @@ export function registerAuditFile(server: McpServer): void {
       try {
         html = await readFile(resolved, "utf-8");
       } catch (err) {
-        const message =
-          err instanceof Error ? err.message : "Unknown error reading file";
+        const message = err instanceof Error ? err.message : "Unknown error reading file";
         return {
           content: [{ type: "text", text: `Error reading file: ${message}` }],
           isError: true,
@@ -102,8 +97,10 @@ export function registerAuditFile(server: McpServer): void {
       const processedHtml = await inlineCSS(html, baseURL, { allowPrivateNetwork });
       const result = audit(processedHtml, { name });
       return {
-        content: [{ type: "text", text: formatViolations(result.violations, { minImpact: min_impact }) }],
+        content: [
+          { type: "text", text: formatViolations(result.violations, { minImpact: min_impact }) },
+        ],
       };
-    }
+    },
   );
 }

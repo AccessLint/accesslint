@@ -37,9 +37,7 @@ function generateElements(n: number): string {
       // ── Forms ───────────────────────────────────────────────
       // Valid labeled input
       case 6:
-        parts.push(
-          `<label for="input${i}">Field ${i}</label><input id="input${i}" type="text">`,
-        );
+        parts.push(`<label for="input${i}">Field ${i}</label><input id="input${i}" type="text">`);
         break;
       // label: missing label on text input
       case 7:
@@ -84,9 +82,7 @@ function generateElements(n: number): string {
         parts.push(`<div role="button" aria-label="Action ${i}">Click</div>`);
         break;
       case 17:
-        parts.push(
-          `<div role="checkbox" aria-checked="false" aria-label="Check ${i}">Check</div>`,
-        );
+        parts.push(`<div role="checkbox" aria-checked="false" aria-label="Check ${i}">Check</div>`);
         break;
 
       // ── ARIA (violations) ───────────────────────────────────
@@ -174,21 +170,15 @@ function generateElements(n: number): string {
       // ── Tables ──────────────────────────────────────────────
       // Valid table
       case 37:
-        parts.push(
-          `<table><tr><th>Header ${i}</th></tr><tr><td>Data ${i}</td></tr></table>`,
-        );
+        parts.push(`<table><tr><th>Header ${i}</th></tr><tr><td>Data ${i}</td></tr></table>`);
         break;
       // scope-attr-valid: invalid scope value
       case 38:
-        parts.push(
-          `<table><tr><th scope="invalid">H</th></tr><tr><td>data</td></tr></table>`,
-        );
+        parts.push(`<table><tr><th scope="invalid">H</th></tr><tr><td>data</td></tr></table>`);
         break;
       // empty-table-header: empty th element
       case 39:
-        parts.push(
-          `<table><tr><th></th></tr><tr><td>data</td></tr></table>`,
-        );
+        parts.push(`<table><tr><th></th></tr><tr><td>data</td></tr></table>`);
         break;
       // td-headers-attr: td referencing nonexistent header
       case 40:
@@ -200,9 +190,7 @@ function generateElements(n: number): string {
       // ── Lists ───────────────────────────────────────────────
       // Valid list
       case 41:
-        parts.push(
-          `<ul><li>Item ${i}a</li><li>Item ${i}b</li><li>Item ${i}c</li></ul>`,
-        );
+        parts.push(`<ul><li>Item ${i}a</li><li>Item ${i}b</li><li>Item ${i}c</li></ul>`);
         break;
       // list: invalid child of ul
       case 42:
@@ -219,9 +207,7 @@ function generateElements(n: number): string {
 
       // ── Navigation ─────────────────────────────────────────
       case 45:
-        parts.push(
-          `<nav aria-label="Nav ${i}"><a href="/a${i}">A</a><a href="/b${i}">B</a></nav>`,
-        );
+        parts.push(`<nav aria-label="Nav ${i}"><a href="/a${i}">A</a><a href="/b${i}">B</a></nav>`);
         break;
 
       // ── Labeled select (valid) ──────────────────────────────
@@ -233,9 +219,7 @@ function generateElements(n: number): string {
 
       // ── SVG with role=img (valid) ───────────────────────────
       case 47:
-        parts.push(
-          `<svg role="img" aria-label="Icon ${i}"><circle r="10"/></svg>`,
-        );
+        parts.push(`<svg role="img" aria-label="Icon ${i}"><circle r="10"/></svg>`);
         break;
 
       // ── Keyboard ────────────────────────────────────────────

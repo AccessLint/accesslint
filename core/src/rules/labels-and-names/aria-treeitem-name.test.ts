@@ -10,6 +10,9 @@ describe(RULE_ID, () => {
   });
 
   it("reports treeitem without name", () => {
-    expectViolations(ariaTreeitemName, '<div role="treeitem"></div>', { count: 1, ruleId: RULE_ID });
+    expectViolations(ariaTreeitemName, '<div role="treeitem"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 });

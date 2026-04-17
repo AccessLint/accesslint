@@ -17,13 +17,20 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden marquee", () => {
-    expectNoViolations(marquee, '<html><body><marquee aria-hidden="true">Hidden</marquee></body></html>');
+    expectNoViolations(
+      marquee,
+      '<html><body><marquee aria-hidden="true">Hidden</marquee></body></html>',
+    );
   });
 
   it("reports multiple marquee elements", () => {
-    expectViolations(marquee, "<html><body><marquee>One</marquee><marquee>Two</marquee></body></html>", {
-      count: 2,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      marquee,
+      "<html><body><marquee>One</marquee><marquee>Two</marquee></body></html>",
+      {
+        count: 2,
+        ruleId: RULE_ID,
+      },
+    );
   });
 });

@@ -28,7 +28,7 @@ const TIMEOUT = parseInt(flags.timeout!, 10);
 const CASE_FILTER = flags.case ?? null;
 
 const manifest: RenderManifest = JSON.parse(
-  readFileSync(resolve(__dirname, "render-manifest.json"), "utf-8")
+  readFileSync(resolve(__dirname, "render-manifest.json"), "utf-8"),
 );
 
 const RENDER_JSON_SCHEMA = {
@@ -67,9 +67,7 @@ async function loadComponent(filePath: string): Promise<{ default: React.Compone
 }
 
 // Main
-const cases = CASE_FILTER
-  ? manifest.cases.filter((c) => c.id === CASE_FILTER)
-  : manifest.cases;
+const cases = CASE_FILTER ? manifest.cases.filter((c) => c.id === CASE_FILTER) : manifest.cases;
 
 if (cases.length === 0) {
   console.error(`No cases found${CASE_FILTER ? ` matching "${CASE_FILTER}"` : ""}`);
@@ -151,7 +149,7 @@ for (const testCase of cases) {
     const comparison = compareViolationSets(groundTruthViolations, claudeViolations);
 
     process.stdout.write(
-      ` (${result.durationMs}ms, matched=${comparison.matched}/${groundTruthViolations.length}, extra=${comparison.extra})`
+      ` (${result.durationMs}ms, matched=${comparison.matched}/${groundTruthViolations.length}, extra=${comparison.extra})`,
     );
 
     runs.push({

@@ -15,37 +15,29 @@ describe("audit_html pipeline", () => {
   it("finds violations in an image without alt", () => {
     const result = audit('<img src="photo.jpg">');
     expect(result.violations.length).toBeGreaterThan(0);
-    const imgAlt = result.violations.find(
-      (v) => v.ruleId === "text-alternatives/img-alt"
-    );
+    const imgAlt = result.violations.find((v) => v.ruleId === "text-alternatives/img-alt");
     expect(imgAlt).toBeDefined();
     expect(imgAlt!.impact).toBe("critical");
   });
 
   it("returns no violations for accessible HTML", () => {
     const result = audit('<img src="photo.jpg" alt="A sunset">');
-    const imgAlt = result.violations.find(
-      (v) => v.ruleId === "text-alternatives/img-alt"
-    );
+    const imgAlt = result.violations.find((v) => v.ruleId === "text-alternatives/img-alt");
     expect(imgAlt).toBeUndefined();
   });
 
   it("auto-enables componentMode for fragments", () => {
     // A fragment without <html> should not trigger page-level rules like html-lang
     const result = audit("<p>Hello world</p>");
-    const pageLevelViolation = result.violations.find(
-      (v) => v.ruleId === "readable/html-has-lang"
-    );
+    const pageLevelViolation = result.violations.find((v) => v.ruleId === "readable/html-has-lang");
     expect(pageLevelViolation).toBeUndefined();
   });
 
   it("detects page-level violations in full documents", () => {
     const result = audit(
-      "<!DOCTYPE html><html><head><title>Test</title></head><body><p>Hello</p></body></html>"
+      "<!DOCTYPE html><html><head><title>Test</title></head><body><p>Hello</p></body></html>",
     );
-    const htmlLang = result.violations.find(
-      (v) => v.ruleId === "readable/html-has-lang"
-    );
+    const htmlLang = result.violations.find((v) => v.ruleId === "readable/html-has-lang");
     expect(htmlLang).toBeDefined();
   });
 
@@ -75,9 +67,7 @@ describe("diff_html pipeline", () => {
     const diff = diffAudit(before, after);
 
     expect(diff.fixed.length).toBeGreaterThan(0);
-    const fixedImgAlt = diff.fixed.find(
-      (v) => v.ruleId === "text-alternatives/img-alt"
-    );
+    const fixedImgAlt = diff.fixed.find((v) => v.ruleId === "text-alternatives/img-alt");
     expect(fixedImgAlt).toBeDefined();
   });
 
@@ -106,7 +96,7 @@ describe("audit_file pipeline", () => {
   it("reads and audits an HTML file", async () => {
     await writeFile(
       tmpFile,
-      '<!DOCTYPE html><html lang="en"><head><title>Test</title></head><body><img src="photo.jpg"></body></html>'
+      '<!DOCTYPE html><html lang="en"><head><title>Test</title></head><body><img src="photo.jpg"></body></html>',
     );
     try {
       const html = await readFile(tmpFile, "utf-8");
@@ -151,7 +141,10 @@ describe("audit_url pipeline", () => {
     vi.restoreAllMocks();
   });
 
-  function mockFetch(body: string, init?: { status?: number; statusText?: string; contentType?: string }) {
+  function mockFetch(
+    body: string,
+    init?: { status?: number; statusText?: string; contentType?: string },
+  ) {
     const status = init?.status ?? 200;
     const statusText = init?.statusText ?? "OK";
     const contentType = init?.contentType ?? "text/html; charset=utf-8";
@@ -162,8 +155,8 @@ describe("audit_url pipeline", () => {
           status,
           statusText,
           headers: { "content-type": contentType },
-        })
-      )
+        }),
+      ),
     );
   }
 
@@ -178,21 +171,16 @@ describe("audit_url pipeline", () => {
 
   it("returns no violations for accessible HTML", async () => {
     mockFetch(
-      '<!DOCTYPE html><html lang="en"><head><title>Test</title></head><body><img src="photo.jpg" alt="A sunset"></body></html>'
+      '<!DOCTYPE html><html lang="en"><head><title>Test</title></head><body><img src="photo.jpg" alt="A sunset"></body></html>',
     );
     const html = await (await fetch("http://example.com")).text();
     const result = audit(html, {});
-    const imgAlt = result.violations.find(
-      (v) => v.ruleId === "text-alternatives/img-alt"
-    );
+    const imgAlt = result.violations.find((v) => v.ruleId === "text-alternatives/img-alt");
     expect(imgAlt).toBeUndefined();
   });
 
   it("handles network errors", async () => {
-    vi.stubGlobal(
-      "fetch",
-      vi.fn().mockRejectedValue(new Error("ECONNREFUSED"))
-    );
+    vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("ECONNREFUSED")));
     await expect(fetch("http://localhost:9999")).rejects.toThrow("ECONNREFUSED");
   });
 

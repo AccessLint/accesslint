@@ -15,7 +15,10 @@ export const dlChildren: Rule = {
     for (const el of doc.querySelectorAll("dt, dd")) {
       const parent = el.parentElement;
       const tag = parent?.tagName.toLowerCase();
-      if (!parent || (tag !== "dl" && !(tag === "div" && parent.parentElement?.tagName.toLowerCase() === "dl"))) {
+      if (
+        !parent ||
+        (tag !== "dl" && !(tag === "div" && parent.parentElement?.tagName.toLowerCase() === "dl"))
+      ) {
         violations.push({
           ruleId: "adaptable/dl-children",
           selector: getSelector(el),

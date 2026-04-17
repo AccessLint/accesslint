@@ -4,11 +4,11 @@ import { isAriaHidden } from "../utils/aria";
 
 // Focusable elements selector
 const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
+  "a[href]",
+  "button:not([disabled])",
   'input:not([disabled]):not([type="hidden"])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
+  "select:not([disabled])",
+  "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
 ].join(", ");
 
@@ -63,8 +63,10 @@ export const presentationRoleConflict: Rule = {
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",
-  description: "Elements with role='presentation' or role='none' must not be focusable or have global ARIA attributes.",
-  guidance: "When an element has role='presentation' or role='none', it's marked as decorative and removed from the accessibility tree. However, if the element is focusable or has certain ARIA attributes, the presentation role is ignored and the element remains accessible. This creates confusion. Either remove the presentation role, or remove the focusability/ARIA attributes.",
+  description:
+    "Elements with role='presentation' or role='none' must not be focusable or have global ARIA attributes.",
+  guidance:
+    "When an element has role='presentation' or role='none', it's marked as decorative and removed from the accessibility tree. However, if the element is focusable or has certain ARIA attributes, the presentation role is ignored and the element remains accessible. This creates confusion. Either remove the presentation role, or remove the focusability/ARIA attributes.",
   run(doc) {
     const violations = [];
 
@@ -80,7 +82,11 @@ export const presentationRoleConflict: Rule = {
           html: getHtmlSnippet(el),
           impact: "serious" as const,
           message: `Presentation role conflicts with: ${issues.join(", ")}. The role will be ignored.`,
-          fix: { type: "suggest", suggestion: "Remove the presentation/none role, or remove the conflicting focusability and ARIA attributes" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Remove the presentation/none role, or remove the conflicting focusability and ARIA attributes",
+          } as const,
         });
       }
     }
@@ -100,7 +106,11 @@ export const presentationRoleConflict: Rule = {
           html: getHtmlSnippet(img),
           impact: "serious" as const,
           message: `Element with implicit presentation role (alt="") conflicts with: ${issues.join(", ")}. The decorative role will be ignored.`,
-          fix: { type: "suggest", suggestion: "Remove the conflicting focusability and ARIA attributes, or add descriptive alt text if the image is not decorative" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Remove the conflicting focusability and ARIA attributes, or add descriptive alt text if the image is not decorative",
+          } as const,
         });
       }
     }

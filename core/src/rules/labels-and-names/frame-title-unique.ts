@@ -11,7 +11,8 @@ export const frameTitleUnique: Rule = {
   tags: ["best-practice"],
   fixability: "contextual",
   description: "Frame titles should be unique.",
-  guidance: "When multiple frames have identical titles, screen reader users cannot distinguish between them. Give each frame a unique, descriptive title that explains its specific purpose or content.",
+  guidance:
+    "When multiple frames have identical titles, screen reader users cannot distinguish between them. Give each frame a unique, descriptive title that explains its specific purpose or content.",
   run(doc) {
     const violations = [];
     const frames = Array.from(doc.querySelectorAll("iframe[title], frame[title]"));

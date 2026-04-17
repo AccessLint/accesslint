@@ -2,7 +2,6 @@ import { describe, it } from "vitest";
 import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { headingOrder } from "./heading-order";
 
-
 describe("navigable/heading-order", () => {
   it("passes sequential headings", () => {
     expectNoViolations(headingOrder, "<html><body><h1>A</h1><h2>B</h2><h3>C</h3></body></html>");

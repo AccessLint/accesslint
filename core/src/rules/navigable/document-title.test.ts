@@ -14,19 +14,30 @@ describe(RULE_ID, () => {
   });
 
   it("reports empty title element", () => {
-    expectViolations(documentTitle, "<html><head><title></title></head><body>Content</body></html>", {
-      count: 1,
-      messageMatches: /empty/,
-    });
+    expectViolations(
+      documentTitle,
+      "<html><head><title></title></head><body>Content</body></html>",
+      {
+        count: 1,
+        messageMatches: /empty/,
+      },
+    );
   });
 
   it("reports whitespace-only title element", () => {
-    expectViolations(documentTitle, "<html><head><title>   </title></head><body>Content</body></html>", {
-      count: 1,
-    });
+    expectViolations(
+      documentTitle,
+      "<html><head><title>   </title></head><body>Content</body></html>",
+      {
+        count: 1,
+      },
+    );
   });
 
   it("passes with valid title", () => {
-    expectNoViolations(documentTitle, "<html><head><title>My Page Title</title></head><body>Content</body></html>");
+    expectNoViolations(
+      documentTitle,
+      "<html><head><title>My Page Title</title></head><body>Content</body></html>",
+    );
   });
 });

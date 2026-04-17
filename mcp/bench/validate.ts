@@ -34,9 +34,7 @@ interface CaseResult {
   unexpected: { ruleId: string; selector: string; impact: string }[];
 }
 
-const manifest: Manifest = JSON.parse(
-  readFileSync(resolve(__dirname, "manifest.json"), "utf-8")
-);
+const manifest: Manifest = JSON.parse(readFileSync(resolve(__dirname, "manifest.json"), "utf-8"));
 
 const results: CaseResult[] = [];
 let passCount = 0;
@@ -64,7 +62,7 @@ for (const testCase of manifest.cases) {
       (a) =>
         a.ruleId === expected.ruleId &&
         a.selector.includes(expected.selectorPattern) &&
-        a.impact === expected.impact
+        a.impact === expected.impact,
     );
     if (idx !== -1) {
       matched.push(expected);

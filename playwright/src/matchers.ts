@@ -48,10 +48,7 @@ function isUpdateMode(): boolean {
   }
 }
 
-export async function toBeAccessible(
-  target: Page | Locator,
-  options?: SnapshotMatcherOptions,
-) {
+export async function toBeAccessible(target: Page | Locator, options?: SnapshotMatcherOptions) {
   // ── Snapshot mode ────────────────────────────────────────────────────
   if (options?.snapshot) {
     validateSnapshotName(options.snapshot);
@@ -60,14 +57,8 @@ export async function toBeAccessible(
     await waitForPageSettle(target);
 
     const result = await accesslintAudit(target, options);
-    const snapshotPath = resolveSnapshotPath(
-      options.snapshot,
-      options.snapshotDir,
-    );
-    const stableViolations = await toStableViolations(
-      target,
-      result.violations,
-    );
+    const snapshotPath = resolveSnapshotPath(options.snapshot, options.snapshotDir);
+    const stableViolations = await toStableViolations(target, result.violations);
     const update = isUpdateMode();
     const snap = evaluateSnapshot(stableViolations, snapshotPath, { update });
 
@@ -88,9 +79,7 @@ export async function toBeAccessible(
           return "Expected accessibility violations beyond snapshot, but none were found";
         }
 
-        const summary = snap.newViolations
-          .map((v) => `  ${v.ruleId}: ${v.selector}`)
-          .join("\n");
+        const summary = snap.newViolations.map((v) => `  ${v.ruleId}: ${v.selector}`).join("\n");
         return (
           `Expected no new accessibility violations beyond snapshot ` +
           `"${options.snapshot}", but found ${snap.newViolations.length} new:\n\n${summary}`

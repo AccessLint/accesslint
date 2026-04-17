@@ -4,7 +4,13 @@ import { scrollableRegion } from "./scrollable-region";
 import * as colorUtils from "../utils/color";
 import { clearColorCaches } from "../utils/color";
 
-function mockScrollable(el: Element, scrollHeight = 300, clientHeight = 100, scrollWidth = 0, clientWidth = 200) {
+function mockScrollable(
+  el: Element,
+  scrollHeight = 300,
+  clientHeight = 100,
+  scrollWidth = 0,
+  clientWidth = 200,
+) {
   Object.defineProperty(el, "scrollHeight", { value: scrollHeight, configurable: true });
   Object.defineProperty(el, "clientHeight", { value: clientHeight, configurable: true });
   Object.defineProperty(el, "scrollWidth", { value: scrollWidth, configurable: true });
@@ -124,10 +130,13 @@ describe("keyboard-accessible/scrollable-region", () => {
     });
 
     it("does not report overflow: auto region with image content but no keyboard access", () => {
-      vi.spyOn(colorUtils, "getCachedComputedStyle").mockImplementation((el: Element) => ({
-        overflowX: "visible",
-        overflowY: (el as HTMLElement).hasAttribute?.("data-scrollable") ? "auto" : "visible",
-      } as unknown as CSSStyleDeclaration));
+      vi.spyOn(colorUtils, "getCachedComputedStyle").mockImplementation(
+        (el: Element) =>
+          ({
+            overflowX: "visible",
+            overflowY: (el as HTMLElement).hasAttribute?.("data-scrollable") ? "auto" : "visible",
+          }) as unknown as CSSStyleDeclaration,
+      );
       const doc = makeDoc(`<div data-scrollable><img src="photo.jpg" alt="Photo"></div>`);
       mockScrollable(doc.querySelector("[data-scrollable]")!);
 

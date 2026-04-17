@@ -7,16 +7,40 @@ import { isAriaHidden } from "../utils/aria";
 // details (naturally contains interactive children like <summary>),
 // iframe/embed (embedded content containers, not interactive controls).
 const INTERACTIVE_ELEMENTS = new Set([
-  "a", "audio", "button", "img",
-  "input", "select", "textarea", "video",
+  "a",
+  "audio",
+  "button",
+  "img",
+  "input",
+  "select",
+  "textarea",
+  "video",
 ]);
 
 // Roles that are interactive
 const INTERACTIVE_ROLES = new Set([
-  "button", "checkbox", "combobox", "gridcell", "link", "listbox",
-  "menu", "menubar", "menuitem", "menuitemcheckbox", "menuitemradio",
-  "option", "progressbar", "radio", "scrollbar", "searchbox",
-  "slider", "spinbutton", "switch", "tab", "tabpanel", "textbox",
+  "button",
+  "checkbox",
+  "combobox",
+  "gridcell",
+  "link",
+  "listbox",
+  "menu",
+  "menubar",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "option",
+  "progressbar",
+  "radio",
+  "scrollbar",
+  "searchbox",
+  "slider",
+  "spinbutton",
+  "switch",
+  "tab",
+  "tabpanel",
+  "textbox",
   "treeitem",
 ]);
 
@@ -91,7 +115,8 @@ export const nestedInteractive: Rule = {
   level: "A",
   fixability: "contextual",
   description: "Interactive controls must not be nested inside each other.",
-  guidance: "Nesting interactive elements (like a button inside a link, or a link inside a button) creates unpredictable behavior and confuses assistive technologies. The browser may remove the inner element from the accessibility tree. Restructure the HTML so interactive elements are siblings, not nested. If you need a clickable card, use CSS and JavaScript rather than nesting.",
+  guidance:
+    "Nesting interactive elements (like a button inside a link, or a link inside a button) creates unpredictable behavior and confuses assistive technologies. The browser may remove the inner element from the accessibility tree. Restructure the HTML so interactive elements are siblings, not nested. If you need a clickable card, use CSS and JavaScript rather than nesting.",
   run(doc) {
     const violations: Violation[] = [];
     const root = doc.body ?? (doc as unknown as ShadowRoot);
@@ -105,8 +130,10 @@ export const nestedInteractive: Rule = {
     // Process body itself, then walk
     while (node) {
       // Pop ancestors that no longer contain the current node
-      while (interactiveAncestors.length > 0 &&
-             !interactiveAncestors[interactiveAncestors.length - 1].contains(node)) {
+      while (
+        interactiveAncestors.length > 0 &&
+        !interactiveAncestors[interactiveAncestors.length - 1].contains(node)
+      ) {
         interactiveAncestors.pop();
       }
 
@@ -120,7 +147,11 @@ export const nestedInteractive: Rule = {
               html: getHtmlSnippet(node),
               impact: "serious" as const,
               message: `Interactive element <${node.tagName.toLowerCase()}> is nested inside <${parent.tagName.toLowerCase()}>.`,
-              fix: { type: "suggest", suggestion: "Move the nested interactive element outside its interactive parent so they are siblings instead of nested" } as const,
+              fix: {
+                type: "suggest",
+                suggestion:
+                  "Move the nested interactive element outside its interactive parent so they are siblings instead of nested",
+              } as const,
             });
           }
         }

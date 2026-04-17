@@ -13,18 +13,13 @@ export default function ComplexForm() {
       {fields.map((field) => (
         <div key={field.name}>
           <label htmlFor={`${formId}-${field.name}`}>{field.label}</label>
-          <input
-            type={field.type}
-            id={`${formId}-${field.name}`}
-            name={field.name}
-            tabIndex={0}
-          />
+          <input type={field.type} id={`${formId}-${field.name}`} name={field.name} tabIndex={0} />
         </div>
       ))}
       <div>
         <label htmlFor={`${formId}-tos`}>
-          <input type="checkbox" id={`${formId}-tos`} name="tos" />
-          I agree to the <a href="/terms">terms of service</a>
+          <input type="checkbox" id={`${formId}-tos`} name="tos" />I agree to the{" "}
+          <a href="/terms">terms of service</a>
         </label>
       </div>
       <button type="submit">Create Account</button>

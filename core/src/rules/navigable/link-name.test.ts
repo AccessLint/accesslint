@@ -2,7 +2,6 @@ import { describe, it } from "vitest";
 import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { linkName } from "./link-name";
 
-
 describe("navigable/link-name", () => {
   it("reports empty links", () => {
     expectViolations(linkName, '<html><body><a href="/page"></a></body></html>', {
@@ -16,7 +15,10 @@ describe("navigable/link-name", () => {
   });
 
   it("passes links with aria-label", () => {
-    expectNoViolations(linkName, '<html><body><a href="/page" aria-label="About us"></a></body></html>');
+    expectNoViolations(
+      linkName,
+      '<html><body><a href="/page" aria-label="About us"></a></body></html>',
+    );
   });
 
   it("passes links with img alt inside", () => {

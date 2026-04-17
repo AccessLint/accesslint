@@ -8,8 +8,7 @@ export const colorContrastEnhanced: Rule = {
   wcag: ["1.4.6"],
   level: "AAA",
   fixability: "visual",
-  description:
-    "Text elements must have enhanced color contrast against the background (WCAG AAA).",
+  description: "Text elements must have enhanced color contrast against the background (WCAG AAA).",
   browserHint:
     "Violation context includes computed colors and ratio. After changing colors, use JavaScript to read getComputedStyle() on the element and recalculate the contrast ratio. Screenshot the element to verify the fix looks correct in context.",
   guidance:

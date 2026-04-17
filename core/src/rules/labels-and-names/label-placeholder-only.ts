@@ -11,7 +11,8 @@ export const labelPlaceholderOnly: Rule = {
   tags: [],
   fixability: "contextual",
   description: "Form elements should not use placeholder attribute as the only accessible name.",
-  guidance: "The placeholder attribute disappears as soon as the user begins typing, making it unreliable as a label. Users may forget the field's purpose mid-entry, and placeholders are often rendered with low contrast. Use a visible <label> element, aria-label, or aria-labelledby instead. Placeholder can supplement a label but should not replace it.",
+  guidance:
+    "The placeholder attribute disappears as soon as the user begins typing, making it unreliable as a label. Users may forget the field's purpose mid-entry, and placeholders are often rendered with low contrast. Use a visible <label> element, aria-label, or aria-labelledby instead. Placeholder can supplement a label but should not replace it.",
   run(doc) {
     const violations = [];
     const inputs = doc.querySelectorAll(NATIVE_LABELABLE_SELECTOR);
@@ -36,8 +37,13 @@ export const labelPlaceholderOnly: Rule = {
           selector: getSelector(input),
           html: getHtmlSnippet(input),
           impact: "serious" as const,
-          message: "Form element uses placeholder as only label. Use <label>, aria-label, or aria-labelledby instead.",
-          fix: { type: "suggest", suggestion: "Add a visible <label> element or aria-label attribute, and optionally keep the placeholder as supplementary hint text" } as const,
+          message:
+            "Form element uses placeholder as only label. Use <label>, aria-label, or aria-labelledby instead.",
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Add a visible <label> element or aria-label attribute, and optionally keep the placeholder as supplementary hint text",
+          } as const,
         });
       }
     }

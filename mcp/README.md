@@ -24,7 +24,7 @@ Add to your MCP client configuration:
 - **audit_url** — Fetch a URL and audit the returned HTML.
 - **diff_html** — Audit new HTML and diff against a previously named audit to verify fixes.
 - **list_rules** — List available WCAG rules with optional filters by category, level, fixability, or criterion.
-All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
+  All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
 
 Each violation in the audit output includes the rule ID, CSS selector, failing HTML, impact level, and — where available — a concrete fix suggestion, fixability rating, and guidance. When multiple elements break the same rule, shared metadata is printed once to keep output compact.
 
@@ -46,13 +46,13 @@ Without tools, the agent reasons about WCAG rules from memory. The MCP replaces 
 
 Benchmarked across 25 test cases, 67 fixable violations, 3 runs each (Claude Opus):
 
-| | With @accesslint/mcp | Agent alone |
-|---|---|---|
-| **Violations fixed** | 99.5% (200/201) | 93.5% (188/201) |
-| **Regressions** | 1.7 / run | 2.0 / run |
-| **Cost** | $0.56 / run | $0.62 / run |
-| **Duration** | 270s / run | 377s / run |
-| **Timeouts** | 0 / 63 tasks | 2 / 63 tasks |
+|                      | With @accesslint/mcp | Agent alone     |
+| -------------------- | -------------------- | --------------- |
+| **Violations fixed** | 99.5% (200/201)      | 93.5% (188/201) |
+| **Regressions**      | 1.7 / run            | 2.0 / run       |
+| **Cost**             | $0.56 / run          | $0.62 / run     |
+| **Duration**         | 270s / run           | 377s / run      |
+| **Timeouts**         | 0 / 63 tasks         | 2 / 63 tasks    |
 
 ## License
 

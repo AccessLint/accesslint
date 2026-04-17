@@ -10,13 +10,15 @@ export const thHasDataCells: Rule = {
   level: "A",
   fixability: "contextual",
   description: "Table headers should be associated with data cells.",
-  guidance: "Screen readers use <th> elements to announce column or row headers when navigating table cells — for example, reading 'Name: John' when moving to a cell. A table with <th> but no <td> elements means headers describe nothing, and screen readers cannot associate data with headers. Either add <td> data cells, or if this is not tabular data, use non-table markup instead.",
+  guidance:
+    "Screen readers use <th> elements to announce column or row headers when navigating table cells — for example, reading 'Name: John' when moving to a cell. A table with <th> but no <td> elements means headers describe nothing, and screen readers cannot associate data with headers. Either add <td> data cells, or if this is not tabular data, use non-table markup instead.",
   run(doc) {
     const violations = [];
     for (const table of doc.querySelectorAll("table")) {
       if (isAriaHidden(table)) continue;
       // Skip tables marked as presentational
-      if (table.getAttribute("role") === "presentation" || table.getAttribute("role") === "none") continue;
+      if (table.getAttribute("role") === "presentation" || table.getAttribute("role") === "none")
+        continue;
 
       const ths = table.querySelectorAll("th");
       const tds = table.querySelectorAll("td");

@@ -18,7 +18,9 @@ export function isHiddenFrame(frame: Element): boolean {
  * Parse a meta refresh content attribute, extracting the delay in seconds
  * and whether it contains a valid URL redirect.
  */
-export function parseMetaRefreshContent(content: string): { seconds: number; hasValidUrl: boolean } | null {
+export function parseMetaRefreshContent(
+  content: string,
+): { seconds: number; hasValidUrl: boolean } | null {
   const match = content.match(/^(\d+)/);
   if (!match) return null;
   const seconds = parseInt(match[1], 10);
@@ -26,17 +28,19 @@ export function parseMetaRefreshContent(content: string): { seconds: number; has
   // Valid URL redirect: number followed by ; or , then either:
   //   - url= prefix (with any URL, including relative), or
   //   - an absolute http(s) URL
-  const hasValidUrl = /^\d+\s*[;,]\s*url\s*=/i.test(content) ||
-    /^\d+\s*[;,]\s*['"]?\s*https?:/i.test(content);
+  const hasValidUrl =
+    /^\d+\s*[;,]\s*url\s*=/i.test(content) || /^\d+\s*[;,]\s*['"]?\s*https?:/i.test(content);
 
   return { seconds, hasValidUrl };
 }
 
 // Selectors for sectioning elements that scope landmarks
-export const SECTIONING_SELECTOR = 'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
+export const SECTIONING_SELECTOR =
+  'article, aside, main, nav, section, [role="article"], [role="complementary"], [role="main"], [role="navigation"], [role="region"]';
 
 // Landmark selectors
-export const LANDMARK_SELECTOR = 'main, [role="main"], header, [role="banner"], footer, [role="contentinfo"], nav, [role="navigation"], aside, [role="complementary"], section[aria-label], section[aria-labelledby], [role="region"][aria-label], [role="region"][aria-labelledby], form[aria-label], form[aria-labelledby], [role="form"][aria-label], [role="form"][aria-labelledby], [role="search"]';
+export const LANDMARK_SELECTOR =
+  'main, [role="main"], header, [role="banner"], footer, [role="contentinfo"], nav, [role="navigation"], aside, [role="complementary"], section[aria-label], section[aria-labelledby], [role="region"][aria-label], [role="region"][aria-labelledby], form[aria-label], form[aria-labelledby], [role="form"][aria-label], [role="form"][aria-labelledby], [role="search"]';
 
 /**
  * Factory for "nested landmark" rules. These rules check that elements with
@@ -112,7 +116,7 @@ export function makeNoDuplicateLandmarkRule(opts: {
             html: getHtmlSnippet(el),
             impact: "moderate" as const,
             message: `Page has multiple ${opts.landmarkName} landmarks.`,
-          })
+          }),
         );
       }
       return violations;

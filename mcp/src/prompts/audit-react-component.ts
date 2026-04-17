@@ -48,6 +48,6 @@ audit_html({ html: "<your rendered HTML>" })
           },
         ],
       };
-    }
+    },
   );
 }

@@ -10,7 +10,8 @@ export const ariaCommandName: Rule = {
   level: "A",
   fixability: "contextual",
   description: "ARIA commands must have an accessible name.",
-  guidance: "Interactive ARIA command roles (button, link, menuitem) must have accessible names so users know what action they perform. Add visible text content, aria-label, or aria-labelledby to provide a name.",
+  guidance:
+    "Interactive ARIA command roles (button, link, menuitem) must have accessible names so users know what action they perform. Add visible text content, aria-label, or aria-labelledby to provide a name.",
   run(doc) {
     const violations = [];
 
@@ -28,7 +29,8 @@ export const ariaCommandName: Rule = {
       if (
         (el.tagName.toLowerCase() === "button" || el.tagName.toLowerCase() === "a") &&
         explicitRole !== "menuitem"
-      ) continue;
+      )
+        continue;
 
       const name = getAccessibleName(el);
       if (!name) {

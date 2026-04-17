@@ -75,17 +75,19 @@ export function isLabelForDisabledControl(el: Element, doc: Document): boolean {
   const forId = label.htmlFor;
   if (forId) {
     const target = doc.getElementById(forId);
-    if (target && (
-      (target as HTMLInputElement).disabled ||
-      target.getAttribute("aria-disabled") === "true"
-    )) return true;
+    if (
+      target &&
+      ((target as HTMLInputElement).disabled || target.getAttribute("aria-disabled") === "true")
+    )
+      return true;
   }
   // Implicit association (control nested inside label)
   const control = label.querySelector("input, select, textarea, button");
-  if (control && (
-    (control as HTMLInputElement).disabled ||
-    control.getAttribute("aria-disabled") === "true"
-  )) return true;
+  if (
+    control &&
+    ((control as HTMLInputElement).disabled || control.getAttribute("aria-disabled") === "true")
+  )
+    return true;
   // Label referencing an aria-disabled widget via for + aria-labelledby
   const id = label.id;
   if (id) {

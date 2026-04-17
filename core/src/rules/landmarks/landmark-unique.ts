@@ -10,18 +10,27 @@ export const landmarkUnique: Rule = {
   tags: ["best-practice", "page-level"],
   fixability: "contextual",
   description: "Landmarks should have unique labels when there are multiple of the same type.",
-  guidance: "When a page has multiple landmarks of the same type (e.g., multiple nav elements), each should have a unique accessible name via aria-label or aria-labelledby. This helps screen reader users distinguish between them (e.g., 'Main navigation' vs 'Footer navigation').",
+  guidance:
+    "When a page has multiple landmarks of the same type (e.g., multiple nav elements), each should have a unique accessible name via aria-label or aria-labelledby. This helps screen reader users distinguish between them (e.g., 'Main navigation' vs 'Footer navigation').",
   run(doc) {
     const violations: Violation[] = [];
     const landmarkTypes = [
       { selector: 'nav, [role="navigation"]', type: "navigation" },
       { selector: 'aside, [role="complementary"]', type: "complementary" },
-      { selector: 'section[aria-label], section[aria-labelledby], [role="region"]', type: "region" },
-      { selector: 'form[aria-label], form[aria-labelledby], [role="form"], [role="search"]', type: "form" },
+      {
+        selector: 'section[aria-label], section[aria-labelledby], [role="region"]',
+        type: "region",
+      },
+      {
+        selector: 'form[aria-label], form[aria-labelledby], [role="form"], [role="search"]',
+        type: "form",
+      },
     ];
 
     for (const { selector, type } of landmarkTypes) {
-      const landmarks = Array.from(doc.querySelectorAll(selector)).filter((el) => !isAriaHidden(el));
+      const landmarks = Array.from(doc.querySelectorAll(selector)).filter(
+        (el) => !isAriaHidden(el),
+      );
       if (landmarks.length <= 1) continue;
 
       const names = new Map<string, Element[]>();

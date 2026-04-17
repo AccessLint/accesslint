@@ -22,7 +22,7 @@ export function extractFingerprints(html: string): ViolationFingerprint[] {
  */
 export function compareViolationSets(
   groundTruth: ViolationFingerprint[],
-  claude: ViolationFingerprint[]
+  claude: ViolationFingerprint[],
 ): { matched: number; missing: number; extra: number } {
   const toKey = (v: ViolationFingerprint) => `${v.ruleId}|${v.impact}`;
 

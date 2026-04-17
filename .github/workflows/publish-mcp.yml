@@ -2,7 +2,7 @@ name: Publish @accesslint/mcp
 
 on:
   push:
-    tags: ['mcp/v*']
+    tags: ["mcp/v*"]
 
 jobs:
   publish:

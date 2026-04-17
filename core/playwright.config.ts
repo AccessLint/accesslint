@@ -16,8 +16,5 @@ export default defineConfig({
       use: { browserName: "chromium" },
     },
   ],
-  reporter: [
-    ["list"],
-    ["./src/act/browser-earl-reporter.ts"],
-  ],
+  reporter: [["list"], ["./src/act/browser-earl-reporter.ts"]],
 });

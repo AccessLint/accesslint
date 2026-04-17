@@ -36,15 +36,13 @@ export const duplicateIdAria: Rule = {
 
       // Find which element references this ID
       const ariaRef = doc.querySelector(
-        ARIA_ID_ATTRS.map((a) => `[${a}~="${CSS.escape(id)}"]`).join(", ")
+        ARIA_ID_ATTRS.map((a) => `[${a}~="${CSS.escape(id)}"]`).join(", "),
       );
       const labelRef = doc.querySelector(`label[for="${CSS.escape(id)}"]`);
 
       let refDesc: string | undefined;
       if (ariaRef) {
-        const attr = ARIA_ID_ATTRS.find((a) =>
-          ariaRef.getAttribute(a)?.split(/\s+/).includes(id)
-        );
+        const attr = ARIA_ID_ATTRS.find((a) => ariaRef.getAttribute(a)?.split(/\s+/).includes(id));
         if (attr) refDesc = attr;
       } else if (labelRef) {
         refDesc = "label[for]";
@@ -57,7 +55,11 @@ export const duplicateIdAria: Rule = {
         impact: "critical" as const,
         message: `Duplicate ID "${id}" referenced by ${refDesc ?? "an accessibility attribute"}.`,
         context: `First element: ${getHtmlSnippet(els[0])}${refDesc ? `\nReferenced by: ${refDesc}` : ""}`,
-        fix: { type: "suggest", suggestion: "Change the duplicate ID to a unique value so the ARIA or label reference points to the correct element" } as const,
+        fix: {
+          type: "suggest",
+          suggestion:
+            "Change the duplicate ID to a unique value so the ARIA or label reference points to the correct element",
+        } as const,
       });
     }
     return violations;

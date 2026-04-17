@@ -1,4 +1,10 @@
-export const ARIA_ID_ATTRS = ["aria-labelledby", "aria-describedby", "aria-controls", "aria-owns", "aria-flowto"];
+export const ARIA_ID_ATTRS = [
+  "aria-labelledby",
+  "aria-describedby",
+  "aria-controls",
+  "aria-owns",
+  "aria-flowto",
+];
 
 /**
  * Collect all IDs referenced by ARIA attributes and `label[for]` in the document.
@@ -6,10 +12,15 @@ export const ARIA_ID_ATTRS = ["aria-labelledby", "aria-describedby", "aria-contr
 export function collectActiveIdRefs(doc: Document): Set<string> {
   const activeRefs = new Set<string>();
 
-  for (const el of doc.querySelectorAll("[aria-labelledby], [aria-describedby], [aria-controls], [aria-owns], [aria-flowto]")) {
+  for (const el of doc.querySelectorAll(
+    "[aria-labelledby], [aria-describedby], [aria-controls], [aria-owns], [aria-flowto]",
+  )) {
     for (const attr of ARIA_ID_ATTRS) {
       const val = el.getAttribute(attr);
-      if (val) val.split(/\s+/).forEach((id) => { if (id) activeRefs.add(id); });
+      if (val)
+        val.split(/\s+/).forEach((id) => {
+          if (id) activeRefs.add(id);
+        });
     }
   }
 

@@ -40,10 +40,10 @@ describe(RULE_ID, () => {
   it("reports multiple distinct duplicate IDs in one document", () => {
     expectViolations(
       duplicateIdAria,
-      '<html><body>' +
+      "<html><body>" +
         '<div id="a">A1</div><div id="a">A2</div><input aria-labelledby="a">' +
         '<div id="b">B1</div><div id="b">B2</div><input aria-describedby="b">' +
-      '</body></html>',
+        "</body></html>",
       { count: 2, ruleId: RULE_ID },
     );
   });

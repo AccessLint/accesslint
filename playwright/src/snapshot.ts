@@ -66,14 +66,9 @@ export function loadSnapshot(path: string): SnapshotViolation[] | null {
   }
 }
 
-export function saveSnapshot(
-  path: string,
-  violations: SnapshotViolation[],
-): void {
+export function saveSnapshot(path: string, violations: SnapshotViolation[]): void {
   const sorted = [...violations].sort(
-    (a, b) =>
-      a.ruleId.localeCompare(b.ruleId) ||
-      a.selector.localeCompare(b.selector),
+    (a, b) => a.ruleId.localeCompare(b.ruleId) || a.selector.localeCompare(b.selector),
   );
   mkdirSync(dirname(path), { recursive: true });
   writeFileSync(path, JSON.stringify(sorted, null, 2) + "\n");
@@ -168,10 +163,7 @@ export function evaluateSnapshot(
     };
   }
 
-  const { newViolations, fixedViolations } = compareViolations(
-    currentViolations,
-    baseline,
-  );
+  const { newViolations, fixedViolations } = compareViolations(currentViolations, baseline);
 
   // Ratchet down — auto-update when violations only decreased
   if (newViolations.length === 0 && fixedViolations.length > 0) {
@@ -258,9 +250,7 @@ function playwrightCorePath(subpath: string): string {
 
 /** Read the InjectedScript source that Playwright injects into pages. */
 function getInjectedScriptSource(): string {
-  const filePath = playwrightCorePath(
-    "lib/generated/injectedScriptSource.js",
-  );
+  const filePath = playwrightCorePath("lib/generated/injectedScriptSource.js");
   const mod: { exports: { source: string } } = { exports: { source: "" } };
   const fn = new Function("module", "exports", readFileSync(filePath, "utf-8"));
   fn(mod, mod.exports);
@@ -269,9 +259,7 @@ function getInjectedScriptSource(): string {
 
 /** Convert a Playwright internal selector to a locator string. */
 function loadAsLocator(): (lang: string, selector: string) => string {
-  const filePath = playwrightCorePath(
-    "lib/utils/isomorphic/locatorGenerators.js",
-  );
+  const filePath = playwrightCorePath("lib/utils/isomorphic/locatorGenerators.js");
   return require(filePath).asLocator;
 }
 
@@ -309,10 +297,7 @@ async function ensureInjectedScript(target: Page | Frame): Promise<void> {
  * Injects InjectedScript, runs generateSelectorSimple, then converts
  * via asLocator. Falls back to tag-path selectors on failure.
  */
-async function stabilizeSelectors(
-  target: Page | Frame,
-  cssSelectors: string[],
-): Promise<string[]> {
+async function stabilizeSelectors(target: Page | Frame, cssSelectors: string[]): Promise<string[]> {
   if (cssSelectors.length === 0) return [];
 
   try {
@@ -320,25 +305,20 @@ async function stabilizeSelectors(
     if (!_asLocator) _asLocator = loadAsLocator();
     const asLocator = _asLocator;
 
-    const internalSelectors: string[] = await target.evaluate(
-      (selectors: string[]) => {
-        const injected = (window as any).__accesslintInjected;
-        return selectors.map((selector) => {
-          try {
-            const el = selector
-              ? document.querySelector(selector)
-              : document.documentElement;
-            if (!el) return selector;
-            return injected.generateSelectorSimple(el, {
-              testIdAttributeName: "data-testid",
-            });
-          } catch {
-            return selector;
-          }
-        });
-      },
-      cssSelectors,
-    );
+    const internalSelectors: string[] = await target.evaluate((selectors: string[]) => {
+      const injected = (window as any).__accesslintInjected;
+      return selectors.map((selector) => {
+        try {
+          const el = selector ? document.querySelector(selector) : document.documentElement;
+          if (!el) return selector;
+          return injected.generateSelectorSimple(el, {
+            testIdAttributeName: "data-testid",
+          });
+        } catch {
+          return selector;
+        }
+      });
+    }, cssSelectors);
 
     return internalSelectors.map((sel) => {
       try {
@@ -362,10 +342,7 @@ const IFRAME_BOUNDARY = " >>>iframe> ";
  * Navigate the frame tree to find the innermost frame described by a
  * `>>>iframe>` prefix like `#iframe1 >>>iframe> #iframe2 >>>iframe>`.
  */
-async function findFrameByPrefix(
-  page: Page,
-  prefix: string,
-): Promise<Frame | null> {
+async function findFrameByPrefix(page: Page, prefix: string): Promise<Frame | null> {
   const segments = prefix
     .split(" >>>iframe>")
     .map((s) => s.trim())
@@ -427,10 +404,7 @@ export async function toStableViolations(
   // Categorize violations by context
   const mainIndices: number[] = [];
   const mainSelectors: string[] = [];
-  const iframeGroups = new Map<
-    string,
-    { indices: number[]; suffixes: string[] }
-  >();
+  const iframeGroups = new Map<string, { indices: number[]; suffixes: string[] }>();
 
   for (let i = 0; i < violations.length; i++) {
     const selector = violations[i].selector;
@@ -478,9 +452,7 @@ export async function toStableViolations(
     let stableSuffixes: string[];
     try {
       const frame = await findFrameByPrefix(page, prefix);
-      stableSuffixes = frame
-        ? await stabilizeSelectors(frame, suffixes)
-        : suffixes;
+      stableSuffixes = frame ? await stabilizeSelectors(frame, suffixes) : suffixes;
     } catch {
       stableSuffixes = suffixes;
     }
@@ -495,10 +467,7 @@ export async function toStableViolations(
   return result;
 }
 
-async function tagPathFallback(
-  target: Page | Frame,
-  selectors: string[],
-): Promise<string[]> {
+async function tagPathFallback(target: Page | Frame, selectors: string[]): Promise<string[]> {
   return target.evaluate((cssSelectors: string[]) => {
     function tagPath(el: Element): string {
       const parts: string[] = [];
@@ -522,9 +491,7 @@ async function tagPathFallback(
 
     return cssSelectors.map((selector) => {
       try {
-        const el = selector
-          ? document.querySelector(selector)
-          : document.documentElement;
+        const el = selector ? document.querySelector(selector) : document.documentElement;
         return el ? tagPath(el) : selector;
       } catch {
         return selector;

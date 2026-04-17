@@ -10,7 +10,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes dt/dd inside div inside dl", () => {
-    expectNoViolations(dlChildren, "<html><body><dl><div><dt>T</dt><dd>D</dd></div></dl></body></html>");
+    expectNoViolations(
+      dlChildren,
+      "<html><body><dl><div><dt>T</dt><dd>D</dd></div></dl></body></html>",
+    );
   });
 
   it("reports dt outside dl", () => {

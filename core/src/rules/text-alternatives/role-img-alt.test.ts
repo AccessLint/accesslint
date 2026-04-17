@@ -6,11 +6,10 @@ const RULE_ID = "text-alternatives/role-img-alt";
 
 describe(RULE_ID, () => {
   it("reports div with role=img without name", () => {
-    expectViolations(
-      roleImgAlt,
-      '<div role="img" style="background: url(icon.png)"></div>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(roleImgAlt, '<div role="img" style="background: url(icon.png)"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes div with role=img and aria-label", () => {

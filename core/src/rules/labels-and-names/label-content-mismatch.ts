@@ -24,11 +24,12 @@ function visibleTextMatches(accessibleName: string, visibleText: string): boolea
   // accessible name.  This handles cases like "Parks By State" (aria-label)
   // vs "By State..." (visible text after icons/prefixes are stripped).
   // Strip trailing punctuation from words before comparing.
-  const visibleWords = normVisible.split(/\s+/)
-    .map(w => w.replace(/[.,;:!?\u2026]+$/g, ""))
-    .filter(w => w.length > 2);
+  const visibleWords = normVisible
+    .split(/\s+/)
+    .map((w) => w.replace(/[.,;:!?\u2026]+$/g, ""))
+    .filter((w) => w.length > 2);
   if (visibleWords.length >= 2) {
-    const matchingWords = visibleWords.filter(w => normAccessible.includes(w));
+    const matchingWords = visibleWords.filter((w) => normAccessible.includes(w));
     if (matchingWords.length / visibleWords.length > 0.5) return true;
   }
 
@@ -43,14 +44,19 @@ export const labelContentMismatch: Rule = {
   level: "A",
   tags: ["best-practice"],
   fixability: "contextual",
-  browserHint: "Screenshot the control to see its visible label, then ensure aria-label starts with that visible text.",
-  description: "Interactive elements with visible text must have accessible names that contain that text.",
-  guidance: "For voice control users who activate controls by speaking their visible label, the accessible name must include the visible text. If aria-label is 'Submit form' but the button shows 'Send', voice users saying 'click Send' won't activate it. Ensure aria-label/aria-labelledby contains or matches the visible text.",
+  browserHint:
+    "Screenshot the control to see its visible label, then ensure aria-label starts with that visible text.",
+  description:
+    "Interactive elements with visible text must have accessible names that contain that text.",
+  guidance:
+    "For voice control users who activate controls by speaking their visible label, the accessible name must include the visible text. If aria-label is 'Submit form' but the button shows 'Send', voice users saying 'click Send' won't activate it. Ensure aria-label/aria-labelledby contains or matches the visible text.",
   run(doc) {
     const violations = [];
 
     // Check buttons
-    for (const el of doc.querySelectorAll('button, [role="button"], a[href], input[type="submit"], input[type="button"]')) {
+    for (const el of doc.querySelectorAll(
+      'button, [role="button"], a[href], input[type="submit"], input[type="button"]',
+    )) {
       if (isAriaHidden(el)) continue;
 
       const accessibleName = getAccessibleName(el);
@@ -83,7 +89,11 @@ export const labelContentMismatch: Rule = {
           html: getHtmlSnippet(el),
           impact: "serious" as const,
           message: `Accessible name "${accessibleName}" does not contain visible text "${visibleText.trim()}".`,
-          fix: { type: "suggest", suggestion: "Update aria-label to include the visible text content so voice control users can activate this element by speaking its label" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Update aria-label to include the visible text content so voice control users can activate this element by speaking its label",
+          } as const,
         });
       }
     }
@@ -91,7 +101,11 @@ export const labelContentMismatch: Rule = {
     // Check labeled form fields
     for (const el of doc.querySelectorAll("input, select, textarea")) {
       if (isAriaHidden(el)) continue;
-      if (el instanceof HTMLInputElement && ["hidden", "submit", "button", "image"].includes(el.type)) continue;
+      if (
+        el instanceof HTMLInputElement &&
+        ["hidden", "submit", "button", "image"].includes(el.type)
+      )
+        continue;
 
       const accessibleName = getAccessibleName(el);
       if (!accessibleName) continue;
@@ -119,7 +133,11 @@ export const labelContentMismatch: Rule = {
           html: getHtmlSnippet(el),
           impact: "serious" as const,
           message: `Accessible name "${accessibleName}" does not contain visible label "${visibleLabel.trim()}".`,
-          fix: { type: "suggest", suggestion: "Update aria-label to include the visible label text so voice control users can activate this element by speaking its label" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Update aria-label to include the visible label text so voice control users can activate this element by speaking its label",
+          } as const,
         });
       }
     }

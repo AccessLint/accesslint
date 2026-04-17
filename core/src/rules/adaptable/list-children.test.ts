@@ -25,7 +25,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes style element inside ul (CSS-in-JS)", () => {
-    expectNoViolations(listChildren, '<html><body><ul><style>.x{color:red}</style><li>A</li></ul></body></html>');
+    expectNoViolations(
+      listChildren,
+      "<html><body><ul><style>.x{color:red}</style><li>A</li></ul></body></html>",
+    );
   });
 
   it("passes ul with only whitespace text nodes", () => {

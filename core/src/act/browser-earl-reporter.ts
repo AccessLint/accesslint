@@ -40,11 +40,7 @@ export default class BrowserEarlReporter implements Reporter {
     const testcaseId = readAnnotation(annotations, "testcaseId");
     const expectedRaw = readAnnotation(annotations, "expected");
     if (!actRuleId || !coreRuleId || !testcaseId || !expectedRaw) return;
-    if (
-      expectedRaw !== "passed" &&
-      expectedRaw !== "failed" &&
-      expectedRaw !== "inapplicable"
-    )
+    if (expectedRaw !== "passed" && expectedRaw !== "failed" && expectedRaw !== "inapplicable")
       return;
     const expected = expectedRaw;
 

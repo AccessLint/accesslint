@@ -63,11 +63,14 @@ describe(RULE_ID, () => {
   });
 
   it("skips select elements (no placeholder support)", () => {
-    expectNoViolations(labelPlaceholderOnly, '<select><option>A</option></select>');
+    expectNoViolations(labelPlaceholderOnly, "<select><option>A</option></select>");
   });
 
   it("skips hidden inputs", () => {
-    expectNoViolations(labelPlaceholderOnly, '<input type="hidden" placeholder="Token" value="abc">');
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<input type="hidden" placeholder="Token" value="abc">',
+    );
   });
 
   it("skips submit buttons", () => {

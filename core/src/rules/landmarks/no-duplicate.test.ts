@@ -16,7 +16,10 @@ const cases: NoDuplicateCase[] = [
     rule: noDuplicateBanner,
     passes: [
       { label: "single header", body: "<header>Site header</header><main>Content</main>" },
-      { label: "headers inside sectioning elements are ignored", body: "<header>Site</header><article><header>Article</header></article>" },
+      {
+        label: "headers inside sectioning elements are ignored",
+        body: "<header>Site</header><article><header>Article</header></article>",
+      },
     ],
     violates: [
       { label: "duplicate top-level headers", body: "<header>One</header><header>Two</header>" },
@@ -24,21 +27,15 @@ const cases: NoDuplicateCase[] = [
   },
   {
     rule: noDuplicateContentinfo,
-    passes: [
-      { label: "single footer", body: "<main>Content</main><footer>Site footer</footer>" },
-    ],
+    passes: [{ label: "single footer", body: "<main>Content</main><footer>Site footer</footer>" }],
     violates: [
       { label: "duplicate top-level footers", body: "<footer>One</footer><footer>Two</footer>" },
     ],
   },
   {
     rule: noDuplicateMain,
-    passes: [
-      { label: "single main", body: "<main>Content</main>" },
-    ],
-    violates: [
-      { label: "duplicate mains", body: "<main>One</main><main>Two</main>" },
-    ],
+    passes: [{ label: "single main", body: "<main>Content</main>" }],
+    violates: [{ label: "duplicate mains", body: "<main>One</main><main>Two</main>" }],
   },
 ];
 

@@ -6,11 +6,16 @@ import { getSelector, getHtmlSnippet } from "../utils/selector";
  */
 function toDegrees(num: number, unit: string): number {
   switch (unit.toLowerCase()) {
-    case "deg": return num;
-    case "rad": return (num * 180) / Math.PI;
-    case "turn": return num * 360;
-    case "grad": return num * 0.9;
-    default: return NaN;
+    case "deg":
+      return num;
+    case "rad":
+      return (num * 180) / Math.PI;
+    case "turn":
+      return num * 360;
+    case "grad":
+      return num * 0.9;
+    default:
+      return NaN;
   }
 }
 
@@ -20,9 +25,7 @@ function toDegrees(num: number, unit: string): number {
 function isLockedAngle(degrees: number): boolean {
   if (isNaN(degrees)) return false;
   degrees = ((degrees % 360) + 360) % 360;
-  return (
-    (degrees >= 85 && degrees <= 95) || (degrees >= 265 && degrees <= 275)
-  );
+  return (degrees >= 85 && degrees <= 95) || (degrees >= 265 && degrees <= 275);
 }
 
 /**
@@ -31,9 +34,7 @@ function isLockedAngle(degrees: number): boolean {
  */
 function isOrientationLockTransform(value: string): boolean {
   // rotate(Xdeg) or rotateZ(Xdeg)
-  const rotateMatch = value.match(
-    /rotate[Z]?\(\s*(-?[\d.]+)(deg|rad|turn|grad)\s*\)/i,
-  );
+  const rotateMatch = value.match(/rotate[Z]?\(\s*(-?[\d.]+)(deg|rad|turn|grad)\s*\)/i);
   if (rotateMatch) {
     const degrees = toDegrees(parseFloat(rotateMatch[1]), rotateMatch[2]);
     if (isLockedAngle(degrees)) return true;
@@ -84,8 +85,7 @@ export const orientationLock: Rule = {
   level: "AA",
   tags: ["page-level"],
   fixability: "contextual",
-  description:
-    "Page orientation must not be restricted using CSS transforms.",
+  description: "Page orientation must not be restricted using CSS transforms.",
   guidance:
     "Users with motor disabilities may mount their device in a fixed orientation. Using CSS transforms with @media (orientation: portrait/landscape) to rotate content 90° effectively locks the page to one orientation. Remove the orientation-dependent transform and use responsive design instead.",
   run(doc) {
@@ -105,18 +105,14 @@ export const orientationLock: Rule = {
         let locked = false;
 
         // Check for transform property with rotation close to 90/270 degrees
-        const transformMatch = mediaBody.match(
-          /transform\s*:\s*([^;]+)/i,
-        );
+        const transformMatch = mediaBody.match(/transform\s*:\s*([^;]+)/i);
         if (transformMatch && isOrientationLockTransform(transformMatch[1])) {
           locked = true;
         }
 
         // Check for standalone rotate CSS property
         if (!locked) {
-          const rotateMatch = mediaBody.match(
-            /(?:^|[{;\s])rotate\s*:\s*([^;]+)/i,
-          );
+          const rotateMatch = mediaBody.match(/(?:^|[{;\s])rotate\s*:\s*([^;]+)/i);
           if (rotateMatch && isOrientationLockRotate(rotateMatch[1])) {
             locked = true;
           }

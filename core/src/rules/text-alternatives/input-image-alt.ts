@@ -9,8 +9,10 @@ export const inputImageAlt: Rule = {
   wcag: ["1.1.1", "4.1.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the image button to see its icon, then set alt to describe the action (e.g., 'Search', 'Submit').",
-  description: 'Image inputs (<input type="image">) must have alternate text describing the button action.',
+  browserHint:
+    "Screenshot the image button to see its icon, then set alt to describe the action (e.g., 'Search', 'Submit').",
+  description:
+    'Image inputs (<input type="image">) must have alternate text describing the button action.',
   guidance:
     "Image buttons (<input type='image'>) act as submit buttons with a custom image. Add alt text via alt, aria-label, or aria-labelledby that describes the action (e.g. alt='Search' or alt='Submit order'), not the image itself. Without it, screen readers announce only 'image' or the filename, giving no clue what the button does.",
   run(doc) {

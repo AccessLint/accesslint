@@ -40,10 +40,7 @@ describe(RULE_ID, () => {
   });
 
   it("passes decorative object with role=presentation", () => {
-    expectNoViolations(
-      objectAlt,
-      '<object data="decoration.swf" role="presentation"></object>',
-    );
+    expectNoViolations(objectAlt, '<object data="decoration.swf" role="presentation"></object>');
   });
 
   it("passes decorative object with role=none", () => {

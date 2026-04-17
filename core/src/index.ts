@@ -1,5 +1,12 @@
 // Core audit
-export { rules, runAudit, diffAudit, getRuleById, getActiveRules, clearAllCaches } from "./rules/index";
+export {
+  rules,
+  runAudit,
+  diffAudit,
+  getRuleById,
+  getActiveRules,
+  clearAllCaches,
+} from "./rules/index";
 export type { ChunkedAudit } from "./rules/index";
 export { createChunkedAudit } from "./rules/index";
 
@@ -34,11 +41,7 @@ export {
   clearComputedRoleCache,
 } from "./rules/utils/aria";
 
-export {
-  getSelector,
-  getHtmlSnippet,
-  querySelectorShadowAware,
-} from "./rules/utils/selector";
+export { getSelector, getHtmlSnippet, querySelectorShadowAware } from "./rules/utils/selector";
 
 // Cache clearing (useful for test helpers and extension integration)
 export { clearAriaAttrAuditCache } from "./rules/aria/aria-attr-audit";

@@ -49,12 +49,24 @@ export function getContrastRatio(l1: number, l2: number): number {
 }
 
 const NAMED_COLORS: Record<string, [number, number, number]> = {
-  black: [0, 0, 0], white: [255, 255, 255], red: [255, 0, 0],
-  green: [0, 128, 0], blue: [0, 0, 255], yellow: [255, 255, 0],
-  orange: [255, 165, 0], purple: [128, 0, 128], gray: [128, 128, 128],
-  grey: [128, 128, 128], silver: [192, 192, 192], maroon: [128, 0, 0],
-  navy: [0, 0, 128], teal: [0, 128, 128], aqua: [0, 255, 255],
-  fuchsia: [255, 0, 255], lime: [0, 255, 0], olive: [128, 128, 0],
+  black: [0, 0, 0],
+  white: [255, 255, 255],
+  red: [255, 0, 0],
+  green: [0, 128, 0],
+  blue: [0, 0, 255],
+  yellow: [255, 255, 0],
+  orange: [255, 165, 0],
+  purple: [128, 0, 128],
+  gray: [128, 128, 128],
+  grey: [128, 128, 128],
+  silver: [192, 192, 192],
+  maroon: [128, 0, 0],
+  navy: [0, 0, 128],
+  teal: [0, 128, 128],
+  aqua: [0, 255, 255],
+  fuchsia: [255, 0, 255],
+  lime: [0, 255, 0],
+  olive: [128, 128, 0],
 };
 
 export function parseColor(color: string): [number, number, number] | null {
@@ -66,7 +78,11 @@ export function parseColor(color: string): [number, number, number] | null {
   // Hex: #RGB, #RRGGBB
   const hex3 = trimmed.match(/^#([0-9a-f])([0-9a-f])([0-9a-f])$/);
   if (hex3) {
-    return [parseInt(hex3[1] + hex3[1], 16), parseInt(hex3[2] + hex3[2], 16), parseInt(hex3[3] + hex3[3], 16)];
+    return [
+      parseInt(hex3[1] + hex3[1], 16),
+      parseInt(hex3[2] + hex3[2], 16),
+      parseInt(hex3[3] + hex3[3], 16),
+    ];
   }
   const hex6 = trimmed.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/);
   if (hex6) {
@@ -74,16 +90,12 @@ export function parseColor(color: string): [number, number, number] | null {
   }
 
   // Legacy comma-separated: rgb(r, g, b) / rgba(r, g, b, a)
-  const comma = color.match(
-    /rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*[\d.]+)?\s*\)/
-  );
+  const comma = color.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*[\d.]+)?\s*\)/);
   if (comma) {
     return [parseInt(comma[1]), parseInt(comma[2]), parseInt(comma[3])];
   }
   // Modern space-separated (CSS Color Level 4): rgb(r g b) / rgb(r g b / a)
-  const space = color.match(
-    /rgba?\(\s*(\d+)\s+(\d+)\s+(\d+)\s*(?:\/\s*[\d.]+%?)?\s*\)/
-  );
+  const space = color.match(/rgba?\(\s*(\d+)\s+(\d+)\s+(\d+)\s*(?:\/\s*[\d.]+%?)?\s*\)/);
   if (space) {
     return [parseInt(space[1]), parseInt(space[2]), parseInt(space[3])];
   }

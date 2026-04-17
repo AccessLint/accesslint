@@ -175,9 +175,7 @@ test.describe("accesslintAudit", () => {
     await page.setContent(ACCESSIBLE_HTML);
     await accesslintAudit(page);
     await accesslintAudit(page);
-    const scriptCount = await page.evaluate(() =>
-      document.querySelectorAll("script").length,
-    );
+    const scriptCount = await page.evaluate(() => document.querySelectorAll("script").length);
     expect(scriptCount).toBe(1);
   });
 });
@@ -193,9 +191,7 @@ test.describe("iframe auditing", () => {
   test("violation selectors include >>>iframe> prefix", async ({ page }) => {
     await page.setContent(IFRAME_INACCESSIBLE_HTML);
     const result = await accesslintAudit(page);
-    const iframeViolations = result.violations.filter((v) =>
-      v.selector.includes(">>>iframe>"),
-    );
+    const iframeViolations = result.violations.filter((v) => v.selector.includes(">>>iframe>"));
     expect(iframeViolations.length).toBeGreaterThan(0);
   });
 
@@ -213,9 +209,7 @@ test.describe("iframe auditing", () => {
   test("includeFrames: false skips iframe violations", async ({ page }) => {
     await page.setContent(IFRAME_INACCESSIBLE_HTML);
     const result = await accesslintAudit(page, { includeFrames: false });
-    const iframeViolations = result.violations.filter((v) =>
-      v.selector.includes(">>>iframe>"),
-    );
+    const iframeViolations = result.violations.filter((v) => v.selector.includes(">>>iframe>"));
     expect(iframeViolations).toHaveLength(0);
   });
 });

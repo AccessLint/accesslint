@@ -10,7 +10,8 @@ export const skipLink: Rule = {
   tags: ["best-practice", "page-level"],
   fixability: "mechanical",
   description: "Skip links must point to a valid target on the page.",
-  guidance: "Skip links allow keyboard users to bypass repetitive navigation and jump directly to main content. The skip link should be the first focusable element on the page, link to the main content (e.g., href='#main'), and become visible when focused. It can be visually hidden until focused using CSS.",
+  guidance:
+    "Skip links allow keyboard users to bypass repetitive navigation and jump directly to main content. The skip link should be the first focusable element on the page, link to the main content (e.g., href='#main'), and become visible when focused. It can be visually hidden until focused using CSS.",
   run(doc) {
     const violations = [];
 
@@ -26,8 +27,10 @@ export const skipLink: Rule = {
 
       const text = getAccessibleTextContent(a).toLowerCase();
       const isSkipLink =
-        text.includes("skip") || text.includes("jump") ||
-        text.includes("main content") || text.includes("navigation");
+        text.includes("skip") ||
+        text.includes("jump") ||
+        text.includes("main content") ||
+        text.includes("navigation");
       if (!isSkipLink) continue;
 
       // Validate the target exists

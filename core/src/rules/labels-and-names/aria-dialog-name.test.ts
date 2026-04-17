@@ -21,7 +21,10 @@ describe(RULE_ID, () => {
   });
 
   it("checks alertdialog", () => {
-    expectViolations(ariaDialogName, '<div role="alertdialog"></div>', { count: 1, ruleId: RULE_ID });
+    expectViolations(ariaDialogName, '<div role="alertdialog"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes native dialog with aria-label", () => {

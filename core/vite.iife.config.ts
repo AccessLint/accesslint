@@ -13,7 +13,8 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       output: {
-        footer: "if(typeof globalThis!=='undefined')globalThis.AccessLintCore=globalThis.AccessLint;",
+        footer:
+          "if(typeof globalThis!=='undefined')globalThis.AccessLintCore=globalThis.AccessLint;",
       },
     },
   },

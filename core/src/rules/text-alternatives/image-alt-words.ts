@@ -26,7 +26,8 @@ export const imageAltWords: Rule = {
   level: "A",
   tags: ["best-practice"],
   fixability: "contextual",
-  browserHint: "Screenshot the image to verify the alt text accurately describes it without filler words like 'image of'.",
+  browserHint:
+    "Screenshot the image to verify the alt text accurately describes it without filler words like 'image of'.",
   description:
     "Image alt text should not start with words like 'image of', 'photo of', or 'picture of' — screen readers already announce the element type.",
   guidance:
@@ -47,7 +48,11 @@ export const imageAltWords: Rule = {
           impact: "minor" as const,
           message: `Alt text "${alt}" starts with redundant prefix "${word}".`,
           context: `Current alt: "${alt}", redundant prefix: "${word}"`,
-          fix: { type: "suggest", suggestion: "Remove the redundant prefix from the alt text; screen readers already announce the element as an image" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Remove the redundant prefix from the alt text; screen readers already announce the element as an image",
+          } as const,
         });
       }
     }

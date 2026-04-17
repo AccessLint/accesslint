@@ -15,7 +15,12 @@ export async function resolveInput(source?: string): Promise<string> {
       try {
         res = await safeFetch(source, { allowPrivateNetwork: true });
       } catch (err: unknown) {
-        const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : (err instanceof Error ? err.message : String(err));
+        const cause =
+          err instanceof Error && err.cause instanceof Error
+            ? err.cause.message
+            : err instanceof Error
+              ? err.message
+              : String(err);
         throw new Error(`Failed to fetch ${source}: ${cause}`);
       }
       if (!res.ok) {
@@ -38,7 +43,5 @@ export async function resolveInput(source?: string): Promise<string> {
     return Buffer.concat(chunks).toString("utf-8");
   }
 
-  throw new Error(
-    "No input provided. Pass an HTML file, URL, or pipe HTML via stdin."
-  );
+  throw new Error("No input provided. Pass an HTML file, URL, or pipe HTML via stdin.");
 }

@@ -13,9 +13,7 @@ if (!resultsPath) {
   process.exit(1);
 }
 
-const results: BenchmarkResults = JSON.parse(
-  readFileSync(resultsPath, "utf-8")
-);
+const results: BenchmarkResults = JSON.parse(readFileSync(resultsPath, "utf-8"));
 
 function computePRF(tp: number, fp: number, fn: number) {
   // When there are no expected violations and none were found, that's a perfect score
@@ -39,7 +37,7 @@ function stddev(arr: number[]): number {
 
 function mcpExactMatch(
   actual: Array<{ ruleId: string; selector: string; impact: string }>,
-  expected: ExpectedViolation[]
+  expected: ExpectedViolation[],
 ): { tp: number; fp: number; fn: number } {
   const remaining = [...actual];
   let tp = 0;
@@ -48,9 +46,7 @@ function mcpExactMatch(
   for (const ev of expected) {
     const idx = remaining.findIndex(
       (a) =>
-        a.ruleId === ev.ruleId &&
-        a.selector.includes(ev.selectorPattern) &&
-        a.impact === ev.impact
+        a.ruleId === ev.ruleId && a.selector.includes(ev.selectorPattern) && a.impact === ev.impact,
     );
     if (idx !== -1) {
       tp++;
@@ -167,9 +163,15 @@ const aggClaudeR = mean(scores.map((s) => s.claude.mean.recall));
 const aggClaudeF1 = mean(scores.map((s) => s.claude.mean.f1));
 const aggClaudeMs = mean(scores.map((s) => s.claude.mean.durationMs));
 
-const aggClaudePStd = stddev(scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.precision));
-const aggClaudeRStd = stddev(scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.recall));
-const aggClaudeF1Std = stddev(scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.f1));
+const aggClaudePStd = stddev(
+  scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.precision),
+);
+const aggClaudeRStd = stddev(
+  scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.recall),
+);
+const aggClaudeF1Std = stddev(
+  scores.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.f1),
+);
 
 // Aggregate token usage across all Claude runs
 let totalInputTokens = 0;
@@ -195,12 +197,18 @@ for (const caseData of Object.values(results.cases)) {
 console.log("=".repeat(70));
 console.log("BENCHMARK RESULTS");
 console.log(`  Config: ${results.config.runs} runs, model=${results.config.model}`);
-console.log(`  Cases: ${results.manifest.caseCount}, Expected violations: ${results.manifest.totalExpectedViolations}`);
+console.log(
+  `  Cases: ${results.manifest.caseCount}, Expected violations: ${results.manifest.totalExpectedViolations}`,
+);
 if (claudeRunCount > 0) {
   console.log(`  Claude runs: ${claudeRunCount}, Total cost: $${totalCostUsd.toFixed(4)}`);
-  console.log(`  Tokens — input: ${totalInputTokens.toLocaleString()}, output: ${totalOutputTokens.toLocaleString()}, cache read: ${totalCacheReadTokens.toLocaleString()}, cache write: ${totalCacheCreationTokens.toLocaleString()}`);
+  console.log(
+    `  Tokens — input: ${totalInputTokens.toLocaleString()}, output: ${totalOutputTokens.toLocaleString()}, cache read: ${totalCacheReadTokens.toLocaleString()}, cache write: ${totalCacheCreationTokens.toLocaleString()}`,
+  );
   if (claudeRunCount > 0) {
-    console.log(`  Per-call avg — input: ${Math.round(totalInputTokens / claudeRunCount).toLocaleString()}, output: ${Math.round(totalOutputTokens / claudeRunCount).toLocaleString()}, cost: $${(totalCostUsd / claudeRunCount).toFixed(4)}`);
+    console.log(
+      `  Per-call avg — input: ${Math.round(totalInputTokens / claudeRunCount).toLocaleString()}, output: ${Math.round(totalOutputTokens / claudeRunCount).toLocaleString()}, cost: $${(totalCostUsd / claudeRunCount).toFixed(4)}`,
+    );
   }
 }
 console.log("=".repeat(70));
@@ -208,23 +216,46 @@ console.log("");
 
 // Aggregate table
 console.log("AGGREGATE RESULTS");
-console.log("  " + pad("Metric", 12) + "| " + pad("MCP", 14) + "| " + (hasClaude ? "Claude (mean +/- stddev)" : "Claude (not run)"));
+console.log(
+  "  " +
+    pad("Metric", 12) +
+    "| " +
+    pad("MCP", 14) +
+    "| " +
+    (hasClaude ? "Claude (mean +/- stddev)" : "Claude (not run)"),
+);
 console.log("  " + "-".repeat(12) + "|" + "-".repeat(15) + "|" + "-".repeat(30));
 console.log(
-  "  " + pad("Precision", 12) + "| " + pad(pct(aggMcpP), 14) + "| " +
-  (hasClaude ? `${pct(aggClaudeP)} +/- ${pct(aggClaudePStd)}` : "—")
+  "  " +
+    pad("Precision", 12) +
+    "| " +
+    pad(pct(aggMcpP), 14) +
+    "| " +
+    (hasClaude ? `${pct(aggClaudeP)} +/- ${pct(aggClaudePStd)}` : "—"),
 );
 console.log(
-  "  " + pad("Recall", 12) + "| " + pad(pct(aggMcpR), 14) + "| " +
-  (hasClaude ? `${pct(aggClaudeR)} +/- ${pct(aggClaudeRStd)}` : "—")
+  "  " +
+    pad("Recall", 12) +
+    "| " +
+    pad(pct(aggMcpR), 14) +
+    "| " +
+    (hasClaude ? `${pct(aggClaudeR)} +/- ${pct(aggClaudeRStd)}` : "—"),
 );
 console.log(
-  "  " + pad("F1", 12) + "| " + pad(pct(aggMcpF1), 14) + "| " +
-  (hasClaude ? `${pct(aggClaudeF1)} +/- ${pct(aggClaudeF1Std)}` : "—")
+  "  " +
+    pad("F1", 12) +
+    "| " +
+    pad(pct(aggMcpF1), 14) +
+    "| " +
+    (hasClaude ? `${pct(aggClaudeF1)} +/- ${pct(aggClaudeF1Std)}` : "—"),
 );
 console.log(
-  "  " + pad("Latency", 12) + "| " + pad(`${Math.round(aggMcpMs)}ms`, 14) + "| " +
-  (hasClaude ? `${Math.round(aggClaudeMs)}ms` : "—")
+  "  " +
+    pad("Latency", 12) +
+    "| " +
+    pad(`${Math.round(aggMcpMs)}ms`, 14) +
+    "| " +
+    (hasClaude ? `${Math.round(aggClaudeMs)}ms` : "—"),
 );
 console.log("");
 
@@ -236,11 +267,13 @@ for (const diff of ["easy", "medium", "hard"] as const) {
 
   const dMcpF1 = mean(subset.map((s) => s.mcp.f1));
   const dClaudeF1 = mean(subset.map((s) => s.claude.mean.f1));
-  const dClaudeF1Std = stddev(subset.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.f1));
+  const dClaudeF1Std = stddev(
+    subset.filter((s) => s.claude.runs.length > 0).map((s) => s.claude.mean.f1),
+  );
 
   console.log(
     `  ${pad(diff, 8)} (${subset.length} cases) | MCP F1: ${pct(dMcpF1)} | ` +
-    (hasClaude ? `Claude F1: ${pct(dClaudeF1)} +/- ${pct(dClaudeF1Std)}` : "Claude: —")
+      (hasClaude ? `Claude F1: ${pct(dClaudeF1)} +/- ${pct(dClaudeF1Std)}` : "Claude: —"),
   );
 }
 console.log("");
@@ -248,10 +281,16 @@ console.log("");
 // Per-case table
 console.log("PER-CASE RESULTS");
 console.log(
-  "  " + pad("Case", 30) + "| " + pad("Exp", 4) + "| " +
-  pad("MCP P/R/F1", 18) + "| " +
-  (hasClaude ? pad("Claude P/R/F1 (mean)", 28) + "| " : "") +
-  "Speed" + (hasClaude ? " | Tokens (in/out) Cost" : "")
+  "  " +
+    pad("Case", 30) +
+    "| " +
+    pad("Exp", 4) +
+    "| " +
+    pad("MCP P/R/F1", 18) +
+    "| " +
+    (hasClaude ? pad("Claude P/R/F1 (mean)", 28) + "| " : "") +
+    "Speed" +
+    (hasClaude ? " | Tokens (in/out) Cost" : ""),
 );
 console.log("  " + "-".repeat(hasClaude ? 120 : 65));
 
@@ -261,9 +300,10 @@ for (const s of scores) {
   const claudePRF = hasClaude
     ? `${pct(s.claude.mean.precision)}/${pct(s.claude.mean.recall)}/${pct(s.claude.mean.f1)}`
     : "";
-  const speed = hasClaude && s.claude.mean.durationMs > 0
-    ? `${s.mcp.durationMs}ms vs ${Math.round(s.claude.mean.durationMs)}ms`
-    : `${s.mcp.durationMs}ms`;
+  const speed =
+    hasClaude && s.claude.mean.durationMs > 0
+      ? `${s.mcp.durationMs}ms vs ${Math.round(s.claude.mean.durationMs)}ms`
+      : `${s.mcp.durationMs}ms`;
 
   // Per-case token stats
   let tokenInfo = "";
@@ -278,25 +318,29 @@ for (const s of scores) {
   }
 
   console.log(
-    "  " + pad(s.caseId, 30) + "| " + padL(String(s.expectedCount), 3) + " | " +
-    pad(mcpPRF, 18) + "| " +
-    (hasClaude ? pad(claudePRF, 28) + "| " : "") +
-    speed + tokenInfo
+    "  " +
+      pad(s.caseId, 30) +
+      "| " +
+      padL(String(s.expectedCount), 3) +
+      " | " +
+      pad(mcpPRF, 18) +
+      "| " +
+      (hasClaude ? pad(claudePRF, 28) + "| " : "") +
+      speed +
+      tokenInfo,
   );
 }
 console.log("");
 
 // Consistency report (Claude cases with stddev F1 > 10%)
 if (hasClaude) {
-  const inconsistent = scores.filter(
-    (s) => s.claude.runs.length > 1 && s.claude.stddev.f1 > 0.1
-  );
+  const inconsistent = scores.filter((s) => s.claude.runs.length > 1 && s.claude.stddev.f1 > 0.1);
   if (inconsistent.length > 0) {
     console.log("CONSISTENCY WARNINGS (Claude stddev F1 > 10%)");
     for (const s of inconsistent) {
       console.log(
         `  ${s.caseId}: F1 stddev = ${pct(s.claude.stddev.f1)} ` +
-        `(runs: ${s.claude.runs.map((r) => pct(r.f1)).join(", ")})`
+          `(runs: ${s.claude.runs.map((r) => pct(r.f1)).join(", ")})`,
       );
     }
     console.log("");
@@ -305,7 +349,9 @@ if (hasClaude) {
 
 // Fix scoring
 const fixCases = Object.entries(results.cases).filter(
-  ([, c]) => c.expectedViolations.length > 0 && ((c.hybridFix && c.hybridFix.length > 0) || (c.claudeFix && c.claudeFix.length > 0))
+  ([, c]) =>
+    c.expectedViolations.length > 0 &&
+    ((c.hybridFix && c.hybridFix.length > 0) || (c.claudeFix && c.claudeFix.length > 0)),
 );
 
 if (fixCases.length > 0) {
@@ -327,7 +373,7 @@ if (fixCases.length > 0) {
   const fixScores: CaseFixScore[] = [];
 
   for (const [caseId, caseData] of fixCases) {
-    const firstFix = (caseData.hybridFix?.[0]) ?? (caseData.claudeFix?.[0]);
+    const firstFix = caseData.hybridFix?.[0] ?? caseData.claudeFix?.[0];
     const origCount = firstFix?.originalViolationCount ?? 0;
     if (origCount === 0) continue;
 
@@ -387,32 +433,64 @@ if (fixCases.length > 0) {
     const aggClaudeRegrRate = mean(fixScores.map((s) => mean(s.claudeRegrRates)));
     const aggClaudeNetImpr = mean(fixScores.map((s) => mean(s.claudeNetImprovements)));
 
-    const aggClaudeFixRateStd = stddev(fixScores.filter((s) => s.claudeFixRates.length > 0).map((s) => mean(s.claudeFixRates)));
-    const aggClaudeRegrRateStd = stddev(fixScores.filter((s) => s.claudeRegrRates.length > 0).map((s) => mean(s.claudeRegrRates)));
-    const aggClaudeNetImprStd = stddev(fixScores.filter((s) => s.claudeNetImprovements.length > 0).map((s) => mean(s.claudeNetImprovements)));
+    const aggClaudeFixRateStd = stddev(
+      fixScores.filter((s) => s.claudeFixRates.length > 0).map((s) => mean(s.claudeFixRates)),
+    );
+    const aggClaudeRegrRateStd = stddev(
+      fixScores.filter((s) => s.claudeRegrRates.length > 0).map((s) => mean(s.claudeRegrRates)),
+    );
+    const aggClaudeNetImprStd = stddev(
+      fixScores
+        .filter((s) => s.claudeNetImprovements.length > 0)
+        .map((s) => mean(s.claudeNetImprovements)),
+    );
 
     console.log("FIX RESULTS");
-    console.log("  " + pad("Metric", 18) + "| " + pad("MCP+Claude", 18) + "| " + (hasClaudeFix ? "Claude (mean +/- stddev)" : "Claude (not run)"));
+    console.log(
+      "  " +
+        pad("Metric", 18) +
+        "| " +
+        pad("MCP+Claude", 18) +
+        "| " +
+        (hasClaudeFix ? "Claude (mean +/- stddev)" : "Claude (not run)"),
+    );
     console.log("  " + "-".repeat(18) + "|" + "-".repeat(19) + "|" + "-".repeat(30));
     console.log(
-      "  " + pad("Fix rate", 18) + "| " + pad(pct(aggHybridFixRate), 18) + "| " +
-      (hasClaudeFix ? `${pct(aggClaudeFixRate)} +/- ${pct(aggClaudeFixRateStd)}` : "—")
+      "  " +
+        pad("Fix rate", 18) +
+        "| " +
+        pad(pct(aggHybridFixRate), 18) +
+        "| " +
+        (hasClaudeFix ? `${pct(aggClaudeFixRate)} +/- ${pct(aggClaudeFixRateStd)}` : "—"),
     );
     console.log(
-      "  " + pad("Regression rate", 18) + "| " + pad(pct(aggHybridRegrRate), 18) + "| " +
-      (hasClaudeFix ? `${pct(aggClaudeRegrRate)} +/- ${pct(aggClaudeRegrRateStd)}` : "—")
+      "  " +
+        pad("Regression rate", 18) +
+        "| " +
+        pad(pct(aggHybridRegrRate), 18) +
+        "| " +
+        (hasClaudeFix ? `${pct(aggClaudeRegrRate)} +/- ${pct(aggClaudeRegrRateStd)}` : "—"),
     );
     console.log(
-      "  " + pad("Net improvement", 18) + "| " + pad(pct(aggHybridNetImpr), 18) + "| " +
-      (hasClaudeFix ? `${pct(aggClaudeNetImpr)} +/- ${pct(aggClaudeNetImprStd)}` : "—")
+      "  " +
+        pad("Net improvement", 18) +
+        "| " +
+        pad(pct(aggHybridNetImpr), 18) +
+        "| " +
+        (hasClaudeFix ? `${pct(aggClaudeNetImpr)} +/- ${pct(aggClaudeNetImprStd)}` : "—"),
     );
     console.log("");
 
     console.log("PER-CASE FIX RESULTS");
     console.log(
-      "  " + pad("Case", 30) + "| " + pad("Violations", 11) + "| " +
-      pad("Hybrid fixed/regr", 18) + "| " +
-      (hasClaudeFix ? "Claude fixed/regr (mean)" : "")
+      "  " +
+        pad("Case", 30) +
+        "| " +
+        pad("Violations", 11) +
+        "| " +
+        pad("Hybrid fixed/regr", 18) +
+        "| " +
+        (hasClaudeFix ? "Claude fixed/regr (mean)" : ""),
     );
     console.log("  " + "-".repeat(hasClaudeFix ? 95 : 65));
 
@@ -438,9 +516,14 @@ if (fixCases.length > 0) {
       }
 
       console.log(
-        "  " + pad(s.caseId, 30) + "| " + padL(String(s.originalViolations), 10) + " | " +
-        pad(hybridCol, 18) + "| " +
-        claudeCol
+        "  " +
+          pad(s.caseId, 30) +
+          "| " +
+          padL(String(s.originalViolations), 10) +
+          " | " +
+          pad(hybridCol, 18) +
+          "| " +
+          claudeCol,
       );
     }
     console.log("");

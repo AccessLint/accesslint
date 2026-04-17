@@ -28,7 +28,13 @@ export type FixSuggestion =
   | { type: "add-attribute"; attribute: string; value: string }
   | { type: "set-attribute"; attribute: string; value: string }
   | { type: "remove-attribute"; attribute: string }
-  | { type: "add-element"; tag: string; parent: string; attributes?: Record<string, string>; textContent?: string }
+  | {
+      type: "add-element";
+      tag: string;
+      parent: string;
+      attributes?: Record<string, string>;
+      textContent?: string;
+    }
   | { type: "remove-element" }
   | { type: "add-text-content"; text?: string }
   | { type: "suggest"; suggestion: string };

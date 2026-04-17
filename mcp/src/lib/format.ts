@@ -16,10 +16,7 @@ export interface FormatOptions {
   minImpact?: Impact;
 }
 
-export function filterByImpact<T extends { impact: string }>(
-  items: T[],
-  minImpact: Impact
-): T[] {
+export function filterByImpact<T extends { impact: string }>(items: T[], minImpact: Impact): T[] {
   const threshold = IMPACT_ORDER[minImpact];
   return items.filter((item) => (IMPACT_ORDER[item.impact] ?? 4) <= threshold);
 }
@@ -119,17 +116,14 @@ function formatSingleViolation(v: EnrichedViolation, index: number): string {
   return lines.join("\n");
 }
 
-function formatGroupedViolations(
-  group: ViolationGroup,
-  startIndex: number
-): string {
+function formatGroupedViolations(group: ViolationGroup, startIndex: number): string {
   const { violations } = group;
   const representative = violations[0];
   const lines: string[] = [];
 
   // Group header
   lines.push(
-    `[${representative.impact.toUpperCase()}] ${group.ruleId} (${violations.length} instances)`
+    `[${representative.impact.toUpperCase()}] ${group.ruleId} (${violations.length} instances)`,
   );
 
   // Shared metadata
@@ -142,8 +136,7 @@ function formatGroupedViolations(
 
   // Context: if all violations share the same context, print once at group level
   const allContextsSame =
-    representative.context != null &&
-    violations.every((v) => v.context === representative.context);
+    representative.context != null && violations.every((v) => v.context === representative.context);
   if (allContextsSame) {
     lines.push(`   Context: ${representative.context}`);
   }
@@ -177,18 +170,14 @@ export function formatViolations(violations: Violation[], options?: FormatOption
   }
 
   const totalCount = violations.length;
-  const filtered = options?.minImpact
-    ? filterByImpact(violations, options.minImpact)
-    : violations;
+  const filtered = options?.minImpact ? filterByImpact(violations, options.minImpact) : violations;
 
   if (filtered.length === 0) {
     return `No accessibility violations at ${options!.minImpact} or above (${totalCount} total at lower severity).`;
   }
 
   const enriched = filtered.map(enrichViolation);
-  enriched.sort(
-    (a, b) => (IMPACT_ORDER[a.impact] ?? 4) - (IMPACT_ORDER[b.impact] ?? 4)
-  );
+  enriched.sort((a, b) => (IMPACT_ORDER[a.impact] ?? 4) - (IMPACT_ORDER[b.impact] ?? 4));
 
   const truncated = enriched.length > MAX_VIOLATIONS;
   const display = truncated ? enriched.slice(0, MAX_VIOLATIONS) : enriched;
@@ -214,7 +203,10 @@ export function formatViolations(violations: Violation[], options?: FormatOption
   const result = [header, "", ...blocks].join("\n");
 
   if (truncated) {
-    return result + `\n\n(Showing ${MAX_VIOLATIONS} of ${filtered.length} violations. Fix these first, then re-audit.)`;
+    return (
+      result +
+      `\n\n(Showing ${MAX_VIOLATIONS} of ${filtered.length} violations. Fix these first, then re-audit.)`
+    );
   }
   return result;
 }
@@ -223,11 +215,11 @@ export function formatDiff(diff: DiffResult, options?: FormatOptions): string {
   const lines: string[] = [];
   const fixed = options?.minImpact ? filterByImpact(diff.fixed, options.minImpact) : diff.fixed;
   const added = options?.minImpact ? filterByImpact(diff.added, options.minImpact) : diff.added;
-  const unchanged = options?.minImpact ? filterByImpact(diff.unchanged, options.minImpact) : diff.unchanged;
+  const unchanged = options?.minImpact
+    ? filterByImpact(diff.unchanged, options.minImpact)
+    : diff.unchanged;
 
-  lines.push(
-    `Summary: ${fixed.length} fixed, ${added.length} new, ${unchanged.length} remaining`
-  );
+  lines.push(`Summary: ${fixed.length} fixed, ${added.length} new, ${unchanged.length} remaining`);
 
   if (fixed.length > 0) {
     lines.push("");
@@ -264,18 +256,20 @@ export function formatDiff(diff: DiffResult, options?: FormatOptions): string {
   return lines.join("\n");
 }
 
-export function formatRuleTable(
-  rules: Rule[]
-): string {
+export function formatRuleTable(rules: Rule[]): string {
   if (rules.length === 0) {
     return "No rules match the specified filters.";
   }
 
   const header = `${rules.length} rule${rules.length === 1 ? "" : "s"}:\n`;
   const rows = rules.map(
-    (r) =>
-      `  ${r.id}  |  ${r.description}  |  ${r.level}  |  ${r.fixability ?? "—"}`
+    (r) => `  ${r.id}  |  ${r.description}  |  ${r.level}  |  ${r.fixability ?? "—"}`,
   );
 
-  return header + "  ID  |  Description  |  Level  |  Fixability\n" + "  ---|---|---|---\n" + rows.join("\n");
+  return (
+    header +
+    "  ID  |  Description  |  Level  |  Fixability\n" +
+    "  ---|---|---|---\n" +
+    rows.join("\n")
+  );
 }

@@ -1,10 +1,7 @@
 import { lookup } from "node:dns/promises";
 import { BlockList, isIP } from "node:net";
 
-const ALWAYS_BLOCKED_HOSTS = new Set([
-  "metadata.google.internal",
-  "metadata.goog",
-]);
+const ALWAYS_BLOCKED_HOSTS = new Set(["metadata.google.internal", "metadata.goog"]);
 
 // Cloud metadata endpoints — always blocked.
 const METADATA = new BlockList();
@@ -60,10 +57,7 @@ function checkAddress(ip: string, family: "ipv4" | "ipv6", opts: GuardOptions): 
  * and (by default) not resolving to a private/loopback address.
  * Throws BlockedUrlError on rejection; returns the parsed URL on success.
  */
-export async function assertSafeUrl(
-  rawUrl: string,
-  opts: GuardOptions = {},
-): Promise<URL> {
+export async function assertSafeUrl(rawUrl: string, opts: GuardOptions = {}): Promise<URL> {
   let url: URL;
   try {
     url = new URL(rawUrl);

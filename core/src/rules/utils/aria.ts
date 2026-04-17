@@ -4,20 +4,20 @@
 
 /** Elements that are natively focusable (comprehensive list). */
 export const FOCUSABLE_SELECTOR = [
-  'a[href]',
-  'button:not([disabled])',
+  "a[href]",
+  "button:not([disabled])",
   'input:not([disabled]):not([type="hidden"])',
-  'select:not([disabled])',
-  'textarea:not([disabled])',
+  "select:not([disabled])",
+  "textarea:not([disabled])",
   '[tabindex]:not([tabindex="-1"])',
-  'audio[controls]',
-  'video[controls]',
+  "audio[controls]",
+  "video[controls]",
   '[contenteditable]:not([contenteditable="false"])',
-  'details > summary:first-of-type',
-  'iframe',
-  'object',
-  'embed',
-  'area[href]',
+  "details > summary:first-of-type",
+  "iframe",
+  "object",
+  "embed",
+  "area[href]",
 ].join(", ");
 
 // ---------------------------------------------------------------------------
@@ -40,58 +40,117 @@ export function getImplicitRole(el: Element): string | null {
   const type = el.getAttribute("type")?.toLowerCase();
 
   switch (tagName) {
-    case "a": return el.hasAttribute("href") ? "link" : null;
-    case "area": return el.hasAttribute("href") ? "link" : null;
-    case "article": return "article";
-    case "aside": return "complementary";
-    case "button": return "button";
-    case "datalist": return "listbox";
-    case "details": return "group";
-    case "dialog": return "dialog";
-    case "fieldset": return "group";
-    case "figure": return "figure";
-    case "footer": return el.closest("article, aside, main, nav, section") ? null : "contentinfo";
-    case "form": return "form";
-    case "h1": case "h2": case "h3": case "h4": case "h5": case "h6": return "heading";
-    case "header": return el.closest("article, aside, main, nav, section") ? null : "banner";
-    case "hr": return "separator";
-    case "img": return el.getAttribute("alt") === "" ? "presentation" : "img";
+    case "a":
+      return el.hasAttribute("href") ? "link" : null;
+    case "area":
+      return el.hasAttribute("href") ? "link" : null;
+    case "article":
+      return "article";
+    case "aside":
+      return "complementary";
+    case "button":
+      return "button";
+    case "datalist":
+      return "listbox";
+    case "details":
+      return "group";
+    case "dialog":
+      return "dialog";
+    case "fieldset":
+      return "group";
+    case "figure":
+      return "figure";
+    case "footer":
+      return el.closest("article, aside, main, nav, section") ? null : "contentinfo";
+    case "form":
+      return "form";
+    case "h1":
+    case "h2":
+    case "h3":
+    case "h4":
+    case "h5":
+    case "h6":
+      return "heading";
+    case "header":
+      return el.closest("article, aside, main, nav, section") ? null : "banner";
+    case "hr":
+      return "separator";
+    case "img":
+      return el.getAttribute("alt") === "" ? "presentation" : "img";
     case "input":
       switch (type) {
-        case "button": case "image": case "reset": case "submit": return "button";
-        case "checkbox": return "checkbox";
-        case "email": case "tel": case "text": case "url": case null: case undefined: return "textbox";
-        case "number": return "spinbutton";
-        case "radio": return "radio";
-        case "range": return "slider";
-        case "search": return "searchbox";
-        default: return "textbox";
+        case "button":
+        case "image":
+        case "reset":
+        case "submit":
+          return "button";
+        case "checkbox":
+          return "checkbox";
+        case "email":
+        case "tel":
+        case "text":
+        case "url":
+        case null:
+        case undefined:
+          return "textbox";
+        case "number":
+          return "spinbutton";
+        case "radio":
+          return "radio";
+        case "range":
+          return "slider";
+        case "search":
+          return "searchbox";
+        default:
+          return "textbox";
       }
-    case "li": return el.closest("ul, ol, menu") ? "listitem" : null;
-    case "main": return "main";
-    case "math": return "math";
-    case "menu": return "list";
-    case "meter": return "meter";
-    case "nav": return "navigation";
-    case "ol": case "ul": return "list";
-    case "optgroup": return "group";
-    case "option": return "option";
-    case "output": return "status";
-    case "progress": return "progressbar";
+    case "li":
+      return el.closest("ul, ol, menu") ? "listitem" : null;
+    case "main":
+      return "main";
+    case "math":
+      return "math";
+    case "menu":
+      return "list";
+    case "meter":
+      return "meter";
+    case "nav":
+      return "navigation";
+    case "ol":
+    case "ul":
+      return "list";
+    case "optgroup":
+      return "group";
+    case "option":
+      return "option";
+    case "output":
+      return "status";
+    case "progress":
+      return "progressbar";
     case "section":
-      return el.hasAttribute("aria-label") || el.hasAttribute("aria-labelledby")
-        ? "region" : null;
+      return el.hasAttribute("aria-label") || el.hasAttribute("aria-labelledby") ? "region" : null;
     case "select":
       return el.hasAttribute("multiple") || (el as HTMLSelectElement).size > 1
-        ? "listbox" : "combobox";
-    case "summary": return "button";
-    case "table": return "table";
-    case "tbody": case "tfoot": case "thead": return "rowgroup";
-    case "td": return "cell";
-    case "textarea": return "textbox";
-    case "th": return "columnheader";
-    case "tr": return "row";
-    default: return null;
+        ? "listbox"
+        : "combobox";
+    case "summary":
+      return "button";
+    case "table":
+      return "table";
+    case "tbody":
+    case "tfoot":
+    case "thead":
+      return "rowgroup";
+    case "td":
+      return "cell";
+    case "textarea":
+      return "textbox";
+    case "th":
+      return "columnheader";
+    case "tr":
+      return "row";
+    default:
+      return null;
   }
 }
 
@@ -149,7 +208,11 @@ function _computeAccessibleName(el: Element): string {
   if (ariaLabel) return ariaLabel;
 
   // For inputs, check <label>
-  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+  if (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    el instanceof HTMLSelectElement
+  ) {
     if (el.id) {
       const label = el.ownerDocument.querySelector(`label[for="${CSS.escape(el.id)}"]`);
       const labelText = label ? getAccessibleTextContent(label).trim() : "";
@@ -207,34 +270,122 @@ function _computeAccessibleName(el: Element): string {
 }
 
 const VALID_ARIA_ROLES = new Set([
-  "alert", "alertdialog", "application", "article", "banner", "blockquote",
-  "button", "caption", "cell", "checkbox", "code", "columnheader", "combobox",
-  "complementary", "contentinfo", "definition", "deletion", "dialog",
-  "directory", "document", "emphasis", "feed", "figure", "form", "generic",
-  "grid", "gridcell", "group", "heading", "img", "insertion", "link", "list",
-  "listbox", "listitem", "log", "main", "marquee", "math", "menu", "menubar",
-  "menuitem", "menuitemcheckbox", "menuitemradio", "meter", "navigation",
-  "none", "note", "option", "paragraph", "presentation", "progressbar",
-  "radio", "radiogroup", "region", "row", "rowgroup", "rowheader",
-  "scrollbar", "search", "searchbox", "separator", "slider", "spinbutton",
-  "status", "strong", "subscript", "superscript", "switch", "tab", "table",
-  "tablist", "tabpanel", "term", "textbox", "time", "timer", "toolbar",
-  "tooltip", "tree", "treegrid", "treeitem",
+  "alert",
+  "alertdialog",
+  "application",
+  "article",
+  "banner",
+  "blockquote",
+  "button",
+  "caption",
+  "cell",
+  "checkbox",
+  "code",
+  "columnheader",
+  "combobox",
+  "complementary",
+  "contentinfo",
+  "definition",
+  "deletion",
+  "dialog",
+  "directory",
+  "document",
+  "emphasis",
+  "feed",
+  "figure",
+  "form",
+  "generic",
+  "grid",
+  "gridcell",
+  "group",
+  "heading",
+  "img",
+  "insertion",
+  "link",
+  "list",
+  "listbox",
+  "listitem",
+  "log",
+  "main",
+  "marquee",
+  "math",
+  "menu",
+  "menubar",
+  "menuitem",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "meter",
+  "navigation",
+  "none",
+  "note",
+  "option",
+  "paragraph",
+  "presentation",
+  "progressbar",
+  "radio",
+  "radiogroup",
+  "region",
+  "row",
+  "rowgroup",
+  "rowheader",
+  "scrollbar",
+  "search",
+  "searchbox",
+  "separator",
+  "slider",
+  "spinbutton",
+  "status",
+  "strong",
+  "subscript",
+  "superscript",
+  "switch",
+  "tab",
+  "table",
+  "tablist",
+  "tabpanel",
+  "term",
+  "textbox",
+  "time",
+  "timer",
+  "toolbar",
+  "tooltip",
+  "tree",
+  "treegrid",
+  "treeitem",
 ]);
 
 export function isValidRole(role: string): boolean {
   // Strip Unicode curly quotes that some CMSes inject into role values
-  const cleaned = role.trim().toLowerCase().replace(/[\u201C\u201D\u2018\u2019\u00AB\u00BB]/g, "");
+  const cleaned = role
+    .trim()
+    .toLowerCase()
+    .replace(/[\u201C\u201D\u2018\u2019\u00AB\u00BB]/g, "");
   return VALID_ARIA_ROLES.has(cleaned);
 }
 
 export const GLOBAL_ARIA_ATTRS = new Set([
-  "aria-atomic", "aria-braillelabel", "aria-brailleroledescription",
-  "aria-busy", "aria-controls", "aria-current",
-  "aria-describedby", "aria-details", "aria-disabled", "aria-dropeffect",
-  "aria-errormessage", "aria-flowto", "aria-grabbed", "aria-haspopup",
-  "aria-hidden", "aria-invalid", "aria-keyshortcuts", "aria-label",
-  "aria-labelledby", "aria-live", "aria-owns", "aria-relevant",
+  "aria-atomic",
+  "aria-braillelabel",
+  "aria-brailleroledescription",
+  "aria-busy",
+  "aria-controls",
+  "aria-current",
+  "aria-describedby",
+  "aria-details",
+  "aria-disabled",
+  "aria-dropeffect",
+  "aria-errormessage",
+  "aria-flowto",
+  "aria-grabbed",
+  "aria-haspopup",
+  "aria-hidden",
+  "aria-invalid",
+  "aria-keyshortcuts",
+  "aria-label",
+  "aria-labelledby",
+  "aria-live",
+  "aria-owns",
+  "aria-relevant",
   "aria-roledescription",
 ]);
 
@@ -324,10 +475,11 @@ export function getAccessibleTextContent(el: Element): string {
               continue;
             }
           }
-          text += child.getAttribute("aria-label")?.trim()
-            ?? child.getAttribute("alt")
-            ?? child.getAttribute("title")?.trim()
-            ?? "";
+          text +=
+            child.getAttribute("aria-label")?.trim() ??
+            child.getAttribute("alt") ??
+            child.getAttribute("title")?.trim() ??
+            "";
         } else if (tagName === "svg") {
           // SVGs contribute their aria-label or <title> child text
           const svgLabel = child.getAttribute("aria-label")?.trim();

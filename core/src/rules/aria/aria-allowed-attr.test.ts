@@ -10,7 +10,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes global ARIA attributes on any role", () => {
-    expectNoViolations(ariaAllowedAttr, '<div role="button" aria-label="Close" aria-describedby="desc">X</div>');
+    expectNoViolations(
+      ariaAllowedAttr,
+      '<div role="button" aria-label="Close" aria-describedby="desc">X</div>',
+    );
   });
 
   it("reports aria-pressed on role=link", () => {
@@ -44,11 +47,17 @@ describe(RULE_ID, () => {
   });
 
   it("passes aria-sort on columnheader", () => {
-    expectNoViolations(ariaAllowedAttr, '<div role="columnheader" aria-sort="ascending">Name</div>');
+    expectNoViolations(
+      ariaAllowedAttr,
+      '<div role="columnheader" aria-sort="ascending">Name</div>',
+    );
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(ariaAllowedAttr, '<div role="link" aria-pressed="true" aria-hidden="true">Hidden</div>');
+    expectNoViolations(
+      ariaAllowedAttr,
+      '<div role="link" aria-pressed="true" aria-hidden="true">Hidden</div>',
+    );
   });
 
   it("checks implicit roles from native elements", () => {

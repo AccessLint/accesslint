@@ -208,7 +208,9 @@ describe("getComputedRole", () => {
 
 describe("getAccessibleName", () => {
   it("uses aria-labelledby when present", () => {
-    const doc = makeDoc(`<span id="lbl">Label text</span><button aria-labelledby="lbl">btn</button>`);
+    const doc = makeDoc(
+      `<span id="lbl">Label text</span><button aria-labelledby="lbl">btn</button>`,
+    );
     expect(getAccessibleName(doc.querySelector("button")!)).toBe("Label text");
   });
 
@@ -273,7 +275,9 @@ describe("getAccessibleName", () => {
   });
 
   it("resolves multiple aria-labelledby ids", () => {
-    const doc = makeDoc(`<span id="a">First</span><span id="b">Second</span><div aria-labelledby="a b">content</div>`);
+    const doc = makeDoc(
+      `<span id="a">First</span><span id="b">Second</span><div aria-labelledby="a b">content</div>`,
+    );
     expect(getAccessibleName(doc.querySelector("div")!)).toBe("First Second");
   });
 });

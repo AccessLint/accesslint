@@ -23,18 +23,12 @@ export function escapeRegExp(s: string): string {
  * Returns em/unitless values directly, and px values separately so callers
  * can convert using the affected text element's computed font-size.
  */
-export function getImportantValue(
-  el: Element,
-  property: string,
-): ImportantResult | null {
+export function getImportantValue(el: Element, property: string): ImportantResult | null {
   const style = el.getAttribute("style");
   if (!style) return null;
 
   // Match all occurrences of  property: value !important  (last one wins)
-  const regex = new RegExp(
-    `${escapeRegExp(property)}\\s*:\\s*([^;!]+)\\s*!\\s*important`,
-    "gi",
-  );
+  const regex = new RegExp(`${escapeRegExp(property)}\\s*:\\s*([^;!]+)\\s*!\\s*important`, "gi");
   let lastMatch: RegExpExecArray | null = null;
   let m: RegExpExecArray | null;
   while ((m = regex.exec(style))) {
@@ -70,12 +64,23 @@ export function getImportantValue(
     const unit = pxMatch[2].toLowerCase();
     let px: number;
     switch (unit) {
-      case "px": px = value; break;
-      case "pt": px = value * (4 / 3); break;
-      case "cm": px = value * (96 / 2.54); break;
-      case "mm": px = value * (96 / 25.4); break;
-      case "in": px = value * 96; break;
-      default: return null;
+      case "px":
+        px = value;
+        break;
+      case "pt":
+        px = value * (4 / 3);
+        break;
+      case "cm":
+        px = value * (96 / 2.54);
+        break;
+      case "mm":
+        px = value * (96 / 25.4);
+        break;
+      case "in":
+        px = value * 96;
+        break;
+      default:
+        return null;
     }
     return { em: null, px };
   }
@@ -98,7 +103,8 @@ export function anyTextViolatesPx(
     if (node !== el) {
       const childStyle = node.getAttribute("style") || "";
       const hasOwn = new RegExp(
-        `${escapeRegExp(property)}\\s*:\\s*[^;!]+\\s*!\\s*important`, "i"
+        `${escapeRegExp(property)}\\s*:\\s*[^;!]+\\s*!\\s*important`,
+        "i",
       ).test(childStyle);
       if (hasOwn) return false;
     }
@@ -188,7 +194,13 @@ export function checkTextSpacing(
   property: string,
   threshold: number,
 ): { ruleId: string; selector: string; html: string; impact: "serious"; message: string }[] {
-  const violations: { ruleId: string; selector: string; html: string; impact: "serious"; message: string }[] = [];
+  const violations: {
+    ruleId: string;
+    selector: string;
+    html: string;
+    impact: "serious";
+    message: string;
+  }[] = [];
 
   for (const el of doc.querySelectorAll("[style]")) {
     if (isAriaHidden(el)) continue;
@@ -208,9 +220,10 @@ export function checkTextSpacing(
     }
 
     if (violates) {
-      const displayValue = result.em !== null
-        ? `${result.em}${property === "line-height" ? "" : "em"}`
-        : `${result.px}px`;
+      const displayValue =
+        result.em !== null
+          ? `${result.em}${property === "line-height" ? "" : "em"}`
+          : `${result.px}px`;
       violations.push({
         ruleId,
         selector: getSelector(el),
@@ -245,7 +258,8 @@ export function hasHorizontalOnlyScroll(el: Element): boolean {
     // Found a horizontal scroll container
     if (
       (overflowX === "scroll" || overflowX === "auto") &&
-      overflowY !== "scroll" && overflowY !== "auto"
+      overflowY !== "scroll" &&
+      overflowY !== "auto"
     ) {
       return wideChild;
     }

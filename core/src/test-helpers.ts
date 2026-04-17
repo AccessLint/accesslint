@@ -32,7 +32,10 @@ export function expectViolations(
 
   if (count !== undefined) {
     const detail = violations.map((v) => `${v.selector} — ${v.message}`).join("; ");
-    expect(violations, `expected ${count} violations, got ${violations.length}: ${detail}`).toHaveLength(count);
+    expect(
+      violations,
+      `expected ${count} violations, got ${violations.length}: ${detail}`,
+    ).toHaveLength(count);
   }
 
   if (violations.length === 0) return violations;

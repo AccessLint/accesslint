@@ -27,13 +27,15 @@ describe.skipIf(!bundleExists)("CJS bundle smoke test (requires npm run build)",
   it("runAudit detects a missing img alt violation", () => {
     const doc = new DOMParser().parseFromString(`<img src="x.png">`, "text/html");
     const result = bundle.runAudit(doc);
-    expect(result.violations.some((v: { ruleId: string }) => v.ruleId === "text-alternatives/img-alt")).toBe(true);
+    expect(
+      result.violations.some((v: { ruleId: string }) => v.ruleId === "text-alternatives/img-alt"),
+    ).toBe(true);
   });
 
   it("runAudit returns no violations for a clean document", () => {
     const doc = new DOMParser().parseFromString(
       `<html lang="en"><head><title>Test</title></head><body><main><h1>Hello</h1></main></body></html>`,
-      "text/html"
+      "text/html",
     );
     const result = bundle.runAudit(doc);
     expect(result.violations).toHaveLength(0);

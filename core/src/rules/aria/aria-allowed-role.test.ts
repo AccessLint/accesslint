@@ -22,7 +22,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes checkbox role on button", () => {
-    expectNoViolations(ariaAllowedRole, '<button role="checkbox" aria-checked="false">Option</button>');
+    expectNoViolations(
+      ariaAllowedRole,
+      '<button role="checkbox" aria-checked="false">Option</button>',
+    );
   });
 
   it("reports role on elements that should not have roles", () => {
@@ -52,7 +55,10 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(ariaAllowedRole, '<button role="heading" aria-hidden="true">Hidden</button>');
+    expectNoViolations(
+      ariaAllowedRole,
+      '<button role="heading" aria-hidden="true">Hidden</button>',
+    );
   });
 
   // Redundant-but-valid roles (implicit role == explicit role)
@@ -77,7 +83,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes combobox role on input[type=search]", () => {
-    expectNoViolations(ariaAllowedRole, '<input type="search" role="combobox" aria-expanded="false" aria-controls="list1">');
+    expectNoViolations(
+      ariaAllowedRole,
+      '<input type="search" role="combobox" aria-expanded="false" aria-controls="list1">',
+    );
   });
 
   it("passes searchbox role on input[type=search]", () => {

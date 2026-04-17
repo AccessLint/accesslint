@@ -14,14 +14,16 @@ function getButtonContext(btn: Element): string | undefined {
   // Check for form context
   const form = btn.closest("form");
   if (form) {
-    const formLabel = form.getAttribute("aria-label") || form.querySelector("legend")?.textContent?.trim();
+    const formLabel =
+      form.getAttribute("aria-label") || form.querySelector("legend")?.textContent?.trim();
     if (formLabel) parts.push(`Form: ${formLabel.slice(0, 60)}`);
   }
 
   // Check nearby heading
   const parent = btn.parentElement;
   if (parent) {
-    const heading = parent.closest("h1, h2, h3, h4, h5, h6") || parent.querySelector("h1, h2, h3, h4, h5, h6");
+    const heading =
+      parent.closest("h1, h2, h3, h4, h5, h6") || parent.querySelector("h1, h2, h3, h4, h5, h6");
     if (heading?.textContent?.trim()) {
       parts.push(`Nearby heading: ${heading.textContent.trim().slice(0, 60)}`);
     }
@@ -37,7 +39,8 @@ export const buttonName: Rule = {
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the button to identify its icon or visual label, then add a matching aria-label.",
+  browserHint:
+    "Screenshot the button to identify its icon or visual label, then add a matching aria-label.",
   description: "Buttons must have discernible text.",
   guidance:
     "Screen reader users need to know what a button does. Add visible text content, aria-label, or aria-labelledby. For icon buttons, use aria-label describing the action (e.g., aria-label='Close'). If the button contains an image, ensure the image has alt text describing the button's action.",
@@ -51,7 +54,8 @@ export const buttonName: Rule = {
       // Focusable elements (like <button>) override the presentation role.
       const role = btn.getAttribute("role");
       if (role === "none" || role === "presentation") {
-        const isFocusable = btn.matches('button:not([disabled]), [tabindex]:not([tabindex="-1"])') ||
+        const isFocusable =
+          btn.matches('button:not([disabled]), [tabindex]:not([tabindex="-1"])') ||
           (btn.tagName.toLowerCase() === "button" && !(btn as HTMLButtonElement).disabled);
         if (!isFocusable) continue;
       }

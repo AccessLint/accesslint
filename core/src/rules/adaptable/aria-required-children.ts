@@ -25,9 +25,17 @@ const REQUIRED_CHILDREN: Record<string, string[][]> = {
 // axe-core skips these when the element has no children at all — common in
 // dynamically rendered pages captured before content loads.
 const REVIEW_EMPTY_ROLES = new Set([
-  "doc-bibliography", "doc-endnotes",
-  "grid", "group", "list", "listbox",
-  "rowgroup", "table", "tablist", "tree", "treegrid",
+  "doc-bibliography",
+  "doc-endnotes",
+  "grid",
+  "group",
+  "list",
+  "listbox",
+  "rowgroup",
+  "table",
+  "tablist",
+  "tree",
+  "treegrid",
 ]);
 
 /** "pass" = has required children, "fail" = has children but missing required, "empty" = no children at all */
@@ -74,7 +82,8 @@ export const ariaRequiredChildren: Rule = {
   level: "A",
   fixability: "contextual",
   description: "Certain ARIA roles require specific child roles to be present.",
-  guidance: "Some ARIA roles represent containers that must contain specific child roles for proper semantics. For example, a list must contain listitems, a menu must contain menuitems. Add the required child elements with appropriate roles, or use native HTML elements that provide these semantics implicitly (e.g., <ul> with <li>).",
+  guidance:
+    "Some ARIA roles represent containers that must contain specific child roles for proper semantics. For example, a list must contain listitems, a menu must contain menuitems. Add the required child elements with appropriate roles, or use native HTML elements that provide these semantics implicitly (e.g., <ul> with <li>).",
   run(doc) {
     const violations: Violation[] = [];
 

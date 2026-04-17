@@ -3,10 +3,7 @@ import { resolve } from "node:path";
 import type { Page } from "@playwright/test";
 import type { Violation } from "../rules/types";
 
-export const IIFE_PATH = resolve(
-  import.meta.dirname,
-  "../../dist/index.iife.js",
-);
+export const IIFE_PATH = resolve(import.meta.dirname, "../../dist/index.iife.js");
 
 export const iifeExists = existsSync(IIFE_PATH);
 
@@ -36,10 +33,7 @@ declare global {
 /**
  * Inject the IIFE bundle and run a rule by its core rule ID.
  */
-export async function runRule(
-  page: Page,
-  ruleId: string,
-): Promise<SerializedViolation[]> {
+export async function runRule(page: Page, ruleId: string): Promise<SerializedViolation[]> {
   await page.addScriptTag({ path: IIFE_PATH });
   return page.evaluate((id) => {
     const { rules, clearAllCaches } = window.AccessLint;

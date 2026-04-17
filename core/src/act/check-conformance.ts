@@ -6,14 +6,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { isCorrectOutcome, type EarlReport } from "./earl-report";
 
-const EARL_PATH = resolve(
-  import.meta.dirname,
-  "../../act-fixtures/earl-report-browser.json",
-);
-const FIXTURES_PATH = resolve(
-  import.meta.dirname,
-  "../../act-fixtures/act-testcases.json",
-);
+const EARL_PATH = resolve(import.meta.dirname, "../../act-fixtures/earl-report-browser.json");
+const FIXTURES_PATH = resolve(import.meta.dirname, "../../act-fixtures/act-testcases.json");
 const THRESHOLD = 0.8;
 
 interface RuleStats {
@@ -101,21 +95,17 @@ function main() {
   console.log("\n=== ACT Conformance Gate (Browser) ===\n");
   console.log(
     "Rule".padEnd(40) +
-    "Total".padEnd(8) +
-    "Pass".padEnd(8) +
-    "Fail".padEnd(8) +
-    "Rate".padEnd(10) +
-    "Status",
+      "Total".padEnd(8) +
+      "Pass".padEnd(8) +
+      "Fail".padEnd(8) +
+      "Rate".padEnd(10) +
+      "Status",
   );
   console.log("-".repeat(85));
 
-  for (const [coreRuleId, stats] of [...ruleStats].sort((a, b) =>
-    a[0].localeCompare(b[0]),
-  )) {
+  for (const [coreRuleId, stats] of [...ruleStats].sort((a, b) => a[0].localeCompare(b[0]))) {
     const actIds = ruleActIds.get(coreRuleId);
-    const label = actIds?.size
-      ? `${coreRuleId} (${[...actIds].sort().join(", ")})`
-      : coreRuleId;
+    const label = actIds?.size ? `${coreRuleId} (${[...actIds].sort().join(", ")})` : coreRuleId;
 
     // For rate calculation, exclude cantTell assertions
     const testable = stats.passed + stats.failed;
@@ -127,11 +117,11 @@ function main() {
 
     console.log(
       label.padEnd(40) +
-      String(stats.total).padEnd(8) +
-      String(stats.passed).padEnd(8) +
-      String(stats.failed).padEnd(8) +
-      rateStr.padEnd(10) +
-      status,
+        String(stats.total).padEnd(8) +
+        String(stats.passed).padEnd(8) +
+        String(stats.failed).padEnd(8) +
+        rateStr.padEnd(10) +
+        status,
     );
   }
 

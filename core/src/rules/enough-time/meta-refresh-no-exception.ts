@@ -21,14 +21,16 @@ export const metaRefreshNoException: Rule = {
 
       if (parsed.hasValidUrl) {
         if (parsed.seconds > 0) {
-          return [{
-            ruleId: "enough-time/meta-refresh-no-exception",
-            selector: getSelector(refresh),
-            html: getHtmlSnippet(refresh),
-            impact: "critical" as const,
-            message: `Page has a ${parsed.seconds}-second meta refresh delay. Use a server-side redirect instead.`,
-            fix: { type: "remove-element" } as const,
-          }];
+          return [
+            {
+              ruleId: "enough-time/meta-refresh-no-exception",
+              selector: getSelector(refresh),
+              html: getHtmlSnippet(refresh),
+              impact: "critical" as const,
+              message: `Page has a ${parsed.seconds}-second meta refresh delay. Use a server-side redirect instead.`,
+              fix: { type: "remove-element" } as const,
+            },
+          ];
         }
         // Delay 0 with valid URL is OK; this redirect wins, stop checking
         return [];
@@ -36,14 +38,16 @@ export const metaRefreshNoException: Rule = {
 
       // Same-page refresh (no URL)
       if (parsed.seconds > 0) {
-        return [{
-          ruleId: "enough-time/meta-refresh-no-exception",
-          selector: getSelector(refresh),
-          html: getHtmlSnippet(refresh),
-          impact: "critical" as const,
-          message: `Page has a ${parsed.seconds}-second meta refresh delay. Remove the auto-refresh or provide user control.`,
-          fix: { type: "remove-element" } as const,
-        }];
+        return [
+          {
+            ruleId: "enough-time/meta-refresh-no-exception",
+            selector: getSelector(refresh),
+            html: getHtmlSnippet(refresh),
+            impact: "critical" as const,
+            message: `Page has a ${parsed.seconds}-second meta refresh delay. Remove the auto-refresh or provide user control.`,
+            fix: { type: "remove-element" } as const,
+          },
+        ];
       }
     }
     return [];

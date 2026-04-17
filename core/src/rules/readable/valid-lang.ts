@@ -11,7 +11,8 @@ export const validLang: Rule = {
   level: "AA",
   fixability: "mechanical",
   description: "The lang attribute must have a valid value on all elements.",
-  guidance: "When content in a different language appears within a page (e.g., a French quote in an English document), wrap it with a lang attribute to ensure correct pronunciation. The lang value must be a valid BCP 47 tag. Common codes: en, es, fr, de, zh, ja, pt, ar, ru.",
+  guidance:
+    "When content in a different language appears within a page (e.g., a French quote in an English document), wrap it with a lang attribute to ensure correct pronunciation. The lang value must be a valid BCP 47 tag. Common codes: en, es, fr, de, zh, ja, pt, ar, ru.",
   run(doc) {
     const violations = [];
 

@@ -7,12 +7,18 @@ vi.mock("@accesslint/core", async (importOriginal) => {
     ...original,
     getRuleById: (id: string) => {
       const rule = original.getRuleById(id);
-      return rule ? { ...rule, browserHint: "Screenshot the image to describe its visual content for alt text" } : rule;
+      return rule
+        ? {
+            ...rule,
+            browserHint: "Screenshot the image to describe its visual content for alt text",
+          }
+        : rule;
     },
   };
 });
 
-const { formatViolations, formatDiff, formatRuleTable, filterByImpact, IMPACT_ORDER } = await import("../src/lib/format.js");
+const { formatViolations, formatDiff, formatRuleTable, filterByImpact, IMPACT_ORDER } =
+  await import("../src/lib/format.js");
 
 function makeViolation(overrides: Partial<Violation> = {}): Violation {
   return {
@@ -63,7 +69,7 @@ describe("formatViolations", () => {
 
   it("truncates at 50 violations", () => {
     const violations = Array.from({ length: 60 }, (_, i) =>
-      makeViolation({ selector: `img:nth-child(${i})` })
+      makeViolation({ selector: `img:nth-child(${i})` }),
     );
     const output = formatViolations(violations);
     expect(output).toContain("Showing 50 of 60 violations");
@@ -195,18 +201,12 @@ describe("filterByImpact", () => {
   });
 
   it("returns all violations when threshold is minor", () => {
-    const items = [
-      makeViolation({ impact: "critical" }),
-      makeViolation({ impact: "minor" }),
-    ];
+    const items = [makeViolation({ impact: "critical" }), makeViolation({ impact: "minor" })];
     expect(filterByImpact(items, "minor")).toHaveLength(2);
   });
 
   it("returns only critical when threshold is critical", () => {
-    const items = [
-      makeViolation({ impact: "critical" }),
-      makeViolation({ impact: "serious" }),
-    ];
+    const items = [makeViolation({ impact: "critical" }), makeViolation({ impact: "serious" })];
     const result = filterByImpact(items, "critical");
     expect(result).toHaveLength(1);
     expect(result[0].impact).toBe("critical");

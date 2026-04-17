@@ -22,7 +22,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes tablist with tabs", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="tablist"><button role="tab">Tab 1</button></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="tablist"><button role="tab">Tab 1</button></div>',
+    );
   });
 
   it("reports tablist without tabs", () => {
@@ -33,27 +36,45 @@ describe(RULE_ID, () => {
   });
 
   it("passes menu with menuitems", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="menu"><div role="menuitem">Item</div></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="menu"><div role="menuitem">Item</div></div>',
+    );
   });
 
   it("passes grid with rows", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="grid"><div role="row"><div role="gridcell">Cell</div></div></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="grid"><div role="row"><div role="gridcell">Cell</div></div></div>',
+    );
   });
 
   it("passes radiogroup with radios", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="radiogroup"><div role="radio">Option</div></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="radiogroup"><div role="radio">Option</div></div>',
+    );
   });
 
   it("supports aria-owns for children", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="list" aria-owns="item1"></div><div id="item1" role="listitem">Item</div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="list" aria-owns="item1"></div><div id="item1" role="listitem">Item</div>',
+    );
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="list" aria-hidden="true"><div>No items</div></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="list" aria-hidden="true"><div>No items</div></div>',
+    );
   });
 
   it("skips elements with aria-busy=true", () => {
-    expectNoViolations(ariaRequiredChildren, '<div role="list" aria-busy="true"><div>Loading...</div></div>');
+    expectNoViolations(
+      ariaRequiredChildren,
+      '<div role="list" aria-busy="true"><div>Loading...</div></div>',
+    );
   });
 
   it("skips empty reviewEmpty roles (e.g. empty list)", () => {
@@ -87,9 +108,13 @@ describe(RULE_ID, () => {
   });
 
   it("flags expanded div combobox without required children", () => {
-    expectViolations(ariaRequiredChildren, '<div role="combobox" aria-expanded="true"><span>text</span></div>', {
-      count: 1,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      ariaRequiredChildren,
+      '<div role="combobox" aria-expanded="true"><span>text</span></div>',
+      {
+        count: 1,
+        ruleId: RULE_ID,
+      },
+    );
   });
 });

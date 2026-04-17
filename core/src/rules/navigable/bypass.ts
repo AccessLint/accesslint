@@ -9,12 +9,13 @@ export const bypass: Rule = {
   tags: ["best-practice", "page-level"],
   fixability: "contextual",
   description: "Page must have a mechanism to bypass repeated blocks of content.",
-  guidance: "Keyboard users must be able to skip repetitive content like navigation. Provide a skip link at the top of the page that links to the main content (e.g., <a href=\"#main\">Skip to main content</a>), or use a <main> landmark. Screen readers can jump directly to landmarks, so a properly marked-up <main> element satisfies this requirement.",
+  guidance:
+    'Keyboard users must be able to skip repetitive content like navigation. Provide a skip link at the top of the page that links to the main content (e.g., <a href="#main">Skip to main content</a>), or use a <main> landmark. Screen readers can jump directly to landmarks, so a properly marked-up <main> element satisfies this requirement.',
   run(doc) {
     // Check for any ARIA landmark (main, nav, aside, header/banner, footer/contentinfo)
     const hasLandmark = doc.querySelector(
       'main, [role="main"], nav, [role="navigation"], aside, [role="complementary"], ' +
-      'header, [role="banner"], footer, [role="contentinfo"], [role="search"], [role="region"]'
+        'header, [role="banner"], footer, [role="contentinfo"], [role="search"], [role="region"]',
     );
     if (hasLandmark) return [];
 
@@ -38,13 +39,16 @@ export const bypass: Rule = {
     missing.push("no skip link");
     missing.push("no headings");
 
-    return [{
-      ruleId: "navigable/bypass",
-      selector: "html",
-      html: "<html>",
-      impact: "serious" as const,
-      message: "Page has no mechanism to bypass repeated content. Add a <main> landmark or skip link.",
-      context: `Missing: ${missing.join(", ")}`,
-    }];
+    return [
+      {
+        ruleId: "navigable/bypass",
+        selector: "html",
+        html: "<html>",
+        impact: "serious" as const,
+        message:
+          "Page has no mechanism to bypass repeated content. Add a <main> landmark or skip link.",
+        context: `Missing: ${missing.join(", ")}`,
+      },
+    ];
   },
 };

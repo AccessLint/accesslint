@@ -38,7 +38,17 @@ function scopeViolations<T extends { selector: string }>(violations: T[]): T[] {
   });
 }
 
-function enrichViolations(violations: { ruleId: string; selector: string; html: string; impact: string; message: string; context?: string; element?: Element }[]) {
+function enrichViolations(
+  violations: {
+    ruleId: string;
+    selector: string;
+    html: string;
+    impact: string;
+    message: string;
+    context?: string;
+    element?: Element;
+  }[],
+) {
   return violations.map((v) => {
     const rule = getRuleById(v.ruleId);
     return {
@@ -61,7 +71,14 @@ export const afterEach = async ({
   tags,
   id,
 }: {
-  reporting: { addReport: (report: { type: string; version?: number; result: unknown; status: "failed" | "passed" | "warning" }) => void };
+  reporting: {
+    addReport: (report: {
+      type: string;
+      version?: number;
+      result: unknown;
+      status: "failed" | "passed" | "warning";
+    }) => void;
+  };
   parameters: Record<string, unknown>;
   viewMode: string;
   tags?: string[];

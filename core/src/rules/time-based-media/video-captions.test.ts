@@ -6,11 +6,10 @@ const RULE_ID = "time-based-media/video-captions";
 
 describe(RULE_ID, () => {
   it("reports video without captions track", () => {
-    expectViolations(
-      videoCaptions,
-      '<html><body><video src="movie.mp4"></video></body></html>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(videoCaptions, '<html><body><video src="movie.mp4"></video></body></html>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes video with captions track", () => {

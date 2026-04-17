@@ -10,8 +10,15 @@ import { getCachedComputedStyle } from "./color";
  * Identity = 1: brightness, contrast, saturate, opacity
  */
 const FILTER_IDENTITY: Record<string, number> = {
-  grayscale: 0, blur: 0, "hue-rotate": 0, invert: 0, sepia: 0,
-  brightness: 1, contrast: 1, saturate: 1, opacity: 1,
+  grayscale: 0,
+  blur: 0,
+  "hue-rotate": 0,
+  invert: 0,
+  sepia: 0,
+  brightness: 1,
+  contrast: 1,
+  saturate: 1,
+  opacity: 1,
 };
 
 function parseFilterArg(arg: string): number {
@@ -49,7 +56,8 @@ export function hasUnreliableVisualEffects(el: Element): boolean {
     const blendMode = style.mixBlendMode;
     if (blendMode && blendMode !== "normal" && blendMode !== "initial") return true;
     const backdrop = style.backdropFilter;
-    if (backdrop && backdrop !== "none" && backdrop !== "initial" && !isNoopFilter(backdrop)) return true;
+    if (backdrop && backdrop !== "none" && backdrop !== "initial" && !isNoopFilter(backdrop))
+      return true;
     current = current.parentElement;
   }
   return false;

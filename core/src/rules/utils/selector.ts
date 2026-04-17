@@ -14,8 +14,14 @@ function escapeAttrVal(s: string): string {
  * These tend to be stable across DOM mutations unlike positional indices.
  */
 const ANCHOR_ATTRS = [
-  "data-testid", "data-test-id", "data-cy", "data-id",
-  "name", "href", "for", "aria-label",
+  "data-testid",
+  "data-test-id",
+  "data-cy",
+  "data-id",
+  "name",
+  "href",
+  "for",
+  "aria-label",
 ];
 
 /** Build a CSS segment for one element using stable attributes when available. */
@@ -72,7 +78,9 @@ function buildSelectorWithinRoot(el: Element): string {
       try {
         const matches = root.querySelectorAll(candidate);
         if (matches.length === 1 && matches[0] === el) return candidate;
-      } catch { /* invalid selector, keep building */ }
+      } catch {
+        /* invalid selector, keep building */
+      }
     }
 
     current = current.parentElement;

@@ -2,7 +2,7 @@ name: Publish @accesslint/cli
 
 on:
   push:
-    tags: ['cli/v*']
+    tags: ["cli/v*"]
 
 jobs:
   publish:

@@ -13,11 +13,17 @@ describe(RULE_ID, () => {
   });
 
   it("passes compound value (shipping street-address)", () => {
-    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="shipping street-address">');
+    expectNoViolations(
+      autocompleteValid,
+      '<input type="text" autocomplete="shipping street-address">',
+    );
   });
 
   it("passes section-* token", () => {
-    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="section-blue shipping street-address">');
+    expectNoViolations(
+      autocompleteValid,
+      '<input type="text" autocomplete="section-blue shipping street-address">',
+    );
   });
 
   it("passes contact type on contact field (home tel)", () => {
@@ -68,7 +74,10 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" aria-hidden="true">');
+    expectNoViolations(
+      autocompleteValid,
+      '<input type="text" autocomplete="nope" aria-hidden="true">',
+    );
   });
 
   it("skips disabled elements", () => {
@@ -76,10 +85,16 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-disabled elements", () => {
-    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" aria-disabled="true">');
+    expectNoViolations(
+      autocompleteValid,
+      '<input type="text" autocomplete="nope" aria-disabled="true">',
+    );
   });
 
   it("skips computed-hidden elements", () => {
-    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" style="display:none">');
+    expectNoViolations(
+      autocompleteValid,
+      '<input type="text" autocomplete="nope" style="display:none">',
+    );
   });
 });

@@ -1,6 +1,11 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { getAccessibleName, getAccessibleTextContent, isAriaHidden, isComputedHidden } from "../utils/aria";
+import {
+  getAccessibleName,
+  getAccessibleTextContent,
+  isAriaHidden,
+  isComputedHidden,
+} from "../utils/aria";
 import { NATIVE_LABELABLE_SELECTOR, getAssociatedLabelText } from "./form-constants";
 
 // Widget roles that constitute form fields (per ACT rule e086e5)
@@ -20,12 +25,21 @@ const WIDGET_ROLE_SELECTOR = [
 
 // Widget roles where text content is a valid accessible name ("name from content")
 const NAME_FROM_CONTENT_ROLES = new Set([
-  "checkbox", "menuitemcheckbox", "menuitemradio", "radio", "switch",
+  "checkbox",
+  "menuitemcheckbox",
+  "menuitemradio",
+  "radio",
+  "switch",
 ]);
 
 // Roles where text content is NOT a valid accessible name ("name from author")
 const NAME_FROM_AUTHOR_ROLES = new Set([
-  "combobox", "listbox", "searchbox", "slider", "spinbutton", "textbox",
+  "combobox",
+  "listbox",
+  "searchbox",
+  "slider",
+  "spinbutton",
+  "textbox",
 ]);
 
 /**
@@ -68,7 +82,11 @@ function getFormFieldName(el: Element): string {
   if (ariaLabel) return ariaLabel;
 
   // 3. <label> association (only for native labelable elements)
-  if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement) {
+  if (
+    el instanceof HTMLInputElement ||
+    el instanceof HTMLTextAreaElement ||
+    el instanceof HTMLSelectElement
+  ) {
     const labelText = getAssociatedLabelText(el);
     if (labelText) return labelText;
   }
@@ -93,9 +111,11 @@ export const formLabel: Rule = {
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the form to see visual label placement relative to the input, then associate them with a label element or aria-labelledby.",
+  browserHint:
+    "Screenshot the form to see visual label placement relative to the input, then associate them with a label element or aria-labelledby.",
   description: "Form elements must have labels. Use <label>, aria-label, or aria-labelledby.",
-  guidance: "Every form input needs an accessible label so users understand what information to enter. Use a <label> element with a for attribute matching the input's id, wrap the input in a <label>, or use aria-label/aria-labelledby for custom components. Placeholders are not sufficient as labels since they disappear when typing. Labels should describe the information requested, not the field type (e.g., 'Email address', 'Search', 'Phone number').",
+  guidance:
+    "Every form input needs an accessible label so users understand what information to enter. Use a <label> element with a for attribute matching the input's id, wrap the input in a <label>, or use aria-label/aria-labelledby for custom components. Placeholders are not sufficient as labels since they disappear when typing. Labels should describe the information requested, not the field type (e.g., 'Email address', 'Search', 'Phone number').",
   run(doc) {
     const violations = [];
 
@@ -130,7 +150,11 @@ export const formLabel: Rule = {
           impact: "critical" as const,
           message: "Form element has no accessible label.",
           context: parts.length > 0 ? parts.join(", ") : undefined,
-          fix: { type: "suggest", suggestion: "Add a <label> element associated via the for attribute, or add an aria-label attribute" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Add a <label> element associated via the for attribute, or add an aria-label attribute",
+          } as const,
         });
       }
     }

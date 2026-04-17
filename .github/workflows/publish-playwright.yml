@@ -2,7 +2,7 @@ name: Publish @accesslint/playwright
 
 on:
   push:
-    tags: ['playwright/v*']
+    tags: ["playwright/v*"]
 
 jobs:
   publish:

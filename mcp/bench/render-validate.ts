@@ -7,7 +7,7 @@ import type { RenderManifest } from "./lib/types.js";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const manifest: RenderManifest = JSON.parse(
-  readFileSync(resolve(__dirname, "render-manifest.json"), "utf-8")
+  readFileSync(resolve(__dirname, "render-manifest.json"), "utf-8"),
 );
 
 for (const tc of manifest.cases) {

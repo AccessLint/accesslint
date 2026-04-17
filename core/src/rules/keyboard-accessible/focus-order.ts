@@ -2,9 +2,32 @@ import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
 
 const NON_INTERACTIVE_TAGS = new Set([
-  "div", "span", "p", "section", "article", "header", "footer", "main",
-  "nav", "aside", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "li",
-  "dl", "dt", "dd", "table", "tr", "td", "th",
+  "div",
+  "span",
+  "p",
+  "section",
+  "article",
+  "header",
+  "footer",
+  "main",
+  "nav",
+  "aside",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "ul",
+  "ol",
+  "li",
+  "dl",
+  "dt",
+  "dd",
+  "table",
+  "tr",
+  "td",
+  "th",
 ]);
 
 export const focusOrder: Rule = {

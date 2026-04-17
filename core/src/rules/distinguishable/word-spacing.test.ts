@@ -10,19 +10,29 @@ describe(RULE_ID, () => {
   });
 
   it("passes word-spacing at threshold (0.16em)", () => {
-    expectNoViolations(wordSpacing, '<html><body><p style="word-spacing: 0.16em !important">Text</p></body></html>');
+    expectNoViolations(
+      wordSpacing,
+      '<html><body><p style="word-spacing: 0.16em !important">Text</p></body></html>',
+    );
   });
 
   it("reports word-spacing below threshold with !important", () => {
     expectViolations(
       wordSpacing,
       '<html><body><p style="word-spacing: 0.05em !important">Text</p></body></html>',
-      { count: 1, ruleId: RULE_ID, messageMatches: /word-spacing.*!important|!important.*word-spacing/ },
+      {
+        count: 1,
+        ruleId: RULE_ID,
+        messageMatches: /word-spacing.*!important|!important.*word-spacing/,
+      },
     );
   });
 
   it("passes word-spacing without !important", () => {
-    expectNoViolations(wordSpacing, '<html><body><p style="word-spacing: 0.01em">Text</p></body></html>');
+    expectNoViolations(
+      wordSpacing,
+      '<html><body><p style="word-spacing: 0.01em">Text</p></body></html>',
+    );
   });
 
   it("reports normal with !important (effectively 0)", () => {

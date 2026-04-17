@@ -9,7 +9,8 @@ export const htmlXmlLangMismatch: Rule = {
   tags: ["page-level"],
   fixability: "mechanical",
   description: "The lang and xml:lang attributes on <html> must match.",
-  guidance: "In XHTML documents, if both lang and xml:lang are present, they must specify the same base language. Mismatched values confuse assistive technologies. Either remove xml:lang (preferred for HTML5) or ensure both attributes have identical values.",
+  guidance:
+    "In XHTML documents, if both lang and xml:lang are present, they must specify the same base language. Mismatched values confuse assistive technologies. Either remove xml:lang (preferred for HTML5) or ensure both attributes have identical values.",
   run(doc) {
     const html = doc.documentElement;
     const lang = html.getAttribute("lang")?.trim().toLowerCase();
@@ -21,14 +22,16 @@ export const htmlXmlLangMismatch: Rule = {
       const xmlLangPrimary = xmlLang.split("-")[0];
 
       if (langPrimary !== xmlLangPrimary) {
-        return [{
-          ruleId: "readable/html-xml-lang-mismatch",
-          selector: "html",
-          html: getHtmlSnippet(html),
-          impact: "moderate" as const,
-          message: `lang="${lang}" and xml:lang="${xmlLang}" do not match.`,
-          fix: { type: "remove-attribute", attribute: "xml:lang" } as const,
-        }];
+        return [
+          {
+            ruleId: "readable/html-xml-lang-mismatch",
+            selector: "html",
+            html: getHtmlSnippet(html),
+            impact: "moderate" as const,
+            message: `lang="${lang}" and xml:lang="${xmlLang}" do not match.`,
+            fix: { type: "remove-attribute", attribute: "xml:lang" } as const,
+          },
+        ];
       }
     }
 

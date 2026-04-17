@@ -2,7 +2,7 @@ name: Publish @accesslint/vitest
 
 on:
   push:
-    tags: ['vitest/v*']
+    tags: ["vitest/v*"]
 
 jobs:
   publish:

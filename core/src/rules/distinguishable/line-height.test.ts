@@ -10,7 +10,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes line-height at threshold (1.5)", () => {
-    expectNoViolations(lineHeight, '<html><body><p style="line-height: 1.5 !important">Text</p></body></html>');
+    expectNoViolations(
+      lineHeight,
+      '<html><body><p style="line-height: 1.5 !important">Text</p></body></html>',
+    );
   });
 
   it("reports line-height below threshold with !important", () => {
@@ -30,6 +33,9 @@ describe(RULE_ID, () => {
   });
 
   it("passes line-height percentage at threshold (150%)", () => {
-    expectNoViolations(lineHeight, '<html><body><p style="line-height: 150% !important">Text</p></body></html>');
+    expectNoViolations(
+      lineHeight,
+      '<html><body><p style="line-height: 150% !important">Text</p></body></html>',
+    );
   });
 });

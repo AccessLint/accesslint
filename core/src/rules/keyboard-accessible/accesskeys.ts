@@ -10,7 +10,8 @@ export const accesskeys: Rule = {
   tags: ["best-practice"],
   fixability: "mechanical",
   description: "Accesskey attribute values must be unique.",
-  guidance: "When multiple elements share the same accesskey, browser behavior becomes unpredictable - usually only the first element is activated. Ensure each accesskey value is unique within the page. Also consider that accesskeys can conflict with browser and screen reader shortcuts, so use them sparingly.",
+  guidance:
+    "When multiple elements share the same accesskey, browser behavior becomes unpredictable - usually only the first element is activated. Ensure each accesskey value is unique within the page. Also consider that accesskeys can conflict with browser and screen reader shortcuts, so use them sparingly.",
   run(doc) {
     const violations = [];
     const accessKeyMap = new Map<string, Element[]>();

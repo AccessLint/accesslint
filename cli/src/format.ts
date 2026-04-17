@@ -2,9 +2,9 @@ import type { AuditResult, Violation } from "@accesslint/core";
 
 const IMPACT_COLORS: Record<string, string> = {
   critical: "\x1b[31m", // red
-  serious: "\x1b[33m",  // yellow
+  serious: "\x1b[33m", // yellow
   moderate: "\x1b[36m", // cyan
-  minor: "\x1b[90m",    // gray
+  minor: "\x1b[90m", // gray
 };
 const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
@@ -12,10 +12,7 @@ const DIM = "\x1b[2m";
 
 function formatViolation(v: Violation, i: number): string {
   const color = IMPACT_COLORS[v.impact] ?? "";
-  const lines = [
-    `${BOLD}${color}${v.impact}${RESET} ${DIM}${v.ruleId}${RESET}`,
-    `  ${v.message}`,
-  ];
+  const lines = [`${BOLD}${color}${v.impact}${RESET} ${DIM}${v.ruleId}${RESET}`, `  ${v.message}`];
   if (v.selector) lines.push(`  ${DIM}${v.selector}${RESET}`);
   if (v.html) lines.push(`  ${DIM}${v.html}${RESET}`);
   return lines.join("\n");

@@ -2,7 +2,6 @@ import { describe, it } from "vitest";
 import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { bypass } from "./bypass";
 
-
 describe("navigable/bypass", () => {
   it("passes with main landmark", () => {
     expectNoViolations(bypass, "<html><body><main>Content</main></body></html>");

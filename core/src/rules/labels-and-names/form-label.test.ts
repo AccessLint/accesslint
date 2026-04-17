@@ -13,7 +13,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes input with aria-label", () => {
-    expectNoViolations(formLabel, '<html><body><input type="text" aria-label="Name"></body></html>');
+    expectNoViolations(
+      formLabel,
+      '<html><body><input type="text" aria-label="Name"></body></html>',
+    );
   });
 
   it("passes input with associated label", () => {
@@ -24,7 +27,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes input wrapped in label", () => {
-    expectNoViolations(formLabel, '<html><body><label>Name <input type="text"></label></body></html>');
+    expectNoViolations(
+      formLabel,
+      '<html><body><label>Name <input type="text"></label></body></html>',
+    );
   });
 
   it("ignores hidden inputs", () => {
@@ -53,9 +59,13 @@ describe(RULE_ID, () => {
   });
 
   it("reports select with options but no label", () => {
-    expectViolations(formLabel, "<html><body><select><option>England</option></select></body></html>", {
-      count: 1,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      formLabel,
+      "<html><body><select><option>England</option></select></body></html>",
+      {
+        count: 1,
+        ruleId: RULE_ID,
+      },
+    );
   });
 });

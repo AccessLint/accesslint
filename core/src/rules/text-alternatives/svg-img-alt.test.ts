@@ -34,10 +34,7 @@ describe(RULE_ID, () => {
   });
 
   it("passes svg with role=img and title attribute", () => {
-    expectNoViolations(
-      svgImgAlt,
-      '<svg role="img" title="Logo"><circle r="10"></circle></svg>',
-    );
+    expectNoViolations(svgImgAlt, '<svg role="img" title="Logo"><circle r="10"></circle></svg>');
   });
 
   it("skips aria-hidden svg", () => {
@@ -56,11 +53,10 @@ describe(RULE_ID, () => {
   });
 
   it("reports elements with role=graphics-symbol without name", () => {
-    expectViolations(
-      svgImgAlt,
-      '<g role="graphics-symbol"><circle r="5"></circle></g>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(svgImgAlt, '<g role="graphics-symbol"><circle r="5"></circle></g>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("ignores svg without role=img", () => {
@@ -68,10 +64,9 @@ describe(RULE_ID, () => {
   });
 
   it("reports svg with empty <title>", () => {
-    expectViolations(
-      svgImgAlt,
-      '<svg role="img"><title>  </title><circle r="10"></circle></svg>',
-      { count: 1, ruleId: RULE_ID },
-    );
+    expectViolations(svgImgAlt, '<svg role="img"><title>  </title><circle r="10"></circle></svg>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 });

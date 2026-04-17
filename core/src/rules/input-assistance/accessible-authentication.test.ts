@@ -33,10 +33,7 @@ describe(RULE_ID, () => {
   });
 
   it("passes password field with benign onpaste", () => {
-    expectNoViolations(
-      accessibleAuthentication,
-      '<input type="password" onpaste="handlePaste()">',
-    );
+    expectNoViolations(accessibleAuthentication, '<input type="password" onpaste="handlePaste()">');
   });
 
   // --- Violations ---

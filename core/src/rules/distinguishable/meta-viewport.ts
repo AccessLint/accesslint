@@ -9,9 +9,11 @@ export const metaViewport: Rule = {
   level: "AA",
   tags: ["page-level"],
   fixability: "mechanical",
-  browserHint: "After fixing the viewport meta tag, resize the viewport to 320px wide and screenshot to verify content remains readable and usable.",
+  browserHint:
+    "After fixing the viewport meta tag, resize the viewport to 320px wide and screenshot to verify content remains readable and usable.",
   description: "Viewport meta tag must not disable user scaling.",
-  guidance: "Users with low vision need to zoom content up to 200% or more. Setting user-scalable=no or maximum-scale=1 prevents zooming and fails WCAG. Remove these restrictions. If your layout breaks at high zoom, fix the responsive design rather than preventing zoom.",
+  guidance:
+    "Users with low vision need to zoom content up to 200% or more. Setting user-scalable=no or maximum-scale=1 prevents zooming and fails WCAG. Remove these restrictions. If your layout breaks at high zoom, fix the responsive design rather than preventing zoom.",
   run(doc) {
     const violations = [];
 
@@ -36,7 +38,10 @@ export const metaViewport: Rule = {
           impact: "critical" as const,
           message: `Viewport disables user scaling (user-scalable=${raw}). Remove this restriction.`,
           context: `content: "${content}"`,
-          fix: { type: "suggest", suggestion: "Remove user-scalable=no from the viewport meta content attribute" } as const,
+          fix: {
+            type: "suggest",
+            suggestion: "Remove user-scalable=no from the viewport meta content attribute",
+          } as const,
         });
       }
     }
@@ -54,7 +59,11 @@ export const metaViewport: Rule = {
           impact: "critical" as const,
           message: `Viewport maximum-scale=${maxScale} restricts zooming. Set to at least 2 or remove.`,
           context: `content: "${content}"`,
-          fix: { type: "suggest", suggestion: "Remove maximum-scale or set it to at least 2 in the viewport meta content attribute" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Remove maximum-scale or set it to at least 2 in the viewport meta content attribute",
+          } as const,
         });
       }
     }

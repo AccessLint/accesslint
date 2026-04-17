@@ -2,7 +2,7 @@ name: Publish @accesslint/core
 
 on:
   push:
-    tags: ['core/v*']
+    tags: ["core/v*"]
 
 jobs:
   publish:

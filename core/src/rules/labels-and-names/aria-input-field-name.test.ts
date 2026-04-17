@@ -10,7 +10,10 @@ describe(RULE_ID, () => {
   });
 
   it("reports textbox without name", () => {
-    expectViolations(ariaInputFieldName, '<div role="textbox"></div>', { count: 1, ruleId: RULE_ID });
+    expectViolations(ariaInputFieldName, '<div role="textbox"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes combobox with name", () => {

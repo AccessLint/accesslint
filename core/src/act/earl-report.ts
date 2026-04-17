@@ -66,10 +66,8 @@ export interface EarlReport {
   assertedThat: EarlAssertion[];
 }
 
-const ACT_TESTCASE_URL_PREFIX =
-  "https://www.w3.org/WAI/content-assets/wcag-act-rules/testcases";
-const ACT_RULE_URL_PREFIX =
-  "https://www.w3.org/WAI/standards-guidelines/act/rules";
+const ACT_TESTCASE_URL_PREFIX = "https://www.w3.org/WAI/content-assets/wcag-act-rules/testcases";
+const ACT_RULE_URL_PREFIX = "https://www.w3.org/WAI/standards-guidelines/act/rules";
 
 /**
  * Whether an actual outcome satisfies the expected outcome per ACT semantics.
@@ -86,10 +84,7 @@ export function isCorrectOutcome(
   return actual === "passed" || actual === "inapplicable";
 }
 
-export function generateEarlReport(
-  outcomes: FixtureOutcome[],
-  version: string,
-): EarlReport {
+export function generateEarlReport(outcomes: FixtureOutcome[], version: string): EarlReport {
   const assertions: EarlAssertion[] = outcomes.map((outcome) => ({
     "@type": "Assertion",
     mode: "earl:automatic",

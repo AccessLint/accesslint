@@ -27,10 +27,7 @@ export { BlockedUrlError };
  * timeout, and a body-size cap enforced both via Content-Length and while
  * streaming. Returns a Response whose body aborts if the cap is exceeded.
  */
-export async function safeFetch(
-  rawUrl: string,
-  opts: SafeFetchOptions = {},
-): Promise<Response> {
+export async function safeFetch(rawUrl: string, opts: SafeFetchOptions = {}): Promise<Response> {
   const maxBytes = opts.maxBytes ?? DEFAULT_MAX_BYTES;
   const timeoutMs = opts.timeoutMs ?? DEFAULT_TIMEOUT_MS;
   const maxRedirects = opts.maxRedirects ?? DEFAULT_MAX_REDIRECTS;

@@ -135,7 +135,12 @@ function parseResponse(stdout: string, durationMs: number): InvokeClaudeResult {
 
     // Try extracting violations from multiple possible locations in the envelope
     // --json-schema places structured output in `structured_output`, not `result`
-    for (const field of [envelope.structured_output, envelope.result, envelope.content, envelope.output]) {
+    for (const field of [
+      envelope.structured_output,
+      envelope.result,
+      envelope.content,
+      envelope.output,
+    ]) {
       if (field == null) continue;
       const violations = extractViolations(field);
       if (violations) {
@@ -145,7 +150,8 @@ function parseResponse(stdout: string, durationMs: number): InvokeClaudeResult {
 
     // Dump the full envelope keys for debugging
     const keys = Object.keys(envelope).join(", ");
-    const resultPreview = envelope.result === "" ? '(empty string)' : String(envelope.result ?? "(null)").slice(0, 200);
+    const resultPreview =
+      envelope.result === "" ? "(empty string)" : String(envelope.result ?? "(null)").slice(0, 200);
     return {
       parsed: [],
       durationMs,
@@ -232,7 +238,12 @@ function parseFixResponse(stdout: string, durationMs: number): InvokeClaudeFixRe
       return { html: null, durationMs, tokens, error: `Claude error: ${envelope.subtype}` };
     }
 
-    for (const field of [envelope.structured_output, envelope.result, envelope.content, envelope.output]) {
+    for (const field of [
+      envelope.structured_output,
+      envelope.result,
+      envelope.content,
+      envelope.output,
+    ]) {
       if (field == null) continue;
       const html = extractHtml(field);
       if (html !== null) {

@@ -18,7 +18,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes li inside role=list", () => {
-    expectNoViolations(listitemParent, '<html><body><div role="list"><li>Item</li></div></body></html>');
+    expectNoViolations(
+      listitemParent,
+      '<html><body><div role="list"><li>Item</li></div></body></html>',
+    );
   });
 
   it("reports li inside div (no list role)", () => {
@@ -37,6 +40,9 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden li", () => {
-    expectNoViolations(listitemParent, '<html><body><div><li aria-hidden="true">Hidden</li></div></body></html>');
+    expectNoViolations(
+      listitemParent,
+      '<html><body><div><li aria-hidden="true">Hidden</li></div></body></html>',
+    );
   });
 });

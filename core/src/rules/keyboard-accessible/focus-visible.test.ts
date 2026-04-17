@@ -14,11 +14,17 @@ describe(RULE_ID, () => {
   });
 
   it("passes outline:none with border", () => {
-    expectNoViolations(focusVisible, '<button style="outline: none; border: 2px solid blue;">Click</button>');
+    expectNoViolations(
+      focusVisible,
+      '<button style="outline: none; border: 2px solid blue;">Click</button>',
+    );
   });
 
   it("passes outline:none with box-shadow", () => {
-    expectNoViolations(focusVisible, '<button style="outline: none; box-shadow: 0 0 3px blue;">Click</button>');
+    expectNoViolations(
+      focusVisible,
+      '<button style="outline: none; box-shadow: 0 0 3px blue;">Click</button>',
+    );
   });
 
   it("passes element with no inline outline style", () => {
@@ -26,6 +32,9 @@ describe(RULE_ID, () => {
   });
 
   it("skips aria-hidden elements", () => {
-    expectNoViolations(focusVisible, '<button style="outline: none;" aria-hidden="true">Hidden</button>');
+    expectNoViolations(
+      focusVisible,
+      '<button style="outline: none;" aria-hidden="true">Hidden</button>',
+    );
   });
 });

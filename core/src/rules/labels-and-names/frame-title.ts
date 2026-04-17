@@ -10,9 +10,11 @@ export const frameTitle: Rule = {
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the iframe to see what content it displays, then add a title describing its purpose.",
+  browserHint:
+    "Screenshot the iframe to see what content it displays, then add a title describing its purpose.",
   description: "Frames must have an accessible name.",
-  guidance: "Screen readers announce frame titles when users navigate frames. Add a title attribute to <iframe> and <frame> elements that describes the frame's purpose (e.g., <iframe title='Video player'>). Avoid generic titles like 'frame' or 'iframe'. If the frame is decorative, use aria-hidden='true'.",
+  guidance:
+    "Screen readers announce frame titles when users navigate frames. Add a title attribute to <iframe> and <frame> elements that describes the frame's purpose (e.g., <iframe title='Video player'>). Avoid generic titles like 'frame' or 'iframe'. If the frame is decorative, use aria-hidden='true'.",
   run(doc) {
     const violations = [];
     for (const frame of doc.querySelectorAll("iframe, frame")) {

@@ -40,11 +40,11 @@ curl -s https://example.com | bun src/cli.ts
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | No violations |
-| 1 | Violations found |
-| 2 | Error |
+| Code | Meaning          |
+| ---- | ---------------- |
+| 0    | No violations    |
+| 1    | Violations found |
+| 2    | Error            |
 
 ## Examples
 

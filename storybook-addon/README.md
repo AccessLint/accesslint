@@ -7,7 +7,6 @@ Catch accessibility violations in your Storybook stories as you develop. Powered
 
 <img height="414" alt="Storybook screenshot with alt text violation in the details of the AccessLint tab" src="https://github.com/user-attachments/assets/42bb12ee-3a07-4443-8b60-35c2c9c735a9" />
 
-
 ## Getting Started
 
 ```sh
@@ -159,11 +158,11 @@ const preview = {
 export default preview;
 ```
 
-| Mode | Behavior |
-| --- | --- |
-| `"error"` | Violations fail the test (default) |
-| `"todo"` | Violations show as warnings — yellow sidebar dots, non-blocking in CI |
-| `"off"` | Skip auditing entirely |
+| Mode      | Behavior                                                              |
+| --------- | --------------------------------------------------------------------- |
+| `"error"` | Violations fail the test (default)                                    |
+| `"todo"`  | Violations show as warnings — yellow sidebar dots, non-blocking in CI |
+| `"off"`   | Skip auditing entirely                                                |
 
 Override per-story:
 
@@ -225,10 +224,7 @@ import { setProjectAnnotations } from "@storybook/react";
 import { enableAccessLint } from "@accesslint/storybook-addon/portable";
 import * as previewAnnotations from "./.storybook/preview";
 
-const project = setProjectAnnotations([
-  previewAnnotations,
-  enableAccessLint(),
-]);
+const project = setProjectAnnotations([previewAnnotations, enableAccessLint()]);
 
 beforeAll(project.beforeAll);
 ```
@@ -251,36 +247,36 @@ test("Primary button is accessible", async () => {
 
 ### Exports
 
-| Entry point | Description |
-| --- | --- |
-| `@accesslint/storybook-addon` | Main addon registration (manager + preview) |
+| Entry point                                 | Description                                           |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `@accesslint/storybook-addon`               | Main addon registration (manager + preview)           |
 | `@accesslint/storybook-addon/vitest-plugin` | `accesslintTest()` Vite plugin for Vitest integration |
-| `@accesslint/storybook-addon/vitest-setup` | Setup file registered by the Vite plugin |
-| `@accesslint/storybook-addon/matchers` | `toBeAccessible()` custom matcher |
-| `@accesslint/storybook-addon/portable` | `enableAccessLint()` for portable stories |
-| `@accesslint/storybook-addon/preview` | Preview annotations (afterEach hook) |
+| `@accesslint/storybook-addon/vitest-setup`  | Setup file registered by the Vite plugin              |
+| `@accesslint/storybook-addon/matchers`      | `toBeAccessible()` custom matcher                     |
+| `@accesslint/storybook-addon/portable`      | `enableAccessLint()` for portable stories             |
+| `@accesslint/storybook-addon/preview`       | Preview annotations (afterEach hook)                  |
 
 ### `accesslintTest(options?)`
 
 Vite plugin that registers AccessLint's `afterEach` annotation and the `toBeAccessible()` matcher for Vitest story tests.
 
-| Option | Type | Description |
-| --- | --- | --- |
+| Option      | Type       | Description                                        |
+| ----------- | ---------- | -------------------------------------------------- |
 | `tags.skip` | `string[]` | Stories with any of these tags will not be audited |
 
 ### `parameters.accesslint`
 
-| Parameter | Type | Default | Description |
-| --- | --- | --- | --- |
-| `test` | `"todo" \| "error" \| "off"` | `"error"` | Controls how violations are reported |
-| `disable` | `boolean` | `false` | Set to `true` to skip auditing (same as `test: "off"`) |
+| Parameter | Type                         | Default   | Description                                            |
+| --------- | ---------------------------- | --------- | ------------------------------------------------------ |
+| `test`    | `"todo" \| "error" \| "off"` | `"error"` | Controls how violations are reported                   |
+| `disable` | `boolean`                    | `false`   | Set to `true` to skip auditing (same as `test: "off"`) |
 
 ### `toBeAccessible(options?)`
 
 Custom matcher for asserting an element has no accessibility violations.
 
-| Option | Type | Description |
-| --- | --- | --- |
+| Option          | Type       | Description                         |
+| --------------- | ---------- | ----------------------------------- |
 | `disabledRules` | `string[]` | Rule IDs to skip for this assertion |
 
 ### `enableAccessLint()`

@@ -62,9 +62,7 @@ describe("toBeAccessible", () => {
     const img = document.createElement("img");
     document.body.appendChild(img);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ selector: "img" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ selector: "img" })]));
 
     const result = toBeAccessible.call(context, document.body);
     expect(result.pass).toBe(false);
@@ -79,9 +77,7 @@ describe("toBeAccessible", () => {
     document.body.appendChild(container);
     document.body.appendChild(sibling);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ selector: "img" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ selector: "img" })]));
 
     const result = toBeAccessible.call(context, container);
     expect(result.pass).toBe(true);
@@ -94,9 +90,7 @@ describe("toBeAccessible", () => {
     const img = document.createElement("img");
     document.body.appendChild(img);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ ruleId: "img-alt", selector: "img" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ ruleId: "img-alt", selector: "img" })]));
 
     const result = toBeAccessible.call(context, document.body, {
       disabledRules: ["img-alt"],
@@ -110,9 +104,7 @@ describe("toBeAccessible", () => {
     const img = document.createElement("img");
     document.body.appendChild(img);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ ruleId: "img-alt", selector: "img" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ ruleId: "img-alt", selector: "img" })]));
 
     const result = toBeAccessible.call(context, document.body, {
       disabledRules: ["color-contrast"],
@@ -126,9 +118,7 @@ describe("toBeAccessible", () => {
     const img = document.createElement("img");
     document.body.appendChild(img);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ selector: "img" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ selector: "img" })]));
     mockGetRuleById.mockReturnValue({
       id: "img-alt",
       wcag: ["1.1.1"],
@@ -162,9 +152,7 @@ describe("toBeAccessible", () => {
     const el = document.createElement("div");
     document.body.appendChild(el);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ selector: "[invalid>>>" })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ selector: "[invalid>>>" })]));
 
     const result = toBeAccessible.call(context, el);
     // Invalid selector should be caught and filtered out

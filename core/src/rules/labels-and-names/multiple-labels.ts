@@ -10,7 +10,8 @@ export const multipleLabels: Rule = {
   tags: ["best-practice"],
   fixability: "contextual",
   description: "Form fields should not have multiple label elements.",
-  guidance: "When a form field has multiple <label> elements pointing to it, assistive technologies may announce only one label or behave inconsistently. Use a single <label> and combine any additional text into it, or use aria-describedby for supplementary information.",
+  guidance:
+    "When a form field has multiple <label> elements pointing to it, assistive technologies may announce only one label or behave inconsistently. Use a single <label> and combine any additional text into it, or use aria-describedby for supplementary information.",
   run(doc) {
     const violations = [];
     const inputs = doc.querySelectorAll('input:not([type="hidden"]), textarea, select');
@@ -44,7 +45,11 @@ export const multipleLabels: Rule = {
           html: getHtmlSnippet(input),
           impact: "moderate" as const,
           message: `Form field has ${totalLabels} labels. Use a single label element.`,
-          fix: { type: "suggest", suggestion: "Consolidate multiple labels into a single <label> element, and use aria-describedby for supplementary text" } as const,
+          fix: {
+            type: "suggest",
+            suggestion:
+              "Consolidate multiple labels into a single <label> element, and use aria-describedby for supplementary text",
+          } as const,
         });
       }
     }

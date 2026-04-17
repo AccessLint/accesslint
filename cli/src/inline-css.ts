@@ -49,12 +49,9 @@ async function fetchCSS(url: string, ctx: FetchCtx): Promise<string | null> {
   }
 }
 
-async function resolveImports(
-  css: string,
-  baseURL: string,
-  ctx: FetchCtx,
-): Promise<string> {
-  const importPattern = /@import\s+(?:url\(\s*['"]?([^'")\s]+)['"]?\s*\)|['"]([^'"]+)['"])\s*([^;]*);/g;
+async function resolveImports(css: string, baseURL: string, ctx: FetchCtx): Promise<string> {
+  const importPattern =
+    /@import\s+(?:url\(\s*['"]?([^'")\s]+)['"]?\s*\)|['"]([^'"]+)['"])\s*([^;]*);/g;
   const replacements: { match: string; replacement: string }[] = [];
 
   for (const m of css.matchAll(importPattern)) {
@@ -71,9 +68,7 @@ async function resolveImports(
     const imported = await fetchCSS(resolved, ctx);
     if (imported !== null) {
       const mediaQuery = m[3]?.trim();
-      const wrapped = mediaQuery
-        ? `@media ${mediaQuery} {\n${imported}\n}`
-        : imported;
+      const wrapped = mediaQuery ? `@media ${mediaQuery} {\n${imported}\n}` : imported;
       replacements.push({ match: m[0], replacement: wrapped });
     }
   }

@@ -6,7 +6,10 @@ const RULE_ID = "labels-and-names/aria-toggle-field-name";
 
 describe(RULE_ID, () => {
   it("passes checkbox with name", () => {
-    expectNoViolations(ariaToggleFieldName, '<div role="checkbox" aria-checked="false">Subscribe</div>');
+    expectNoViolations(
+      ariaToggleFieldName,
+      '<div role="checkbox" aria-checked="false">Subscribe</div>',
+    );
   });
 
   it("reports checkbox without name", () => {

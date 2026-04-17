@@ -29,23 +29,15 @@ interface FixtureEntry {
 
 function main() {
   if (!existsSync(INDEX_FILE)) {
-    throw new Error(
-      `Missing ${INDEX_FILE}. Run scripts/download-act-fixtures.sh first.`,
-    );
+    throw new Error(`Missing ${INDEX_FILE}. Run scripts/download-act-fixtures.sh first.`);
   }
   if (!existsSync(HTML_DIR)) {
-    throw new Error(
-      `Missing ${HTML_DIR}. Run scripts/download-act-fixtures.sh first.`,
-    );
+    throw new Error(`Missing ${HTML_DIR}. Run scripts/download-act-fixtures.sh first.`);
   }
 
-  const data: { testcases: ActTestCase[] } = JSON.parse(
-    readFileSync(INDEX_FILE, "utf-8"),
-  );
+  const data: { testcases: ActTestCase[] } = JSON.parse(readFileSync(INDEX_FILE, "utf-8"));
 
-  const mapped = data.testcases.filter(
-    (tc) => tc.approved && tc.ruleId in ACT_TO_CORE_RULES,
-  );
+  const mapped = data.testcases.filter((tc) => tc.approved && tc.ruleId in ACT_TO_CORE_RULES);
 
   const htmlFiles = new Set(readdirSync(HTML_DIR));
 

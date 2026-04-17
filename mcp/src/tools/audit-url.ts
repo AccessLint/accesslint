@@ -15,10 +15,7 @@ const PRIMARY_TIMEOUT_MS = 15_000;
 
 export const auditUrlSchema = {
   url: z.string().url().describe("URL to fetch and audit"),
-  name: z
-    .string()
-    .optional()
-    .describe('Store result for later diffing (e.g. "before")'),
+  name: z.string().optional().describe('Store result for later diffing (e.g. "before")'),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
@@ -105,6 +102,6 @@ export function registerAuditUrl(server: McpServer): void {
           },
         ],
       };
-    }
+    },
   );
 }

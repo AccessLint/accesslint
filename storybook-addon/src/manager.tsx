@@ -46,25 +46,32 @@ const Title = () => {
 
   useChannel({
     [RESULT_EVENT]: ({ result }: { result: { violations?: unknown[]; skipped?: boolean } }) => {
-      setCount(result.skipped ? 0 : result.violations?.length ?? 0);
+      setCount(result.skipped ? 0 : (result.violations?.length ?? 0));
     },
   });
 
   return (
     <>
-      AccessLint{count > 0 && <span style={{
-        display: "inline-block",
-        marginLeft: "8px",
-        minWidth: "18px",
-        padding: "0 5px",
-        lineHeight: "18px",
-        borderRadius: "9px",
-        fontSize: "11px",
-        fontWeight: "bold",
-        textAlign: "center",
-        background: "currentColor",
-        color: "inherit",
-      }}><span style={{ color: "#fff" }}>{count}</span></span>}
+      AccessLint
+      {count > 0 && (
+        <span
+          style={{
+            display: "inline-block",
+            marginLeft: "8px",
+            minWidth: "18px",
+            padding: "0 5px",
+            lineHeight: "18px",
+            borderRadius: "9px",
+            fontSize: "11px",
+            fontWeight: "bold",
+            textAlign: "center",
+            background: "currentColor",
+            color: "inherit",
+          }}
+        >
+          <span style={{ color: "#fff" }}>{count}</span>
+        </span>
+      )}
     </>
   );
 };
@@ -120,12 +127,16 @@ const TestProviderWidget = () => {
   }, [api]);
 
   useChannel({
-    [RESULT_EVENT]: ({ storyId, result, status }: {
+    [RESULT_EVENT]: ({
+      storyId,
+      result,
+      status,
+    }: {
       storyId?: string;
       result: ViolationReport & { skipped?: boolean };
       status?: string;
     }) => {
-      const violations = result.skipped ? [] : result.violations ?? [];
+      const violations = result.skipped ? [] : (result.violations ?? []);
       setViolationCount(violations.length);
 
       // Update the status store for per-story sidebar dots (SB 10+ only)
@@ -133,22 +144,26 @@ const TestProviderWidget = () => {
         const hasViolations = violations.length > 0;
         const isWarning = status === "warning";
 
-        statusStore.set([{
-          value: result.skipped
-            ? "status-value:unknown"
-            : hasViolations
-              ? isWarning ? "status-value:warning" : "status-value:error"
-              : "status-value:success",
-          typeId: STATUS_TYPE_ID,
-          storyId,
-          title: "AccessLint",
-          description: result.skipped
-            ? "Skipped"
-            : hasViolations
-              ? `${violations.length} violation${violations.length === 1 ? "" : "s"}`
-              : "No violations",
-          sidebarContextMenu: true,
-        }]);
+        statusStore.set([
+          {
+            value: result.skipped
+              ? "status-value:unknown"
+              : hasViolations
+                ? isWarning
+                  ? "status-value:warning"
+                  : "status-value:error"
+                : "status-value:success",
+            typeId: STATUS_TYPE_ID,
+            storyId,
+            title: "AccessLint",
+            description: result.skipped
+              ? "Skipped"
+              : hasViolations
+                ? `${violations.length} violation${violations.length === 1 ? "" : "s"}`
+                : "No violations",
+            sidebarContextMenu: true,
+          },
+        ]);
       }
 
       // Mark the test provider as succeeded after processing (SB 10+ only)
@@ -200,14 +215,18 @@ const TestProviderWidget = () => {
   // Storybook 9 fallback: simple styled widget
   return (
     <StyledActionList
-      style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 8px", cursor: "pointer" }}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "6px 8px",
+        cursor: "pointer",
+      }}
       onClick={openPanel}
     >
       <StatusDot status={status} />
       <span style={{ fontSize: 12 }}>AccessLint</span>
-      {hasViolations && (
-        <span style={{ fontSize: 11, fontWeight: "bold" }}>{violationCount}</span>
-      )}
+      {hasViolations && <span style={{ fontSize: 11, fontWeight: "bold" }}>{violationCount}</span>}
     </StyledActionList>
   );
 };

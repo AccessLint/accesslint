@@ -47,6 +47,6 @@ export function registerDiffHtml(server: McpServer): void {
       return {
         content: [{ type: "text", text: formatDiff(diff, { minImpact: min_impact }) }],
       };
-    }
+    },
   );
 }

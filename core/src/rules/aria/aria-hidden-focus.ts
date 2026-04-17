@@ -27,7 +27,6 @@ function isActuallyVisible(el: HTMLElement): boolean {
   return true;
 }
 
-
 /**
  * Detect focus sentinel pattern: an off-screen element whose focus is
  * redirected via a script (e.g. `getElementById('id').addEventListener('focus', ...)`
@@ -69,7 +68,8 @@ export const ariaHiddenFocus: Rule = {
   level: "A",
   fixability: "contextual",
   description: "Elements with aria-hidden='true' must not contain focusable elements.",
-  guidance: "When aria-hidden='true' hides an element from assistive technologies but the element contains focusable children, keyboard users can focus those children but screen reader users won't know they exist. Either remove focusable elements from the hidden region, add tabindex='-1' to them, or remove aria-hidden.",
+  guidance:
+    "When aria-hidden='true' hides an element from assistive technologies but the element contains focusable children, keyboard users can focus those children but screen reader users won't know they exist. Either remove focusable elements from the hidden region, add tabindex='-1' to them, or remove aria-hidden.",
   run(doc) {
     const violations = [];
 
@@ -113,7 +113,8 @@ export const ariaHiddenFocus: Rule = {
           if (tabindex !== null) reason = `has tabindex="${tabindex}"`;
           else if (tag === "a" && el.hasAttribute("href")) reason = "is a link with href";
           else if (tag === "button") reason = "is a <button>";
-          else if (tag === "input") reason = `is an <input type="${(el as HTMLInputElement).type}">`;
+          else if (tag === "input")
+            reason = `is an <input type="${(el as HTMLInputElement).type}">`;
           else if (tag === "select") reason = "is a <select>";
           else if (tag === "textarea") reason = "is a <textarea>";
           else if (tag === "iframe") reason = "is an <iframe>";
@@ -129,7 +130,11 @@ export const ariaHiddenFocus: Rule = {
             impact: "serious" as const,
             message: "Focusable element is inside an aria-hidden region.",
             context: `Focusable because: ${reason}. aria-hidden ancestor: ${hiddenAncestor ? getHtmlSnippet(hiddenAncestor) : "unknown"}`,
-            fix: { type: "suggest", suggestion: "Add tabindex=\"-1\" to remove from tab order, or move the element outside the aria-hidden region" } as const,
+            fix: {
+              type: "suggest",
+              suggestion:
+                'Add tabindex="-1" to remove from tab order, or move the element outside the aria-hidden region',
+            } as const,
           });
         }
       }

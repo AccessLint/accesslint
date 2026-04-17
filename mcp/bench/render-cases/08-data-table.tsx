@@ -12,7 +12,9 @@ export default function DataTable() {
       <thead>
         <tr>
           {columns.map((col) => (
-            <th key={col} scope="diagonal">{col}</th>
+            <th key={col} scope="diagonal">
+              {col}
+            </th>
           ))}
         </tr>
       </thead>

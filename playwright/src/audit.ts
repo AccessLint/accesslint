@@ -41,7 +41,9 @@ function getPage(target: Page | Locator): Page {
 }
 
 async function ensureInjected(target: Page | Frame): Promise<void> {
-  const hasAccessLint = await target.evaluate(() => typeof (window as any).AccessLint !== "undefined");
+  const hasAccessLint = await target.evaluate(
+    () => typeof (window as any).AccessLint !== "undefined",
+  );
   if (!hasAccessLint) {
     await target.addScriptTag({ path: iifePath });
   }

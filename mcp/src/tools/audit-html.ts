@@ -6,10 +6,7 @@ import { checkHtmlSize } from "../lib/limits.js";
 
 export const auditHtmlSchema = {
   html: z.string().describe("HTML to audit for accessibility violations"),
-  name: z
-    .string()
-    .optional()
-    .describe('Store result for later diffing (e.g. "before")'),
+  name: z.string().optional().describe('Store result for later diffing (e.g. "before")'),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
@@ -31,8 +28,10 @@ export function registerAuditHtml(server: McpServer): void {
       }
       const result = audit(html, { name });
       return {
-        content: [{ type: "text", text: formatViolations(result.violations, { minImpact: min_impact }) }],
+        content: [
+          { type: "text", text: formatViolations(result.violations, { minImpact: min_impact }) },
+        ],
       };
-    }
+    },
   );
 }

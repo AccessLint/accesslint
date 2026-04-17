@@ -13,13 +13,7 @@ export type { ConfigureOptions } from "./rules/index";
 export { compileDeclarativeRule, validateDeclarativeRule } from "./rules/engine";
 
 // Types
-export type {
-  Rule,
-  Violation,
-  AuditResult,
-  DeclarativeRule,
-  CheckType,
-} from "./rules/types";
+export type { Rule, Violation, AuditResult, DeclarativeRule, CheckType } from "./rules/types";
 
 // Utilities (useful for custom rule authors)
 export {
@@ -33,11 +27,7 @@ export {
   clearComputedRoleCache,
 } from "./rules/utils/aria";
 
-export {
-  getSelector,
-  getHtmlSnippet,
-  querySelectorShadowAware,
-} from "./rules/utils/selector";
+export { getSelector, getHtmlSnippet, querySelectorShadowAware } from "./rules/utils/selector";
 
 // Cache clearing (useful for test helpers and extension integration)
 export { clearAriaAttrAuditCache } from "./rules/aria/aria-attr-audit";

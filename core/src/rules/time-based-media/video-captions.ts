@@ -9,9 +9,12 @@ export const videoCaptions: Rule = {
   wcag: ["1.2.2"],
   level: "A",
   fixability: "contextual",
-  browserHint: "Screenshot the video element to see its poster or content for context when writing captions.",
-  description: "Video elements must have captions via <track kind='captions'> or <track kind='subtitles'>.",
-  guidance: "Captions provide text alternatives for audio content in videos, benefiting deaf users and those who cannot hear audio. Add a <track> element with kind='captions' pointing to a WebVTT caption file. Captions should include both dialogue and important sound effects.",
+  browserHint:
+    "Screenshot the video element to see its poster or content for context when writing captions.",
+  description:
+    "Video elements must have captions via <track kind='captions'> or <track kind='subtitles'>.",
+  guidance:
+    "Captions provide text alternatives for audio content in videos, benefiting deaf users and those who cannot hear audio. Add a <track> element with kind='captions' pointing to a WebVTT caption file. Captions should include both dialogue and important sound effects.",
   run(doc) {
     const violations = [];
     for (const video of doc.querySelectorAll("video")) {
