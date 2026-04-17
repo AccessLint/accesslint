@@ -28,6 +28,39 @@
     "typecheck": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json"]
+    },
+    "act:download": {
+      "inputs": [
+        "src/rules/**/*.ts",
+        "src/act/act-mapping.ts",
+        "src/act/download-fixtures.ts",
+        "scripts/download-act-fixtures.sh"
+      ],
+      "outputs": [
+        "act-fixtures/testcases-index.json",
+        "act-fixtures/html/**",
+        "act-fixtures/act-testcases.json"
+      ]
+    },
+    "test:browser:act": {
+      "dependsOn": ["build", "act:download"],
+      "inputs": [
+        "src/act/**",
+        "src/integration/**",
+        "playwright.config.ts",
+        "package.json"
+      ],
+      "outputs": ["act-fixtures/earl-report-browser.json"]
+    },
+    "act:check": {
+      "dependsOn": ["test:browser:act"],
+      "inputs": [
+        "src/act/check-conformance.ts",
+        "src/act/earl-report.ts",
+        "act-fixtures/act-testcases.json",
+        "act-fixtures/earl-report-browser.json"
+      ],
+      "cache": false
     }
   }
 }
