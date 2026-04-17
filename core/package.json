@@ -28,7 +28,6 @@
     "test:coverage": "vitest run --coverage",
     "test:memory": "vitest run --config vite.memory.config.ts",
     "act:download": "scripts/download-act-fixtures.sh && npx tsx src/act/download-fixtures.ts",
-    "test:act": "vitest run src/act/act.test.ts",
     "act:check": "npx tsx src/act/check-conformance.ts",
     "test:browser": "vitest run --config vite.browser.config.ts",
     "test:browser:act": "npx playwright test src/act/act-browser.spec.ts",
