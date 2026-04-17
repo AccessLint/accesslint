@@ -12,13 +12,15 @@
   },
   "exports": {
     ".": "./dist/audit.js",
-    "./inline-css": "./dist/inline-css.js"
+    "./inline-css": "./dist/inline-css.js",
+    "./ssrf-guard": "./dist/ssrf-guard.js",
+    "./safe-fetch": "./dist/safe-fetch.js"
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/cli.ts --target=node --outdir=dist --external jsdom && bun build src/audit.ts src/inline-css.ts --target=node --outdir=dist --external jsdom --external @accesslint/core && tsc --emitDeclarationOnly",
+    "build": "bun build src/cli.ts --target=node --outdir=dist --external jsdom && bun build src/audit.ts src/inline-css.ts src/ssrf-guard.ts src/safe-fetch.ts --target=node --outdir=dist --external jsdom --external @accesslint/core && tsc --emitDeclarationOnly",
     "start": "bun src/cli.ts"
   },
   "dependencies": {
