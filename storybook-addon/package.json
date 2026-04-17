@@ -17,35 +17,83 @@
   "type": "module",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
-    "./manager": "./dist/manager.js",
+    "./manager": {
+      "types": "./dist/manager.d.ts",
+      "default": "./dist/manager.js"
+    },
     "./preview": {
-      "import": "./dist/preview.js",
-      "require": "./dist/preview.cjs"
+      "import": {
+        "types": "./dist/preview.d.ts",
+        "default": "./dist/preview.js"
+      },
+      "require": {
+        "types": "./dist/preview.d.cts",
+        "default": "./dist/preview.cjs"
+      }
     },
     "./vitest-plugin": {
-      "import": "./dist/vitest-plugin.js",
-      "require": "./dist/vitest-plugin.cjs"
+      "import": {
+        "types": "./dist/vitest-plugin.d.ts",
+        "default": "./dist/vitest-plugin.js"
+      },
+      "require": {
+        "types": "./dist/vitest-plugin.d.cts",
+        "default": "./dist/vitest-plugin.cjs"
+      }
     },
     "./vitest-setup": {
-      "types": "./dist/vitest-setup.d.ts",
-      "import": "./dist/vitest-setup.js",
-      "require": "./dist/vitest-setup.cjs"
+      "import": {
+        "types": "./dist/vitest-setup.d.ts",
+        "default": "./dist/vitest-setup.js"
+      },
+      "require": {
+        "types": "./dist/vitest-setup.d.cts",
+        "default": "./dist/vitest-setup.cjs"
+      }
     },
     "./matchers": {
-      "import": "./dist/matchers.js",
-      "require": "./dist/matchers.cjs"
+      "import": {
+        "types": "./dist/matchers.d.ts",
+        "default": "./dist/matchers.js"
+      },
+      "require": {
+        "types": "./dist/matchers.d.cts",
+        "default": "./dist/matchers.cjs"
+      }
     },
     "./portable": {
-      "import": "./dist/portable.js",
-      "require": "./dist/portable.cjs"
+      "import": {
+        "types": "./dist/portable.d.ts",
+        "default": "./dist/portable.js"
+      },
+      "require": {
+        "types": "./dist/portable.d.cts",
+        "default": "./dist/portable.cjs"
+      }
     }
   },
   "main": "dist/index.cjs",
   "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/index.d.cts",
+  "typesVersions": {
+    "*": {
+      "manager": ["./dist/manager.d.ts"],
+      "preview": ["./dist/preview.d.ts"],
+      "vitest-plugin": ["./dist/vitest-plugin.d.ts"],
+      "vitest-setup": ["./dist/vitest-setup.d.ts"],
+      "matchers": ["./dist/matchers.d.ts"],
+      "portable": ["./dist/portable.d.ts"]
+    }
+  },
   "files": [
     "dist/**/*",
     "README.md",
@@ -53,8 +101,8 @@
     "*.d.ts"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:watch": "tsup --watch",
+    "build": "tsdown",
+    "build:watch": "tsdown --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -67,7 +115,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "storybook": "^10.2.0",
-    "tsup": "^8.4.0",
+    "tsdown": "^0.21.9",
     "typescript": "^5.7.0",
     "vitest": "^4.0.18"
   },
