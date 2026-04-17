@@ -1,63 +1,61 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { emptyTableHeader } from "./empty-table-header";
 
+const RULE_ID = "adaptable/empty-table-header";
 
-describe("adaptable/empty-table-header", () => {
+describe(RULE_ID, () => {
   it("passes header with text", () => {
-    const doc = makeDoc(`
+    expectNoViolations(emptyTableHeader, `
       <table>
         <tr><th>Name</th><th>Age</th></tr>
       </table>
     `);
-    expect(emptyTableHeader.run(doc)).toHaveLength(0);
   });
 
   it("reports empty header", () => {
-    const doc = makeDoc(`
+    expectViolations(emptyTableHeader, `
       <table>
         <tr><th></th><th>Name</th></tr>
       </table>
-    `);
-    const violations = emptyTableHeader.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("adaptable/empty-table-header");
+    `, {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes header with aria-label", () => {
-    const doc = makeDoc(`
+    expectNoViolations(emptyTableHeader, `
       <table>
         <tr><th aria-label="Select all"></th><th>Name</th></tr>
       </table>
     `);
-    expect(emptyTableHeader.run(doc)).toHaveLength(0);
   });
 
   it("reports whitespace-only header", () => {
-    const doc = makeDoc(`
+    expectViolations(emptyTableHeader, `
       <table>
         <tr><th>   </th><th>Name</th></tr>
       </table>
-    `);
-    const violations = emptyTableHeader.run(doc);
-    expect(violations).toHaveLength(1);
+    `, {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("skips presentational tables", () => {
-    const doc = makeDoc(`
+    expectNoViolations(emptyTableHeader, `
       <table role="none">
         <tr><th></th></tr>
       </table>
     `);
-    expect(emptyTableHeader.run(doc)).toHaveLength(0);
   });
 
   it("skips aria-hidden headers", () => {
-    const doc = makeDoc(`
+    expectNoViolations(emptyTableHeader, `
       <table>
         <tr><th aria-hidden="true"></th></tr>
       </table>
     `);
-    expect(emptyTableHeader.run(doc)).toHaveLength(0);
   });
 });

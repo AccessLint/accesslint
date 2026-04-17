@@ -1,39 +1,52 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { imageRedundantAlt } from "./image-redundant-alt";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("text-alternatives/image-redundant-alt", () => {
+const RULE_ID = "text-alternatives/image-redundant-alt";
+
+describe(RULE_ID, () => {
   it("reports img alt duplicating parent link text", () => {
-    const doc = makeDoc('<a href="/home">Home<img src="home.png" alt="Home"></a>');
-    const violations = imageRedundantAlt.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("text-alternatives/image-redundant-alt");
+    expectViolations(
+      imageRedundantAlt,
+      '<a href="/home">Home<img src="home.png" alt="Home"></a>',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("reports img alt duplicating parent button text", () => {
-    const doc = makeDoc('<button>Submit<img src="arrow.png" alt="Submit"></button>');
-    const violations = imageRedundantAlt.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(
+      imageRedundantAlt,
+      '<button>Submit<img src="arrow.png" alt="Submit"></button>',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("passes when alt differs from link text", () => {
-    const doc = makeDoc('<a href="/home">Go home<img src="home.png" alt="House icon"></a>');
-    expect(imageRedundantAlt.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      imageRedundantAlt,
+      '<a href="/home">Go home<img src="home.png" alt="House icon"></a>',
+    );
   });
 
   it("passes img with empty alt inside link", () => {
-    const doc = makeDoc('<a href="/home">Home<img src="icon.png" alt=""></a>');
-    expect(imageRedundantAlt.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      imageRedundantAlt,
+      '<a href="/home">Home<img src="icon.png" alt=""></a>',
+    );
   });
 
   it("passes img not inside link or button", () => {
-    const doc = makeDoc('<div>Hello<img src="photo.jpg" alt="Hello"></div>');
-    expect(imageRedundantAlt.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      imageRedundantAlt,
+      '<div>Hello<img src="photo.jpg" alt="Hello"></div>',
+    );
   });
 
   it("comparison is case-insensitive", () => {
-    const doc = makeDoc('<a href="/home">HOME<img src="icon.png" alt="home"></a>');
-    const violations = imageRedundantAlt.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(
+      imageRedundantAlt,
+      '<a href="/home">HOME<img src="icon.png" alt="home"></a>',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 });

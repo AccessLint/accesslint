@@ -1,57 +1,35 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { imgAlt } from "./img-alt";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("text-alternatives/img-alt", () => {
+const RULE_ID = "text-alternatives/img-alt";
+
+describe(RULE_ID, () => {
   it("reports images missing alt attribute", () => {
-    const doc = makeDoc('<html><body><img src="photo.jpg"></body></html>');
-    const violations = imgAlt.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("text-alternatives/img-alt");
+    expectViolations(imgAlt, '<html><body><img src="photo.jpg"></body></html>', {
+      count: 1,
+      ruleId: RULE_ID,
+      impact: "critical",
+    });
   });
 
-  it("passes images with alt attribute", () => {
-    const doc = makeDoc('<html><body><img src="photo.jpg" alt="A photo"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
+  it("reports multiple violations with correct selectors", () => {
+    expectViolations(imgAlt, '<html><body><img src="a.jpg"><img src="b.jpg"></body></html>', {
+      count: 2,
+      ruleId: RULE_ID,
+    });
   });
 
-  it("passes images with empty alt (decorative)", () => {
-    const doc = makeDoc('<html><body><img src="bg.jpg" alt=""></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("passes images with role=presentation", () => {
-    const doc = makeDoc('<html><body><img src="bg.jpg" role="presentation"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("passes images with role=none", () => {
-    const doc = makeDoc('<html><body><img src="bg.jpg" role="none"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("skips aria-hidden images", () => {
-    const doc = makeDoc('<html><body><img src="x.jpg" aria-hidden="true"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("skips hidden images", () => {
-    const doc = makeDoc('<html><body><img src="pixel.gif" hidden></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("passes images with aria-label", () => {
-    const doc = makeDoc('<html><body><img src="logo.png" aria-label="Company logo"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("passes images with aria-labelledby", () => {
-    const doc = makeDoc('<html><body><span id="desc">Photo</span><img src="x.jpg" aria-labelledby="desc"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(0);
-  });
-
-  it("reports multiple violations", () => {
-    const doc = makeDoc('<html><body><img src="a.jpg"><img src="b.jpg"></body></html>');
-    expect(imgAlt.run(doc)).toHaveLength(2);
+  it.each([
+    ["alt attribute", '<img src="photo.jpg" alt="A photo">'],
+    ["empty alt (decorative)", '<img src="bg.jpg" alt="">'],
+    ["role=presentation", '<img src="bg.jpg" role="presentation">'],
+    ["role=none", '<img src="bg.jpg" role="none">'],
+    ["aria-label", '<img src="logo.png" aria-label="Company logo">'],
+    ["aria-labelledby", '<span id="desc">Photo</span><img src="x.jpg" aria-labelledby="desc">'],
+    ["aria-hidden", '<img src="x.jpg" aria-hidden="true">'],
+    ["hidden attribute", '<img src="pixel.gif" hidden>'],
+  ])("passes images with %s", (_label, body) => {
+    expectNoViolations(imgAlt, `<html><body>${body}</body></html>`);
   });
 });

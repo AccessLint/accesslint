@@ -1,29 +1,29 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { marquee } from "./marquee";
 
+const RULE_ID = "enough-time/marquee";
 
-describe("enough-time/marquee", () => {
+describe(RULE_ID, () => {
   it("reports marquee element", () => {
-    const doc = makeDoc("<html><body><marquee>Scrolling text</marquee></body></html>");
-    const violations = marquee.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("enough-time/marquee");
+    expectViolations(marquee, "<html><body><marquee>Scrolling text</marquee></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes without marquee element", () => {
-    const doc = makeDoc("<html><body><p>Static text</p></body></html>");
-    expect(marquee.run(doc)).toHaveLength(0);
+    expectNoViolations(marquee, "<html><body><p>Static text</p></body></html>");
   });
 
   it("skips aria-hidden marquee", () => {
-    const doc = makeDoc('<html><body><marquee aria-hidden="true">Hidden</marquee></body></html>');
-    expect(marquee.run(doc)).toHaveLength(0);
+    expectNoViolations(marquee, '<html><body><marquee aria-hidden="true">Hidden</marquee></body></html>');
   });
 
   it("reports multiple marquee elements", () => {
-    const doc = makeDoc("<html><body><marquee>One</marquee><marquee>Two</marquee></body></html>");
-    const violations = marquee.run(doc);
-    expect(violations).toHaveLength(2);
+    expectViolations(marquee, "<html><body><marquee>One</marquee><marquee>Two</marquee></body></html>", {
+      count: 2,
+      ruleId: RULE_ID,
+    });
   });
 });

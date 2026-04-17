@@ -1,27 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { htmlHasLang } from "./html-has-lang";
 
+const RULE_ID = "readable/html-has-lang";
 
-describe("readable/html-has-lang", () => {
+describe(RULE_ID, () => {
   it("reports missing lang", () => {
-    const doc = makeDoc("<html><body></body></html>");
-    expect(htmlHasLang.run(doc)).toHaveLength(1);
+    expectViolations(htmlHasLang, "<html><body></body></html>", { count: 1, ruleId: RULE_ID });
   });
 
   it("returns 'html' as the selector", () => {
-    const doc = makeDoc("<html><body></body></html>");
-    const violations = htmlHasLang.run(doc);
+    const violations = expectViolations(htmlHasLang, "<html><body></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+    });
     expect(violations[0].selector).toBe("html");
   });
 
   it("passes with lang", () => {
-    const doc = makeDoc('<html lang="en"><body></body></html>');
-    expect(htmlHasLang.run(doc)).toHaveLength(0);
+    expectNoViolations(htmlHasLang, '<html lang="en"><body></body></html>');
   });
 
   it("reports empty lang", () => {
-    const doc = makeDoc('<html lang=""><body></body></html>');
-    expect(htmlHasLang.run(doc)).toHaveLength(1);
+    expectViolations(htmlHasLang, '<html lang=""><body></body></html>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 });

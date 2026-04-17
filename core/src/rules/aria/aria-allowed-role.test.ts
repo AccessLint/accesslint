@@ -1,103 +1,94 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaAllowedRole } from "./aria-allowed-role";
 
+const RULE_ID = "aria/aria-allowed-role";
 
-describe("aria/aria-allowed-role", () => {
+describe(RULE_ID, () => {
   it("passes valid role on div", () => {
-    const doc = makeDoc('<div role="button">Click me</div>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<div role="button">Click me</div>');
   });
 
   it("passes valid role on button", () => {
-    const doc = makeDoc('<button role="switch">Toggle</button>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<button role="switch">Toggle</button>');
   });
 
   it("reports invalid role on button", () => {
-    const doc = makeDoc('<button role="heading">Not a heading</button>');
-    const violations = ariaAllowedRole.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("heading");
+    expectViolations(ariaAllowedRole, '<button role="heading">Not a heading</button>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /heading/,
+    });
   });
 
   it("passes checkbox role on button", () => {
-    const doc = makeDoc('<button role="checkbox" aria-checked="false">Option</button>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<button role="checkbox" aria-checked="false">Option</button>');
   });
 
   it("reports role on elements that should not have roles", () => {
-    const doc = makeDoc('<meta role="button">');
-    const violations = ariaAllowedRole.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaAllowedRole, '<meta role="button">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes any role on span", () => {
-    const doc = makeDoc('<span role="button">Click</span>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<span role="button">Click</span>');
   });
 
   it("allows presentation/none on img with empty alt", () => {
-    const doc = makeDoc('<img alt="" role="presentation" src="spacer.gif">');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<img alt="" role="presentation" src="spacer.gif">');
   });
 
   it("reports non-presentation role on img with empty alt", () => {
-    const doc = makeDoc('<img alt="" role="button" src="icon.png">');
-    const violations = ariaAllowedRole.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaAllowedRole, '<img alt="" role="button" src="icon.png">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes menuitem role on li", () => {
-    const doc = makeDoc('<ul><li role="menuitem">Item</li></ul>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<ul><li role="menuitem">Item</li></ul>');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<button role="heading" aria-hidden="true">Hidden</button>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<button role="heading" aria-hidden="true">Hidden</button>');
   });
 
   // Redundant-but-valid roles (implicit role == explicit role)
   it("passes redundant role=button on button", () => {
-    const doc = makeDoc('<button role="button">Click</button>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<button role="button">Click</button>');
   });
 
   it("passes redundant role=link on a[href]", () => {
-    const doc = makeDoc('<a href="/" role="link">Home</a>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<a href="/" role="link">Home</a>');
   });
 
   it("passes redundant role=navigation on nav", () => {
-    const doc = makeDoc('<nav role="navigation"><a href="/">Home</a></nav>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<nav role="navigation"><a href="/">Home</a></nav>');
   });
 
   it("passes redundant role=main on main", () => {
-    const doc = makeDoc('<main role="main">Content</main>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<main role="main">Content</main>');
   });
 
   it("passes redundant role=complementary on aside", () => {
-    const doc = makeDoc('<aside role="complementary">Sidebar</aside>');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<aside role="complementary">Sidebar</aside>');
   });
 
   it("passes combobox role on input[type=search]", () => {
-    const doc = makeDoc('<input type="search" role="combobox" aria-expanded="false" aria-controls="list1">');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<input type="search" role="combobox" aria-expanded="false" aria-controls="list1">');
   });
 
   it("passes searchbox role on input[type=search]", () => {
-    const doc = makeDoc('<input type="search" role="searchbox">');
-    expect(ariaAllowedRole.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaAllowedRole, '<input type="search" role="searchbox">');
   });
 
   it("reports disallowed role on input[type=search]", () => {
-    const doc = makeDoc('<input type="search" role="button">');
-    const violations = ariaAllowedRole.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("button");
+    expectViolations(ariaAllowedRole, '<input type="search" role="button">', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /button/,
+    });
   });
 });

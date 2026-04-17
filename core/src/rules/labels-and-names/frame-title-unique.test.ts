@@ -1,56 +1,66 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { frameTitleUnique } from "./frame-title-unique";
 
+const RULE_ID = "labels-and-names/frame-title-unique";
 
-describe("labels-and-names/frame-title-unique", () => {
+describe(RULE_ID, () => {
   it("passes when frame titles are unique", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      frameTitleUnique,
+      `
       <html><body>
         <iframe src="a.html" title="Video player"></iframe>
         <iframe src="b.html" title="Chat widget"></iframe>
       </body></html>
-    `);
-    expect(frameTitleUnique.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 
   it("reports duplicate frame titles", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      frameTitleUnique,
+      `
       <html><body>
         <iframe src="a.html" title="Content"></iframe>
         <iframe src="b.html" title="Content"></iframe>
       </body></html>
-    `);
-    const violations = frameTitleUnique.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("labels-and-names/frame-title-unique");
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("reports multiple duplicates", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      frameTitleUnique,
+      `
       <html><body>
         <iframe src="a.html" title="Frame"></iframe>
         <iframe src="b.html" title="Frame"></iframe>
         <iframe src="c.html" title="Frame"></iframe>
       </body></html>
-    `);
-    const violations = frameTitleUnique.run(doc);
-    expect(violations).toHaveLength(2);
+    `,
+      { count: 2, ruleId: RULE_ID },
+    );
   });
 
   it("is case-insensitive", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      frameTitleUnique,
+      `
       <html><body>
         <iframe src="a.html" title="Video"></iframe>
         <iframe src="b.html" title="VIDEO"></iframe>
       </body></html>
-    `);
-    const violations = frameTitleUnique.run(doc);
-    expect(violations).toHaveLength(1);
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("passes with single frame", () => {
-    const doc = makeDoc('<html><body><iframe src="page.html" title="Content"></iframe></body></html>');
-    expect(frameTitleUnique.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      frameTitleUnique,
+      '<html><body><iframe src="page.html" title="Content"></iframe></body></html>',
+    );
   });
 });

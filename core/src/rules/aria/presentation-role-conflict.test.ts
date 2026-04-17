@@ -1,75 +1,78 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { presentationRoleConflict } from "./presentation-role-conflict";
 
+const RULE_ID = "aria/presentation-role-conflict";
 
-describe("aria/presentation-role-conflict", () => {
+describe(RULE_ID, () => {
   it("passes role=presentation on non-focusable element", () => {
-    const doc = makeDoc('<img role="presentation" src="spacer.gif">');
-    expect(presentationRoleConflict.run(doc)).toHaveLength(0);
+    expectNoViolations(presentationRoleConflict, '<img role="presentation" src="spacer.gif">');
   });
 
   it("passes role=none on non-focusable element", () => {
-    const doc = makeDoc('<div role="none">Decorative</div>');
-    expect(presentationRoleConflict.run(doc)).toHaveLength(0);
+    expectNoViolations(presentationRoleConflict, '<div role="none">Decorative</div>');
   });
 
   it("reports focusable button with role=presentation", () => {
-    const doc = makeDoc('<button role="presentation">Click</button>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("focusable");
+    expectViolations(presentationRoleConflict, '<button role="presentation">Click</button>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /focusable/,
+    });
   });
 
   it("reports link with role=none", () => {
-    const doc = makeDoc('<a href="/" role="none">Link</a>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(presentationRoleConflict, '<a href="/" role="none">Link</a>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports element with tabindex and role=presentation", () => {
-    const doc = makeDoc('<div role="presentation" tabindex="0">Focusable</div>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(presentationRoleConflict, '<div role="presentation" tabindex="0">Focusable</div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports element with aria-label and role=none", () => {
-    const doc = makeDoc('<div role="none" aria-label="Named">Content</div>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("accessible name");
+    expectViolations(presentationRoleConflict, '<div role="none" aria-label="Named">Content</div>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /accessible name/,
+    });
   });
 
   it("reports element with aria-labelledby and role=presentation", () => {
-    const doc = makeDoc('<span id="lbl">Label</span><div role="presentation" aria-labelledby="lbl">Content</div>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(presentationRoleConflict, '<span id="lbl">Label</span><div role="presentation" aria-labelledby="lbl">Content</div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports element with aria-describedby and role=none", () => {
-    const doc = makeDoc('<div role="none" aria-describedby="desc">Content</div>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(presentationRoleConflict, '<div role="none" aria-describedby="desc">Content</div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports element with aria-controls and role=presentation", () => {
-    const doc = makeDoc('<div role="presentation" aria-controls="panel">Content</div>');
-    const violations = presentationRoleConflict.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(presentationRoleConflict, '<div role="presentation" aria-controls="panel">Content</div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes disabled button with role=presentation", () => {
-    const doc = makeDoc('<button role="presentation" disabled>Disabled</button>');
-    expect(presentationRoleConflict.run(doc)).toHaveLength(0);
+    expectNoViolations(presentationRoleConflict, '<button role="presentation" disabled>Disabled</button>');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<button role="presentation" aria-hidden="true">Hidden</button>');
-    expect(presentationRoleConflict.run(doc)).toHaveLength(0);
+    expectNoViolations(presentationRoleConflict, '<button role="presentation" aria-hidden="true">Hidden</button>');
   });
 
   it("passes tabindex=-1 (not in tab order)", () => {
-    const doc = makeDoc('<div role="none" tabindex="-1">Not in tab order</div>');
-    expect(presentationRoleConflict.run(doc)).toHaveLength(0);
+    expectNoViolations(presentationRoleConflict, '<div role="none" tabindex="-1">Not in tab order</div>');
   });
 });

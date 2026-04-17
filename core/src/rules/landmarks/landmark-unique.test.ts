@@ -1,44 +1,50 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { landmarkUnique } from "./landmark-unique";
 
+const RULE_ID = "landmarks/landmark-unique";
 
-describe("landmarks/landmark-unique", () => {
+describe(RULE_ID, () => {
   it("passes with uniquely labeled navs", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      landmarkUnique,
+      `
       <html><body>
         <nav aria-label="Main">Links</nav>
         <nav aria-label="Footer">More links</nav>
       </body></html>
-    `);
-    expect(landmarkUnique.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 
   it("reports duplicate nav labels", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      landmarkUnique,
+      `
       <html><body>
         <nav aria-label="Navigation">Links</nav>
         <nav aria-label="Navigation">More links</nav>
       </body></html>
-    `);
-    const violations = landmarkUnique.run(doc);
-    expect(violations).toHaveLength(1);
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("reports navs with same text content", () => {
     // Navs with same text content are considered duplicates
-    const doc = makeDoc(`
+    expectViolations(
+      landmarkUnique,
+      `
       <html><body>
         <nav>Links</nav>
         <nav>Links</nav>
       </body></html>
-    `);
-    const violations = landmarkUnique.run(doc);
-    expect(violations).toHaveLength(1);
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("passes with single nav", () => {
-    const doc = makeDoc("<html><body><nav>Links</nav></body></html>");
-    expect(landmarkUnique.run(doc)).toHaveLength(0);
+    expectNoViolations(landmarkUnique, "<html><body><nav>Links</nav></body></html>");
   });
 });

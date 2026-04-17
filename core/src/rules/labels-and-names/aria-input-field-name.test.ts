@@ -1,33 +1,30 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaInputFieldName } from "./aria-input-field-name";
 
+const RULE_ID = "labels-and-names/aria-input-field-name";
 
-describe("labels-and-names/aria-input-field-name", () => {
+describe(RULE_ID, () => {
   it("passes textbox with aria-label", () => {
-    const doc = makeDoc('<div role="textbox" aria-label="Username"></div>');
-    expect(ariaInputFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaInputFieldName, '<div role="textbox" aria-label="Username"></div>');
   });
 
   it("reports textbox without name", () => {
-    const doc = makeDoc('<div role="textbox"></div>');
-    const violations = ariaInputFieldName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaInputFieldName, '<div role="textbox"></div>', { count: 1, ruleId: RULE_ID });
   });
 
   it("passes combobox with name", () => {
-    const doc = makeDoc('<div role="combobox" aria-label="Country"></div>');
-    expect(ariaInputFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaInputFieldName, '<div role="combobox" aria-label="Country"></div>');
   });
 
   it("reports slider without name", () => {
-    const doc = makeDoc('<div role="slider" aria-valuenow="50"></div>');
-    const violations = ariaInputFieldName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaInputFieldName, '<div role="slider" aria-valuenow="50"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("skips native inputs (handled by label rule)", () => {
-    const doc = makeDoc('<input type="text">');
-    expect(ariaInputFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaInputFieldName, '<input type="text">');
   });
 });

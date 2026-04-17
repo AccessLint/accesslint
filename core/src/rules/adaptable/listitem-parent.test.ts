@@ -1,45 +1,42 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { listitemParent } from "./listitem-parent";
 
+const RULE_ID = "adaptable/listitem-parent";
 
-describe("adaptable/listitem-parent", () => {
+describe(RULE_ID, () => {
   it("passes li inside ul", () => {
-    const doc = makeDoc("<html><body><ul><li>Item</li></ul></body></html>");
-    expect(listitemParent.run(doc)).toHaveLength(0);
+    expectNoViolations(listitemParent, "<html><body><ul><li>Item</li></ul></body></html>");
   });
 
   it("passes li inside ol", () => {
-    const doc = makeDoc("<html><body><ol><li>Item</li></ol></body></html>");
-    expect(listitemParent.run(doc)).toHaveLength(0);
+    expectNoViolations(listitemParent, "<html><body><ol><li>Item</li></ol></body></html>");
   });
 
   it("passes li inside menu", () => {
-    const doc = makeDoc("<html><body><menu><li>Item</li></menu></body></html>");
-    expect(listitemParent.run(doc)).toHaveLength(0);
+    expectNoViolations(listitemParent, "<html><body><menu><li>Item</li></menu></body></html>");
   });
 
   it("passes li inside role=list", () => {
-    const doc = makeDoc('<html><body><div role="list"><li>Item</li></div></body></html>');
-    expect(listitemParent.run(doc)).toHaveLength(0);
+    expectNoViolations(listitemParent, '<html><body><div role="list"><li>Item</li></div></body></html>');
   });
 
   it("reports li inside div (no list role)", () => {
-    const doc = makeDoc("<html><body><div><li>Orphan</li></div></body></html>");
-    const violations = listitemParent.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("adaptable/listitem-parent");
-    expect(violations[0].message).toContain("<li>");
+    expectViolations(listitemParent, "<html><body><div><li>Orphan</li></div></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /<li>/,
+    });
   });
 
   it("reports li directly in body", () => {
-    const doc = makeDoc("<html><body><li>Orphan</li></body></html>");
-    const violations = listitemParent.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(listitemParent, "<html><body><li>Orphan</li></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("skips aria-hidden li", () => {
-    const doc = makeDoc('<html><body><div><li aria-hidden="true">Hidden</li></div></body></html>');
-    expect(listitemParent.run(doc)).toHaveLength(0);
+    expectNoViolations(listitemParent, '<html><body><div><li aria-hidden="true">Hidden</li></div></body></html>');
   });
 });

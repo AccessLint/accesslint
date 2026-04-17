@@ -1,17 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaTreeitemName } from "./aria-treeitem-name";
 
+const RULE_ID = "labels-and-names/aria-treeitem-name";
 
-describe("labels-and-names/aria-treeitem-name", () => {
+describe(RULE_ID, () => {
   it("passes treeitem with text", () => {
-    const doc = makeDoc('<div role="treeitem">Documents</div>');
-    expect(ariaTreeitemName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaTreeitemName, '<div role="treeitem">Documents</div>');
   });
 
   it("reports treeitem without name", () => {
-    const doc = makeDoc('<div role="treeitem"></div>');
-    const violations = ariaTreeitemName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaTreeitemName, '<div role="treeitem"></div>', { count: 1, ruleId: RULE_ID });
   });
 });

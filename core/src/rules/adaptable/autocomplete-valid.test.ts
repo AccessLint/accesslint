@@ -1,94 +1,85 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { autocompleteValid } from "./autocomplete-valid";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("adaptable/autocomplete-valid", () => {
+const RULE_ID = "adaptable/autocomplete-valid";
+
+describe(RULE_ID, () => {
   // --- Valid values ---
   it("passes standard autocomplete values", () => {
     for (const value of ["name", "email", "tel", "street-address", "postal-code", "cc-number"]) {
-      const doc = makeDoc(`<input type="text" autocomplete="${value}">`);
-      expect(autocompleteValid.run(doc), `expected "${value}" to pass`).toHaveLength(0);
+      expectNoViolations(autocompleteValid, `<input type="text" autocomplete="${value}">`);
     }
   });
 
   it("passes compound value (shipping street-address)", () => {
-    const doc = makeDoc('<input type="text" autocomplete="shipping street-address">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="shipping street-address">');
   });
 
   it("passes section-* token", () => {
-    const doc = makeDoc('<input type="text" autocomplete="section-blue shipping street-address">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="section-blue shipping street-address">');
   });
 
   it("passes contact type on contact field (home tel)", () => {
-    const doc = makeDoc('<input type="tel" autocomplete="home tel">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="tel" autocomplete="home tel">');
   });
 
   it("passes webauthn suffix", () => {
-    const doc = makeDoc('<input type="text" autocomplete="username webauthn">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="username webauthn">');
   });
 
   it("passes off value", () => {
-    const doc = makeDoc('<input type="text" autocomplete="off">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="off">');
   });
 
   it("passes on value", () => {
-    const doc = makeDoc('<input type="text" autocomplete="on">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="on">');
   });
 
   // --- Invalid values ---
   it("reports unknown autocomplete value", () => {
-    const doc = makeDoc('<input type="text" autocomplete="nope">');
-    const v = autocompleteValid.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].ruleId).toBe("adaptable/autocomplete-valid");
+    expectViolations(autocompleteValid, '<input type="text" autocomplete="nope">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports contact type on non-contact field", () => {
-    const doc = makeDoc('<input type="text" autocomplete="home name">');
-    const v = autocompleteValid.run(doc);
-    expect(v).toHaveLength(1);
+    expectViolations(autocompleteValid, '<input type="text" autocomplete="home name">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports extra tokens", () => {
-    const doc = makeDoc('<input type="text" autocomplete="name extra">');
-    const v = autocompleteValid.run(doc);
-    expect(v).toHaveLength(1);
+    expectViolations(autocompleteValid, '<input type="text" autocomplete="name extra">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   // --- Skipped elements ---
   it("skips element without autocomplete attribute", () => {
-    const doc = makeDoc('<input type="text">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text">');
   });
 
   it("skips empty autocomplete value", () => {
-    const doc = makeDoc('<input type="text" autocomplete="">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="">');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<input type="text" autocomplete="nope" aria-hidden="true">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" aria-hidden="true">');
   });
 
   it("skips disabled elements", () => {
-    const doc = makeDoc('<input type="text" autocomplete="nope" disabled>');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" disabled>');
   });
 
   it("skips aria-disabled elements", () => {
-    const doc = makeDoc('<input type="text" autocomplete="nope" aria-disabled="true">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" aria-disabled="true">');
   });
 
   it("skips computed-hidden elements", () => {
-    const doc = makeDoc('<input type="text" autocomplete="nope" style="display:none">');
-    expect(autocompleteValid.run(doc)).toHaveLength(0);
+    expectNoViolations(autocompleteValid, '<input type="text" autocomplete="nope" style="display:none">');
   });
 });

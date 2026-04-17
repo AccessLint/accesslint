@@ -1,85 +1,82 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaRequiredParent } from "./aria-required-parent";
 
+const RULE_ID = "adaptable/aria-required-parent";
 
-describe("adaptable/aria-required-parent", () => {
+describe(RULE_ID, () => {
   it("passes listitem in list", () => {
-    const doc = makeDoc('<ul><li role="listitem">Item</li></ul>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<ul><li role="listitem">Item</li></ul>');
   });
 
   it("reports listitem without list parent", () => {
-    const doc = makeDoc('<div><div role="listitem">Orphan</div></div>');
-    const violations = ariaRequiredParent.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("list");
+    expectViolations(ariaRequiredParent, '<div><div role="listitem">Orphan</div></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /list/,
+    });
   });
 
   it("passes tab in tablist", () => {
-    const doc = makeDoc('<div role="tablist"><button role="tab">Tab</button></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="tablist"><button role="tab">Tab</button></div>');
   });
 
   it("reports tab without tablist parent", () => {
-    const doc = makeDoc('<div><button role="tab">Orphan Tab</button></div>');
-    const violations = ariaRequiredParent.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaRequiredParent, '<div><button role="tab">Orphan Tab</button></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes menuitem in menu", () => {
-    const doc = makeDoc('<div role="menu"><div role="menuitem">Item</div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="menu"><div role="menuitem">Item</div></div>');
   });
 
   it("passes option in listbox", () => {
-    const doc = makeDoc('<div role="listbox"><div role="option">Option</div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="listbox"><div role="option">Option</div></div>');
   });
 
   it("passes row in table", () => {
-    const doc = makeDoc('<div role="table"><div role="row"><div role="cell">Cell</div></div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="table"><div role="row"><div role="cell">Cell</div></div></div>');
   });
 
   it("finds parent through intermediate elements", () => {
-    const doc = makeDoc('<div role="list"><div class="wrapper"><div role="listitem">Item</div></div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="list"><div class="wrapper"><div role="listitem">Item</div></div></div>');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<div><div role="listitem" aria-hidden="true">Hidden</div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div><div role="listitem" aria-hidden="true">Hidden</div></div>');
   });
 
   it("passes cell inside row", () => {
-    const doc = makeDoc('<div role="table"><div role="row"><div role="cell">Data</div></div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="table"><div role="row"><div role="cell">Data</div></div></div>');
   });
 
   it("reports cell without row parent", () => {
-    const doc = makeDoc('<div role="table"><div role="cell">Orphan</div></div>');
-    const violations = ariaRequiredParent.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("row");
+    expectViolations(ariaRequiredParent, '<div role="table"><div role="cell">Orphan</div></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /row/,
+    });
   });
 
   it("reports columnheader without row parent", () => {
-    const doc = makeDoc('<div role="grid"><div role="columnheader">Header</div></div>');
-    const violations = ariaRequiredParent.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("row");
+    expectViolations(ariaRequiredParent, '<div role="grid"><div role="columnheader">Header</div></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /row/,
+    });
   });
 
   it("passes gridcell inside row", () => {
-    const doc = makeDoc('<div role="grid"><div role="row"><div role="gridcell">Cell</div></div></div>');
-    expect(ariaRequiredParent.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRequiredParent, '<div role="grid"><div role="row"><div role="gridcell">Cell</div></div></div>');
   });
 
   it("reports rowheader without row parent", () => {
-    const doc = makeDoc('<div role="table"><div role="rowheader">Header</div></div>');
-    const violations = ariaRequiredParent.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("row");
+    expectViolations(ariaRequiredParent, '<div role="table"><div role="rowheader">Header</div></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /row/,
+    });
   });
 });

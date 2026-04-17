@@ -1,23 +1,23 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaRoles } from "./aria-roles";
 
+const RULE_ID = "aria/aria-roles";
 
-describe("aria/aria-roles", () => {
+describe(RULE_ID, () => {
   it("passes valid roles", () => {
-    const doc = makeDoc('<html><body><div role="button">Click</div></body></html>');
-    expect(ariaRoles.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRoles, '<html><body><div role="button">Click</div></body></html>');
   });
 
   it("reports invalid roles", () => {
-    const doc = makeDoc('<html><body><div role="foobar">X</div></body></html>');
-    const v = ariaRoles.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].message).toContain("foobar");
+    expectViolations(ariaRoles, '<html><body><div role="foobar">X</div></body></html>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /foobar/,
+    });
   });
 
   it("passes multiple valid roles", () => {
-    const doc = makeDoc('<html><body><nav role="navigation">Nav</nav></body></html>');
-    expect(ariaRoles.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaRoles, '<html><body><nav role="navigation">Nav</nav></body></html>');
   });
 });

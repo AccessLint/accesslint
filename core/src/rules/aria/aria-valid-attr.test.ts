@@ -1,17 +1,19 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaValidAttr } from "./aria-valid-attr";
 
+const RULE_ID = "aria/aria-valid-attr";
 
-describe("aria/aria-valid-attr", () => {
+describe(RULE_ID, () => {
   it("passes valid aria attributes", () => {
-    const doc = makeDoc('<html><body><div aria-label="test"></div></body></html>');
-    expect(ariaValidAttr.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaValidAttr, '<html><body><div aria-label="test"></div></body></html>');
   });
 
   it("reports invalid aria attributes", () => {
-    const doc = makeDoc('<html><body><div aria-foo="bar"></div></body></html>');
-    expect(ariaValidAttr.run(doc)).toHaveLength(1);
-    expect(ariaValidAttr.run(doc)[0].message).toContain("aria-foo");
+    expectViolations(ariaValidAttr, '<html><body><div aria-foo="bar"></div></body></html>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /aria-foo/,
+    });
   });
 });

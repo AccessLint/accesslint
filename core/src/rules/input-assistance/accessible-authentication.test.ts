@@ -1,47 +1,56 @@
 import { describe, it, expect } from "vitest";
 import { accessibleAuthentication } from "./accessible-authentication";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("input-assistance/accessible-authentication", () => {
+const RULE_ID = "input-assistance/accessible-authentication";
+
+describe(RULE_ID, () => {
   // --- Passing cases ---
   it("passes password field with autocomplete=current-password", () => {
-    const doc = makeDoc('<input type="password" autocomplete="current-password">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="current-password">',
+    );
   });
 
   it("passes password field with autocomplete=new-password", () => {
-    const doc = makeDoc('<input type="password" autocomplete="new-password">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="new-password">',
+    );
   });
 
   it("passes password field with no autocomplete attribute", () => {
-    const doc = makeDoc('<input type="password">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(accessibleAuthentication, '<input type="password">');
   });
 
   it("passes password field with empty autocomplete", () => {
-    const doc = makeDoc('<input type="password" autocomplete="">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(accessibleAuthentication, '<input type="password" autocomplete="">');
   });
 
   it("passes non-password input with autocomplete=off", () => {
-    const doc = makeDoc('<input type="text" autocomplete="off">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(accessibleAuthentication, '<input type="text" autocomplete="off">');
   });
 
   it("passes password field with benign onpaste", () => {
-    const doc = makeDoc('<input type="password" onpaste="handlePaste()">');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" onpaste="handlePaste()">',
+    );
   });
 
   // --- Violations ---
   it("reports password field with autocomplete=off", () => {
-    const doc = makeDoc('<input type="password" autocomplete="off">');
-    const v = accessibleAuthentication.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].ruleId).toBe("input-assistance/accessible-authentication");
-    expect(v[0].impact).toBe("critical");
-    expect(v[0].message).toContain("autocomplete");
+    const v = expectViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off">',
+      {
+        count: 1,
+        ruleId: RULE_ID,
+        impact: "critical",
+        messageMatches: /autocomplete/,
+      },
+    );
     expect(v[0].fix).toEqual({
       type: "set-attribute",
       attribute: "autocomplete",
@@ -50,10 +59,11 @@ describe("input-assistance/accessible-authentication", () => {
   });
 
   it("reports password field with onpaste=return false", () => {
-    const doc = makeDoc('<input type="password" onpaste="return false">');
-    const v = accessibleAuthentication.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].message).toContain("pasting");
+    const v = expectViolations(
+      accessibleAuthentication,
+      '<input type="password" onpaste="return false">',
+      { count: 1, ruleId: RULE_ID, messageMatches: /pasting/ },
+    );
     expect(v[0].fix).toEqual({
       type: "remove-attribute",
       attribute: "onpaste",
@@ -61,55 +71,59 @@ describe("input-assistance/accessible-authentication", () => {
   });
 
   it("reports password field with onpaste using preventDefault", () => {
-    const doc = makeDoc('<input type="password" onpaste="event.preventDefault()">');
-    const v = accessibleAuthentication.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].message).toContain("pasting");
+    expectViolations(
+      accessibleAuthentication,
+      '<input type="password" onpaste="event.preventDefault()">',
+      { count: 1, ruleId: RULE_ID, messageMatches: /pasting/ },
+    );
   });
 
   it("reports only autocomplete=off when both violations present", () => {
-    const doc = makeDoc(
-      '<input type="password" autocomplete="off" onpaste="return false">'
-    );
     // autocomplete=off triggers first, and we continue past it
-    const v = accessibleAuthentication.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].message).toContain("autocomplete");
+    expectViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off" onpaste="return false">',
+      { count: 1, ruleId: RULE_ID, messageMatches: /autocomplete/ },
+    );
   });
 
   it("reports multiple password fields independently", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      accessibleAuthentication,
+      `
       <input type="password" autocomplete="off">
       <input type="password" onpaste="return false">
-    `);
-    const v = accessibleAuthentication.run(doc);
-    expect(v).toHaveLength(2);
+    `,
+      { count: 2, ruleId: RULE_ID },
+    );
   });
 
   // --- Skipped elements ---
   it("skips aria-hidden password fields", () => {
-    const doc = makeDoc(
-      '<input type="password" autocomplete="off" aria-hidden="true">'
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off" aria-hidden="true">',
     );
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
   });
 
   it("skips disabled password fields", () => {
-    const doc = makeDoc('<input type="password" autocomplete="off" disabled>');
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off" disabled>',
+    );
   });
 
   it("skips aria-disabled password fields", () => {
-    const doc = makeDoc(
-      '<input type="password" autocomplete="off" aria-disabled="true">'
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off" aria-disabled="true">',
     );
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
   });
 
   it("skips computed-hidden password fields", () => {
-    const doc = makeDoc(
-      '<input type="password" autocomplete="off" style="display:none">'
+    expectNoViolations(
+      accessibleAuthentication,
+      '<input type="password" autocomplete="off" style="display:none">',
     );
-    expect(accessibleAuthentication.run(doc)).toHaveLength(0);
   });
 });

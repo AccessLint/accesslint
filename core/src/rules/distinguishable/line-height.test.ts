@@ -1,34 +1,35 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { lineHeight } from "./line-height";
 
-describe("distinguishable/line-height", () => {
+const RULE_ID = "distinguishable/line-height";
+
+describe(RULE_ID, () => {
   it("passes without inline styles", () => {
-    const doc = makeDoc("<html><body><p>Text</p></body></html>");
-    expect(lineHeight.run(doc)).toHaveLength(0);
+    expectNoViolations(lineHeight, "<html><body><p>Text</p></body></html>");
   });
 
   it("passes line-height at threshold (1.5)", () => {
-    const doc = makeDoc('<html><body><p style="line-height: 1.5 !important">Text</p></body></html>');
-    expect(lineHeight.run(doc)).toHaveLength(0);
+    expectNoViolations(lineHeight, '<html><body><p style="line-height: 1.5 !important">Text</p></body></html>');
   });
 
   it("reports line-height below threshold with !important", () => {
-    const doc = makeDoc('<html><body><p style="line-height: 1.1 !important">Text</p></body></html>');
-    const violations = lineHeight.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("distinguishable/line-height");
-    expect(violations[0].message).toContain("Line height");
+    expectViolations(
+      lineHeight,
+      '<html><body><p style="line-height: 1.1 !important">Text</p></body></html>',
+      { count: 1, ruleId: RULE_ID, messageMatches: /Line height/ },
+    );
   });
 
   it("reports line-height percentage below threshold", () => {
-    const doc = makeDoc('<html><body><p style="line-height: 110% !important">Text</p></body></html>');
-    const violations = lineHeight.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(
+      lineHeight,
+      '<html><body><p style="line-height: 110% !important">Text</p></body></html>',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("passes line-height percentage at threshold (150%)", () => {
-    const doc = makeDoc('<html><body><p style="line-height: 150% !important">Text</p></body></html>');
-    expect(lineHeight.run(doc)).toHaveLength(0);
+    expectNoViolations(lineHeight, '<html><body><p style="line-height: 150% !important">Text</p></body></html>');
   });
 });

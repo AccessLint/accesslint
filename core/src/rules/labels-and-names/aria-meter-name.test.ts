@@ -1,22 +1,25 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaMeterName } from "./aria-meter-name";
 
+const RULE_ID = "labels-and-names/aria-meter-name";
 
-describe("labels-and-names/aria-meter-name", () => {
+describe(RULE_ID, () => {
   it("passes meter with aria-label", () => {
-    const doc = makeDoc('<div role="meter" aria-valuenow="70" aria-label="Battery level"></div>');
-    expect(ariaMeterName.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      ariaMeterName,
+      '<div role="meter" aria-valuenow="70" aria-label="Battery level"></div>',
+    );
   });
 
   it("reports meter without name", () => {
-    const doc = makeDoc('<div role="meter" aria-valuenow="70"></div>');
-    const violations = ariaMeterName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaMeterName, '<div role="meter" aria-valuenow="70"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes native meter with aria-label", () => {
-    const doc = makeDoc('<meter value="0.7" aria-label="Progress"></meter>');
-    expect(ariaMeterName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaMeterName, '<meter value="0.7" aria-label="Progress"></meter>');
   });
 });

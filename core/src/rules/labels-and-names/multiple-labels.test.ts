@@ -1,52 +1,59 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { multipleLabels } from "./multiple-labels";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("labels-and-names/multiple-labels", () => {
+const RULE_ID = "labels-and-names/multiple-labels";
+
+describe(RULE_ID, () => {
   it("reports input with multiple label[for] elements", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      multipleLabels,
+      `
       <label for="x">First</label>
       <label for="x">Second</label>
       <input id="x" type="text">
-    `);
-    const v = multipleLabels.run(doc);
-    expect(v).toHaveLength(1);
-    expect(v[0].ruleId).toBe("labels-and-names/multiple-labels");
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("reports input with label[for] and wrapping label", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      multipleLabels,
+      `
       <label for="x">Explicit</label>
       <label><input id="x" type="text"></label>
-    `);
-    const v = multipleLabels.run(doc);
-    expect(v).toHaveLength(1);
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 
   it("passes input with single label", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      multipleLabels,
+      `
       <label for="x">Name</label>
       <input id="x" type="text">
-    `);
-    expect(multipleLabels.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 
   it("passes input with no label", () => {
-    const doc = makeDoc('<input id="x" type="text">');
-    expect(multipleLabels.run(doc)).toHaveLength(0);
+    expectNoViolations(multipleLabels, '<input id="x" type="text">');
   });
 
   it("skips input without id", () => {
-    const doc = makeDoc('<input type="text">');
-    expect(multipleLabels.run(doc)).toHaveLength(0);
+    expectNoViolations(multipleLabels, '<input type="text">');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      multipleLabels,
+      `
       <label for="x">First</label>
       <label for="x">Second</label>
       <input id="x" type="text" aria-hidden="true">
-    `);
-    expect(multipleLabels.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 });

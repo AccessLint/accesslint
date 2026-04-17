@@ -1,23 +1,26 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { definitionList } from "./definition-list";
 
+const RULE_ID = "adaptable/definition-list";
 
-describe("adaptable/definition-list", () => {
+describe(RULE_ID, () => {
   it("passes valid dl", () => {
-    const doc = makeDoc("<html><body><dl><dt>T</dt><dd>D</dd></dl></body></html>");
-    expect(definitionList.run(doc)).toHaveLength(0);
+    expectNoViolations(definitionList, "<html><body><dl><dt>T</dt><dd>D</dd></dl></body></html>");
   });
 
   it("reports invalid child in dl", () => {
-    const doc = makeDoc("<html><body><dl><p>Bad</p></dl></body></html>");
-    expect(definitionList.run(doc)).toHaveLength(1);
+    expectViolations(definitionList, "<html><body><dl><p>Bad</p></dl></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports bare text node in dl", () => {
-    const doc = makeDoc("<html><body><dl>Bare text<dt>T</dt><dd>D</dd></dl></body></html>");
-    const violations = definitionList.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("<dt>");
+    expectViolations(definitionList, "<html><body><dl>Bare text<dt>T</dt><dd>D</dd></dl></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /<dt>/,
+    });
   });
 });

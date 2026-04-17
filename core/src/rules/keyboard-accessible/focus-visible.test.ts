@@ -1,33 +1,31 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { focusVisible } from "./focus-visible";
 
+const RULE_ID = "keyboard-accessible/focus-visible";
 
-describe("keyboard-accessible/focus-visible", () => {
+describe(RULE_ID, () => {
   it("reports outline:none without alternative", () => {
-    const doc = makeDoc('<button style="outline: none;">Click</button>');
-    const violations = focusVisible.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("outline");
+    expectViolations(focusVisible, '<button style="outline: none;">Click</button>', {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /outline/,
+    });
   });
 
   it("passes outline:none with border", () => {
-    const doc = makeDoc('<button style="outline: none; border: 2px solid blue;">Click</button>');
-    expect(focusVisible.run(doc)).toHaveLength(0);
+    expectNoViolations(focusVisible, '<button style="outline: none; border: 2px solid blue;">Click</button>');
   });
 
   it("passes outline:none with box-shadow", () => {
-    const doc = makeDoc('<button style="outline: none; box-shadow: 0 0 3px blue;">Click</button>');
-    expect(focusVisible.run(doc)).toHaveLength(0);
+    expectNoViolations(focusVisible, '<button style="outline: none; box-shadow: 0 0 3px blue;">Click</button>');
   });
 
   it("passes element with no inline outline style", () => {
-    const doc = makeDoc("<button>Click</button>");
-    expect(focusVisible.run(doc)).toHaveLength(0);
+    expectNoViolations(focusVisible, "<button>Click</button>");
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<button style="outline: none;" aria-hidden="true">Hidden</button>');
-    expect(focusVisible.run(doc)).toHaveLength(0);
+    expectNoViolations(focusVisible, '<button style="outline: none;" aria-hidden="true">Hidden</button>');
   });
 });

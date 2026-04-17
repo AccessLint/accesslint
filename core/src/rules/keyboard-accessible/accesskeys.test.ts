@@ -1,41 +1,49 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { accesskeys } from "./accesskeys";
 
+const RULE_ID = "keyboard-accessible/accesskeys";
 
-describe("keyboard-accessible/accesskeys", () => {
+describe(RULE_ID, () => {
   it("reports duplicate accesskeys", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      accesskeys,
+      `
       <button accesskey="s">Save</button>
       <button accesskey="s">Submit</button>
-    `);
-    const violations = accesskeys.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("s");
+    `,
+      { count: 1, ruleId: RULE_ID, messageMatches: /s/ },
+    );
   });
 
   it("passes unique accesskeys", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      accesskeys,
+      `
       <button accesskey="s">Save</button>
       <button accesskey="d">Delete</button>
-    `);
-    expect(accesskeys.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc(`
+    expectNoViolations(
+      accesskeys,
+      `
       <button accesskey="s">Save</button>
       <button accesskey="s" aria-hidden="true">Hidden</button>
-    `);
-    expect(accesskeys.run(doc)).toHaveLength(0);
+    `,
+    );
   });
 
   it("matches accesskeys case-insensitively", () => {
-    const doc = makeDoc(`
+    expectViolations(
+      accesskeys,
+      `
       <button accesskey="S">Save</button>
       <button accesskey="s">Submit</button>
-    `);
-    const violations = accesskeys.run(doc);
-    expect(violations).toHaveLength(1);
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 });

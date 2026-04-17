@@ -1,35 +1,35 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { wordSpacing } from "./word-spacing";
 
-describe("distinguishable/word-spacing", () => {
+const RULE_ID = "distinguishable/word-spacing";
+
+describe(RULE_ID, () => {
   it("passes without inline styles", () => {
-    const doc = makeDoc("<html><body><p>Text</p></body></html>");
-    expect(wordSpacing.run(doc)).toHaveLength(0);
+    expectNoViolations(wordSpacing, "<html><body><p>Text</p></body></html>");
   });
 
   it("passes word-spacing at threshold (0.16em)", () => {
-    const doc = makeDoc('<html><body><p style="word-spacing: 0.16em !important">Text</p></body></html>');
-    expect(wordSpacing.run(doc)).toHaveLength(0);
+    expectNoViolations(wordSpacing, '<html><body><p style="word-spacing: 0.16em !important">Text</p></body></html>');
   });
 
   it("reports word-spacing below threshold with !important", () => {
-    const doc = makeDoc('<html><body><p style="word-spacing: 0.05em !important">Text</p></body></html>');
-    const violations = wordSpacing.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("distinguishable/word-spacing");
-    expect(violations[0].message).toContain("word-spacing");
-    expect(violations[0].message).toContain("!important");
+    expectViolations(
+      wordSpacing,
+      '<html><body><p style="word-spacing: 0.05em !important">Text</p></body></html>',
+      { count: 1, ruleId: RULE_ID, messageMatches: /word-spacing.*!important|!important.*word-spacing/ },
+    );
   });
 
   it("passes word-spacing without !important", () => {
-    const doc = makeDoc('<html><body><p style="word-spacing: 0.01em">Text</p></body></html>');
-    expect(wordSpacing.run(doc)).toHaveLength(0);
+    expectNoViolations(wordSpacing, '<html><body><p style="word-spacing: 0.01em">Text</p></body></html>');
   });
 
   it("reports normal with !important (effectively 0)", () => {
-    const doc = makeDoc('<html><body><p style="word-spacing: normal !important">Text</p></body></html>');
-    const violations = wordSpacing.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(
+      wordSpacing,
+      '<html><body><p style="word-spacing: normal !important">Text</p></body></html>',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 });

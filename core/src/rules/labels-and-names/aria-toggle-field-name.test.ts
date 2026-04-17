@@ -1,27 +1,29 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaToggleFieldName } from "./aria-toggle-field-name";
 
+const RULE_ID = "labels-and-names/aria-toggle-field-name";
 
-describe("labels-and-names/aria-toggle-field-name", () => {
+describe(RULE_ID, () => {
   it("passes checkbox with name", () => {
-    const doc = makeDoc('<div role="checkbox" aria-checked="false">Subscribe</div>');
-    expect(ariaToggleFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaToggleFieldName, '<div role="checkbox" aria-checked="false">Subscribe</div>');
   });
 
   it("reports checkbox without name", () => {
-    const doc = makeDoc('<div role="checkbox" aria-checked="false"></div>');
-    const violations = ariaToggleFieldName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaToggleFieldName, '<div role="checkbox" aria-checked="false"></div>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes switch with aria-label", () => {
-    const doc = makeDoc('<div role="switch" aria-checked="true" aria-label="Dark mode"></div>');
-    expect(ariaToggleFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      ariaToggleFieldName,
+      '<div role="switch" aria-checked="true" aria-label="Dark mode"></div>',
+    );
   });
 
   it("skips native checkboxes", () => {
-    const doc = makeDoc('<input type="checkbox">');
-    expect(ariaToggleFieldName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaToggleFieldName, '<input type="checkbox">');
   });
 });

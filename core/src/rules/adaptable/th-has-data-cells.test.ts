@@ -1,36 +1,36 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { thHasDataCells } from "./th-has-data-cells";
 
+const RULE_ID = "adaptable/th-has-data-cells";
 
-describe("adaptable/th-has-data-cells", () => {
+describe(RULE_ID, () => {
   it("passes table with headers and data", () => {
-    const doc = makeDoc(`
+    expectNoViolations(thHasDataCells, `
       <table>
         <tr><th>Name</th><th>Age</th></tr>
         <tr><td>John</td><td>30</td></tr>
       </table>
     `);
-    expect(thHasDataCells.run(doc)).toHaveLength(0);
   });
 
   it("reports table with only headers", () => {
-    const doc = makeDoc(`
+    expectViolations(thHasDataCells, `
       <table>
         <tr><th>Col 1</th><th>Col 2</th></tr>
         <tr><th>Row 1</th><th>Row 2</th></tr>
       </table>
-    `);
-    const violations = thHasDataCells.run(doc);
-    expect(violations).toHaveLength(1);
+    `, {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("skips presentational tables", () => {
-    const doc = makeDoc(`
+    expectNoViolations(thHasDataCells, `
       <table role="presentation">
         <tr><th>Header</th></tr>
       </table>
     `);
-    expect(thHasDataCells.run(doc)).toHaveLength(0);
   });
 });

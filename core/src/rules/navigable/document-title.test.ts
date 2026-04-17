@@ -1,32 +1,32 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { documentTitle } from "./document-title";
 
+const RULE_ID = "navigable/document-title";
 
-describe("navigable/document-title", () => {
+describe(RULE_ID, () => {
   it("reports missing title element", () => {
-    const doc = makeDoc("<html><head></head><body>Content</body></html>");
-    const violations = documentTitle.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("navigable/document-title");
-    expect(violations[0].message).toContain("missing");
+    expectViolations(documentTitle, "<html><head></head><body>Content</body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /missing/,
+    });
   });
 
   it("reports empty title element", () => {
-    const doc = makeDoc("<html><head><title></title></head><body>Content</body></html>");
-    const violations = documentTitle.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("empty");
+    expectViolations(documentTitle, "<html><head><title></title></head><body>Content</body></html>", {
+      count: 1,
+      messageMatches: /empty/,
+    });
   });
 
   it("reports whitespace-only title element", () => {
-    const doc = makeDoc("<html><head><title>   </title></head><body>Content</body></html>");
-    const violations = documentTitle.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(documentTitle, "<html><head><title>   </title></head><body>Content</body></html>", {
+      count: 1,
+    });
   });
 
   it("passes with valid title", () => {
-    const doc = makeDoc("<html><head><title>My Page Title</title></head><body>Content</body></html>");
-    expect(documentTitle.run(doc)).toHaveLength(0);
+    expectNoViolations(documentTitle, "<html><head><title>My Page Title</title></head><body>Content</body></html>");
   });
 });

@@ -1,30 +1,31 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { landmarkMain } from "./landmark-main";
 
+const RULE_ID = "landmarks/landmark-main";
 
-describe("landmarks/landmark-main", () => {
+describe(RULE_ID, () => {
   it("reports missing main landmark", () => {
-    const doc = makeDoc("<html><body><div>Content</div></body></html>");
-    const violations = landmarkMain.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("no main");
+    expectViolations(landmarkMain, "<html><body><div>Content</div></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /no main/,
+    });
   });
 
   it("passes with main element", () => {
-    const doc = makeDoc("<html><body><main>Content</main></body></html>");
-    expect(landmarkMain.run(doc)).toHaveLength(0);
+    expectNoViolations(landmarkMain, "<html><body><main>Content</main></body></html>");
   });
 
   it("passes with role=main", () => {
-    const doc = makeDoc('<html><body><div role="main">Content</div></body></html>');
-    expect(landmarkMain.run(doc)).toHaveLength(0);
+    expectNoViolations(landmarkMain, '<html><body><div role="main">Content</div></body></html>');
   });
 
   it("reports multiple main landmarks", () => {
-    const doc = makeDoc("<html><body><main>One</main><main>Two</main></body></html>");
-    const violations = landmarkMain.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("multiple");
+    expectViolations(landmarkMain, "<html><body><main>One</main><main>Two</main></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /multiple/,
+    });
   });
 });

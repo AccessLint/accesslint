@@ -1,34 +1,34 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { listChildren } from "./list-children";
 
+const RULE_ID = "adaptable/list-children";
 
-describe("adaptable/list-children", () => {
+describe(RULE_ID, () => {
   it("passes valid ul", () => {
-    const doc = makeDoc("<html><body><ul><li>A</li><li>B</li></ul></body></html>");
-    expect(listChildren.run(doc)).toHaveLength(0);
+    expectNoViolations(listChildren, "<html><body><ul><li>A</li><li>B</li></ul></body></html>");
   });
 
   it("reports non-li child in ul", () => {
-    const doc = makeDoc("<html><body><ul><div>Bad</div></ul></body></html>");
-    expect(listChildren.run(doc)).toHaveLength(1);
+    expectViolations(listChildren, "<html><body><ul><div>Bad</div></ul></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("reports bare text node in ul", () => {
-    const doc = makeDoc("<html><body><ul>Bare text<li>Item</li></ul></body></html>");
-    const violations = listChildren.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].message).toContain("text");
-    expect(violations[0].message).toContain("<li>");
+    expectViolations(listChildren, "<html><body><ul>Bare text<li>Item</li></ul></body></html>", {
+      count: 1,
+      ruleId: RULE_ID,
+      messageMatches: /text.*<li>|<li>.*text/,
+    });
   });
 
   it("passes style element inside ul (CSS-in-JS)", () => {
-    const doc = makeDoc('<html><body><ul><style>.x{color:red}</style><li>A</li></ul></body></html>');
-    expect(listChildren.run(doc)).toHaveLength(0);
+    expectNoViolations(listChildren, '<html><body><ul><style>.x{color:red}</style><li>A</li></ul></body></html>');
   });
 
   it("passes ul with only whitespace text nodes", () => {
-    const doc = makeDoc("<html><body><ul> <li>A</li> <li>B</li> </ul></body></html>");
-    expect(listChildren.run(doc)).toHaveLength(0);
+    expectNoViolations(listChildren, "<html><body><ul> <li>A</li> <li>B</li> </ul></body></html>");
   });
 });

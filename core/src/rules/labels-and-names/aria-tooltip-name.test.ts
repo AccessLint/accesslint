@@ -1,17 +1,15 @@
-import { describe, it, expect } from "vitest";
-import { makeDoc } from "../../test-helpers";
+import { describe, it } from "vitest";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 import { ariaTooltipName } from "./aria-tooltip-name";
 
+const RULE_ID = "labels-and-names/aria-tooltip-name";
 
-describe("labels-and-names/aria-tooltip-name", () => {
+describe(RULE_ID, () => {
   it("passes tooltip with text content", () => {
-    const doc = makeDoc('<div role="tooltip">Helpful hint</div>');
-    expect(ariaTooltipName.run(doc)).toHaveLength(0);
+    expectNoViolations(ariaTooltipName, '<div role="tooltip">Helpful hint</div>');
   });
 
   it("reports empty tooltip", () => {
-    const doc = makeDoc('<div role="tooltip"></div>');
-    const violations = ariaTooltipName.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(ariaTooltipName, '<div role="tooltip"></div>', { count: 1, ruleId: RULE_ID });
   });
 });

@@ -1,79 +1,91 @@
-import { describe, it, expect } from "vitest";
+import { describe, it } from "vitest";
 import { labelPlaceholderOnly } from "./label-placeholder-only";
-import { makeDoc } from "../../test-helpers";
+import { expectViolations, expectNoViolations } from "../../test-helpers";
 
-describe("labels-and-names/label-placeholder-only", () => {
+const RULE_ID = "labels-and-names/label-placeholder-only";
+
+describe(RULE_ID, () => {
   it("reports input with only placeholder attribute", () => {
-    const doc = makeDoc('<input type="text" placeholder="Username">');
-    const violations = labelPlaceholderOnly.run(doc);
-    expect(violations).toHaveLength(1);
-    expect(violations[0].ruleId).toBe("labels-and-names/label-placeholder-only");
+    expectViolations(labelPlaceholderOnly, '<input type="text" placeholder="Username">', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("passes input with label element", () => {
-    const doc = makeDoc('<label for="user">Username</label><input id="user" type="text" placeholder="Username">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<label for="user">Username</label><input id="user" type="text" placeholder="Username">',
+    );
   });
 
   it("passes input with aria-label", () => {
-    const doc = makeDoc('<input type="text" placeholder="Username" aria-label="Username">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<input type="text" placeholder="Username" aria-label="Username">',
+    );
   });
 
   it("passes input with aria-labelledby", () => {
-    const doc = makeDoc('<span id="lbl">Username</span><input type="text" placeholder="Username" aria-labelledby="lbl">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<span id="lbl">Username</span><input type="text" placeholder="Username" aria-labelledby="lbl">',
+    );
   });
 
   it("passes input with title", () => {
-    const doc = makeDoc('<input type="text" placeholder="Username" title="Username">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<input type="text" placeholder="Username" title="Username">',
+    );
   });
 
   it("passes input wrapped in label", () => {
-    const doc = makeDoc('<label>Username <input type="text" placeholder="Enter username"></label>');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<label>Username <input type="text" placeholder="Enter username"></label>',
+    );
   });
 
   it("passes input without placeholder", () => {
-    const doc = makeDoc('<input type="text">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(labelPlaceholderOnly, '<input type="text">');
   });
 
   it("passes input with empty placeholder", () => {
-    const doc = makeDoc('<input type="text" placeholder="">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(labelPlaceholderOnly, '<input type="text" placeholder="">');
   });
 
   it("reports textarea with only placeholder", () => {
-    const doc = makeDoc('<textarea placeholder="Enter message"></textarea>');
-    const violations = labelPlaceholderOnly.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(labelPlaceholderOnly, '<textarea placeholder="Enter message"></textarea>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
   });
 
   it("skips select elements (no placeholder support)", () => {
-    const doc = makeDoc('<select><option>A</option></select>');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(labelPlaceholderOnly, '<select><option>A</option></select>');
   });
 
   it("skips hidden inputs", () => {
-    const doc = makeDoc('<input type="hidden" placeholder="Token" value="abc">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(labelPlaceholderOnly, '<input type="hidden" placeholder="Token" value="abc">');
   });
 
   it("skips submit buttons", () => {
-    const doc = makeDoc('<input type="submit" placeholder="Submit form">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(labelPlaceholderOnly, '<input type="submit" placeholder="Submit form">');
   });
 
   it("skips aria-hidden elements", () => {
-    const doc = makeDoc('<input type="text" placeholder="Username" aria-hidden="true">');
-    expect(labelPlaceholderOnly.run(doc)).toHaveLength(0);
+    expectNoViolations(
+      labelPlaceholderOnly,
+      '<input type="text" placeholder="Username" aria-hidden="true">',
+    );
   });
 
   it("reports input with whitespace-only label", () => {
-    const doc = makeDoc('<label for="x">   </label><input id="x" type="text" placeholder="Username">');
-    const violations = labelPlaceholderOnly.run(doc);
-    expect(violations).toHaveLength(1);
+    expectViolations(
+      labelPlaceholderOnly,
+      '<label for="x">   </label><input id="x" type="text" placeholder="Username">',
+      { count: 1, ruleId: RULE_ID },
+    );
   });
 });
