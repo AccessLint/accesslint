@@ -2,7 +2,11 @@ import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FixtureEntry } from "./earl-report";
-import { iifeExists, runRuleByActId } from "../integration/browser-helpers";
+import {
+  iifeExists,
+  runRuleByActId,
+  type SerializedViolation,
+} from "../integration/browser-helpers";
 
 const FIXTURE_PATH = resolve(
   import.meta.dirname,
@@ -76,7 +80,7 @@ for (const [coreRuleId, entries] of byRule) {
       }
 
       test(testName, { annotation: annotations }, async ({ page }) => {
-        let violations: any[] = [];
+        let violations: SerializedViolation[] = [];
         let navigationDestroyed = false;
 
         await page.setContent(entry.html, { waitUntil: "domcontentloaded" });
