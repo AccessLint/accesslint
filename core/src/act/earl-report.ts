@@ -112,9 +112,9 @@ export function generateEarlReport(outcomes: FixtureOutcome[], version: string):
     "@context": "https://act-rules.github.io/earl-context.json",
     "@type": ["Project", "Assertor"],
     name: "@accesslint/core",
-    shortdesc: "WCAG 2.1 accessibility testing engine for browsers and DOM environments",
+    shortdesc: "Pure accessibility rule engine with zero browser dependencies",
     description:
-      "Automated accessibility testing engine covering WCAG 2.1 Level A, AA, and AAA. Runs in any browser or DOM environment with zero dependencies.",
+      "Automated WCAG 2.2 accessibility testing engine covering Level A and AA, with best-practice rules included. Runs in any browser or DOM environment with zero dependencies.",
     homepage: "https://github.com/AccessLint/accesslint/tree/main/core",
     license: "https://raw.githubusercontent.com/AccessLint/accesslint/main/core/LICENSE",
     vendor: "AccessLint",
