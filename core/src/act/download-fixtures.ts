@@ -1,6 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
-import { ACT_TO_CORE_RULE } from "./act-mapping";
+import { ACT_TO_CORE_RULES } from "./act-mapping";
 
 const OUTPUT_DIR = resolve(import.meta.dirname, "../../act-fixtures");
 const OUTPUT_FILE = resolve(OUTPUT_DIR, "act-testcases.json");
@@ -44,7 +44,7 @@ function main() {
   );
 
   const mapped = data.testcases.filter(
-    (tc) => tc.approved && tc.ruleId in ACT_TO_CORE_RULE,
+    (tc) => tc.approved && tc.ruleId in ACT_TO_CORE_RULES,
   );
 
   const htmlFiles = new Set(readdirSync(HTML_DIR));
@@ -60,15 +60,19 @@ function main() {
     }
 
     const html = readFileSync(resolve(HTML_DIR, filename), "utf-8");
-    fixtures.push({
-      testcaseId: tc.testcaseId,
-      testcaseTitle: tc.testcaseTitle,
-      actRuleId: tc.ruleId,
-      actRuleName: tc.ruleName,
-      coreRuleId: ACT_TO_CORE_RULE[tc.ruleId],
-      expected: tc.expected,
-      html,
-    });
+    // Emit one fixture entry per (testcase, core rule). An ACT rule can
+    // map to multiple core rules, and each should be tested independently.
+    for (const coreRuleId of ACT_TO_CORE_RULES[tc.ruleId]) {
+      fixtures.push({
+        testcaseId: tc.testcaseId,
+        testcaseTitle: tc.testcaseTitle,
+        actRuleId: tc.ruleId,
+        actRuleName: tc.ruleName,
+        coreRuleId,
+        expected: tc.expected,
+        html,
+      });
+    }
   }
 
   if (!existsSync(OUTPUT_DIR)) {

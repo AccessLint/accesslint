@@ -3,7 +3,7 @@ import { makeDoc } from "../test-helpers";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { rules, clearAllCaches } from "../rules/index";
-import { ACT_TO_CORE_RULE } from "./act-mapping";
+import { ACT_TO_CORE_RULES } from "./act-mapping";
 import type { FixtureEntry } from "./earl-report";
 
 const FIXTURE_PATH = resolve(
@@ -27,14 +27,16 @@ function loadFixtures(): FixtureEntry[] {
 describe.skipIf(!fixturesExist)("ACT Performance", () => {
   const fixtures = loadFixtures();
 
-  // Group by core rule ID (translate fixture's old slug to accesslintNNNN via ACT mapping)
+  // Group by core rule ID. A fixture carries its coreRuleId from the
+  // download step; one ACT rule may produce several fixtures (one per
+  // mapped core rule).
   const byRule = new Map<string, FixtureEntry[]>();
   for (const entry of fixtures) {
-    const newId = ACT_TO_CORE_RULE[entry.actRuleId];
-    if (!newId) continue;
-    const list = byRule.get(newId) ?? [];
+    const coreRuleIds = ACT_TO_CORE_RULES[entry.actRuleId];
+    if (!coreRuleIds) continue;
+    const list = byRule.get(entry.coreRuleId) ?? [];
     list.push(entry);
-    byRule.set(newId, list);
+    byRule.set(entry.coreRuleId, list);
   }
 
   const ruleMap = new Map(rules.map((r) => [r.id, r]));

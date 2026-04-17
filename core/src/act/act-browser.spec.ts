@@ -21,11 +21,14 @@ test.skip(!iifeExists, "IIFE bundle not built (run npm run build)");
 
 const fixtures = loadFixtures();
 
-// Deduplicate by testcaseId (multiple ACT rules can map to the same core rule)
+// Deduplicate by (testcaseId, coreRuleId). A single testcase may appear
+// multiple times (one ACT rule → multiple core rules, or multiple ACT
+// rules → same core rule); we want exactly one test per (testcase, core rule).
 const seen = new Set<string>();
 const deduped = fixtures.filter((f) => {
-  if (seen.has(f.testcaseId)) return false;
-  seen.add(f.testcaseId);
+  const key = `${f.testcaseId}|${f.coreRuleId}`;
+  if (seen.has(key)) return false;
+  seen.add(key);
   return true;
 });
 
