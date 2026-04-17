@@ -33,7 +33,7 @@ describe("audit", () => {
 
   it("audits a full document with the document-level rules enabled", () => {
     const result = audit(
-      "<!DOCTYPE html><html lang=\"en\"><head><title>Hi</title></head><body><h1>Hi</h1></body></html>",
+      '<!DOCTYPE html><html lang="en"><head><title>Hi</title></head><body><h1>Hi</h1></body></html>',
     );
     expect(result).toMatchObject({ ruleCount: expect.any(Number), violations: expect.any(Array) });
   });

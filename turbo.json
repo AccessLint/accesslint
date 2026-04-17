@@ -44,12 +44,7 @@
     },
     "test:browser:act": {
       "dependsOn": ["build", "act:download"],
-      "inputs": [
-        "src/act/**",
-        "src/integration/**",
-        "playwright.config.ts",
-        "package.json"
-      ],
+      "inputs": ["src/act/**", "src/integration/**", "playwright.config.ts", "package.json"],
       "outputs": ["act-fixtures/earl-report-browser.json"]
     },
     "act:check": {
