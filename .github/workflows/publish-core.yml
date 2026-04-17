@@ -41,7 +41,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
 
-      - run: npx playwright install chromium --with-deps
+      - name: Install Chromium for Playwright
+        run: npx playwright install chromium --with-deps
+        working-directory: core
 
       - name: Run ACT conformance gate
         run: npx turbo run act --filter=@accesslint/core
