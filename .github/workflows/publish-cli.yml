@@ -21,8 +21,10 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 22
           registry-url: https://registry.npmjs.org
+
+      - run: npm install -g npm@latest
 
       - run: bun install
 
@@ -48,8 +50,6 @@ jobs:
 
       - run: npm publish --provenance --access public
         working-directory: cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/cli v${GITHUB_REF_NAME#cli/v}"

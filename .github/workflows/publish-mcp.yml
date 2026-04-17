@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
+      - run: npm install -g npm@latest
+
       - run: bun install
 
       - run: bun run test
@@ -51,8 +53,6 @@ jobs:
 
       - run: npm publish --provenance --access public
         working-directory: mcp
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/mcp v${GITHUB_REF_NAME#mcp/v}"

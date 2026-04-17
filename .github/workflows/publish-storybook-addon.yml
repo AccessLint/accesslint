@@ -24,6 +24,8 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
+      - run: npm install -g npm@latest
+
       - run: bun install
 
       - run: npx turbo run build --filter=...@accesslint/storybook-addon
@@ -48,8 +50,6 @@ jobs:
 
       - run: npm publish --provenance --access public
         working-directory: storybook-addon
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Create GitHub release
         run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/storybook-addon v${GITHUB_REF_NAME#storybook-addon/v}"
