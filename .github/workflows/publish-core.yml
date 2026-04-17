@@ -39,29 +39,21 @@ jobs:
 
       - run: npx playwright install chromium --with-deps
 
-      - name: Cache ACT fixtures
+      - name: Cache turbo artifacts
         uses: actions/cache@v4
         with:
-          path: core/act-fixtures
-          key: act-fixtures-${{ hashFiles('core/src/act/act-mapping.ts', 'core/src/rules/**/*.ts') }}
+          path: .turbo
+          key: turbo-act-${{ runner.os }}-${{ github.sha }}
+          restore-keys: turbo-act-${{ runner.os }}-
 
-      - name: Download ACT fixtures
-        run: bun run act:download
-        working-directory: core
-
-      - name: Run browser ACT tests
-        run: bun run test:browser:act
-        working-directory: core
+      - name: Run ACT conformance gate
+        run: npx turbo run act:check --filter=@accesslint/core
 
       - name: Upload EARL report
         uses: actions/upload-artifact@v4
         with:
           name: earl-report-browser
           path: core/act-fixtures/earl-report-browser.json
-
-      - name: Check ACT conformance
-        run: bun run act:check
-        working-directory: core
 
       - name: Notify a11y-agent
         run: |
