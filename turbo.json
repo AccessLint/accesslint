@@ -12,7 +12,7 @@
         "tsconfig*.json",
         "package.json",
         "vite.*.config.ts",
-        "tsup.config.ts"
+        "tsdown.config.ts"
       ],
       "outputs": ["dist/**"]
     },
