@@ -16,14 +16,24 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./matchers": {
-      "types": "./dist/matchers.d.ts",
-      "import": "./dist/matchers.js",
-      "require": "./dist/matchers.cjs"
+      "import": {
+        "types": "./dist/matchers.d.ts",
+        "default": "./dist/matchers.js"
+      },
+      "require": {
+        "types": "./dist/matchers.d.cts",
+        "default": "./dist/matchers.cjs"
+      }
     }
   },
   "main": "dist/index.cjs",
@@ -34,7 +44,7 @@
     "*.d.ts"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsdown",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -42,7 +52,7 @@
   },
   "devDependencies": {
     "happy-dom": "^20.6.1",
-    "tsup": "^8.4.0",
+    "tsdown": "^0.21.9",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },
