@@ -8,7 +8,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AccessLint/vitest.git"
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "vitest"
   },
   "bugs": {
     "url": "https://github.com/AccessLint/vitest/issues"
