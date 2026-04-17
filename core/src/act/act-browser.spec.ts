@@ -2,11 +2,7 @@ import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FixtureEntry } from "./earl-report";
-import {
-  iifeExists,
-  runRuleByActId,
-  type SerializedViolation,
-} from "../integration/browser-helpers";
+import { iifeExists, runRuleByActId } from "../integration/browser-helpers";
 
 const FIXTURE_PATH = resolve(import.meta.dirname, "../../act-fixtures/act-testcases.json");
 
@@ -40,12 +36,6 @@ for (const entry of deduped) {
   list.push(entry);
   byRule.set(entry.coreRuleId, list);
 }
-
-// Rules whose test fixtures may trigger browser navigation (meta refresh with delay=0)
-const NAVIGATION_RULES = new Set([
-  "enough-time/meta-refresh",
-  "enough-time/meta-refresh-no-exception",
-]);
 
 // Test fixtures that reference external or root-relative stylesheets that
 // can't be loaded in the test environment (page.setContent doesn't resolve
@@ -82,32 +72,13 @@ for (const [coreRuleId, entries] of byRule) {
       }
 
       test(testName, { annotation: annotations }, async ({ page }) => {
-        let violations: SerializedViolation[] = [];
-        let navigationDestroyed = false;
-
-        await page.setContent(entry.html, { waitUntil: "domcontentloaded" });
-        const urlAfterSetContent = page.url();
-
-        try {
-          violations = await runRuleByActId(page, entry.actRuleId);
-        } catch (e) {
-          // Meta refresh with delay=0 causes instant navigation, destroying
-          // the execution context. Detect deterministically by checking
-          // whether the page URL has changed since setContent.
-          if (NAVIGATION_RULES.has(coreRuleId) && page.url() !== urlAfterSetContent) {
-            navigationDestroyed = true;
-            violations = []; // No violations = passes
-          } else {
-            throw e;
-          }
-        }
-
+        const violations = await runRuleByActId(page, entry.actRuleId, entry.html);
         const hasViolations = violations.length > 0;
 
         if (entry.expected === "failed") {
           expect(
             hasViolations,
-            `Expected violations for "${entry.testcaseTitle}" but got none${navigationDestroyed ? " (page navigated away)" : ""}`,
+            `Expected violations for "${entry.testcaseTitle}" but got none`,
           ).toBe(true);
         } else {
           expect(
