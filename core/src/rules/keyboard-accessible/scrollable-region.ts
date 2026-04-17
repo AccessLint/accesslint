@@ -43,8 +43,8 @@ export const scrollableRegion: Rule = {
 
       // Check if it actually has scrollable content.
       // In real browsers, scroll metrics reflect actual layout overflow.
-      // In DOM-only environments (jsdom), scrollHeight === clientHeight === 0,
-      // so fall back to heuristic: explicit dimensions + visible text content.
+      // In DOM-only environments (happy-dom / jsdom) there is no layout engine,
+      // so scrollHeight === clientHeight === 0 and we skip these elements.
       const hasScrollMetrics = el.scrollHeight > 0 || el.clientHeight > 0;
       if (hasScrollMetrics) {
         const overflowH = el.scrollHeight - el.clientHeight;
@@ -62,8 +62,6 @@ export const scrollableRegion: Rule = {
         const hasMedia = el.querySelector("img, svg, video, canvas, picture") !== null;
         if (textLen === 0 && !hasMedia) continue;
       } else {
-        // DOM-only environment (e.g. happy-dom): scroll metrics unavailable,
-        // cannot determine if content actually overflows — skip.
         continue;
       }
 

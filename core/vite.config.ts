@@ -8,10 +8,10 @@ export default defineConfig({
     },
   },
   test: {
-    environment: "jsdom",
+    environment: "happy-dom",
     setupFiles: ["src/test-setup.ts"],
     include: ["src/**/*.test.ts"],
-    exclude: ["src/bench/memory.test.ts"],
+    exclude: ["src/bench/memory.test.ts", "src/**/*.browser.test.ts"],
     hookTimeout: 60_000,
     coverage: {
       provider: "v8",
