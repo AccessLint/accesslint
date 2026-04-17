@@ -1,0 +1,9 @@
+# Revisions to ignore when running `git blame`.
+#
+# GitHub respects this file automatically in its web UI. To apply it
+# locally, run once per clone:
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Apply prettier formatting across the repo
+8843ca20aa70cfd06e5e9e625bf7bad08d888f17
