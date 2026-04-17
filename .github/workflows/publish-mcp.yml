@@ -26,10 +26,10 @@ jobs:
 
       - run: bun install
 
+      - run: npx turbo run build --filter=...@accesslint/mcp
+
       - run: bun run test
         working-directory: mcp
-
-      - run: npx turbo run build --filter=...@accesslint/mcp
 
       - name: Replace workspace:* with published versions
         working-directory: mcp
