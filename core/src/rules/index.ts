@@ -256,17 +256,7 @@ export interface ChunkedAudit {
   getSkippedRules(): { ruleId: string; error: string }[];
 }
 
-// --- Configuration state ---
-
-let additionalRules: Rule[] = [];
-let disabledRuleIds = new Set<string>();
-let includeAAA = false;
-let componentMode = false;
-let activeLocale: string | undefined;
-let localizedRulesCache: Rule[] | undefined;
-let activeRulesCache: Rule[] | undefined;
-
-export interface ConfigureOptions {
+export interface AuditOptions {
   /** Additional rules to include (e.g. compiled declarative rules) */
   additionalRules?: Rule[];
   /** Rule IDs to disable */
@@ -280,61 +270,40 @@ export interface ConfigureOptions {
   locale?: string;
 }
 
-export function configureRules(options: ConfigureOptions): void {
-  if (options.additionalRules) {
-    additionalRules = options.additionalRules;
-  }
-  if (options.disabledRules) {
-    disabledRuleIds = new Set(options.disabledRules);
-  }
-  if ("includeAAA" in options) {
-    includeAAA = !!options.includeAAA;
-  }
-  if ("componentMode" in options) {
-    componentMode = !!options.componentMode;
-  }
-  if ("locale" in options) {
-    activeLocale = options.locale || undefined;
-  }
-  localizedRulesCache = undefined;
-  activeRulesCache = undefined;
-}
-
 /**
- * Return the full set of active rules: bundled (minus user-disabled, minus
- * AAA unless includeAAA is set) plus any additional rules via configureRules().
- * When a locale is active, returns shallow-cloned rules with translated fields.
+ * Return the full set of active rules for the given options: bundled (minus
+ * user-disabled, minus AAA unless includeAAA is set) plus any additional
+ * rules. When a locale is passed, returns shallow-cloned rules with
+ * translated descriptions and guidance.
  */
-export function getActiveRules(): Rule[] {
-  if (localizedRulesCache) return localizedRulesCache;
-  if (activeRulesCache) return activeRulesCache;
+export function getActiveRules(options?: AuditOptions): Rule[] {
+  const disabled = new Set(options?.disabledRules ?? []);
+  const includeAAA = !!options?.includeAAA;
+  const componentMode = !!options?.componentMode;
 
   const active = rules.filter((r) => {
-    if (disabledRuleIds.has(r.id)) return false;
+    if (disabled.has(r.id)) return false;
     if (r.level === "AAA" && !includeAAA) return false;
     if (componentMode && r.tags?.includes("page-level")) return false;
     return true;
   });
-  const combined = active.concat(additionalRules);
 
-  if (activeLocale) {
-    localizedRulesCache = applyLocale(combined, activeLocale);
-    return localizedRulesCache;
-  }
+  const combined = options?.additionalRules?.length
+    ? active.concat(options.additionalRules)
+    : active;
 
-  activeRulesCache = combined;
-  return combined;
+  return options?.locale ? applyLocale(combined, options.locale) : combined;
 }
 
 /**
  * Create a chunked audit that processes rules in time-boxed batches.
  * Call processChunk() repeatedly (e.g. via setTimeout) to avoid long tasks.
  */
-export function createChunkedAudit(doc: Document): ChunkedAudit {
+export function createChunkedAudit(doc: Document, options?: AuditOptions): ChunkedAudit {
   clearAllCaches();
 
-  const activeRules = getActiveRules();
-  const locale = activeLocale;
+  const activeRules = getActiveRules(options);
+  const locale = options?.locale;
   const violations: Violation[] = [];
   const skippedRules: { ruleId: string; error: string }[] = [];
   let index = 0;
@@ -373,10 +342,11 @@ export function clearAllCaches(): void {
   clearSelectorCache();
 }
 
-export function runAudit(doc: Document): AuditResult {
+export function runAudit(doc: Document, options?: AuditOptions): AuditResult {
   clearAllCaches();
 
-  const activeRules = getActiveRules();
+  const activeRules = getActiveRules(options);
+  const locale = options?.locale;
   const violations: Violation[] = [];
   const skippedRules: { ruleId: string; error: string }[] = [];
   for (const rule of activeRules) {
@@ -390,7 +360,7 @@ export function runAudit(doc: Document): AuditResult {
   return {
     url: doc.location?.href ?? "",
     timestamp: Date.now(),
-    violations: activeLocale ? translateViolations(violations, activeLocale) : violations,
+    violations: locale ? translateViolations(violations, locale) : violations,
     ruleCount: activeRules.length,
     skippedRules,
   };
@@ -436,12 +406,11 @@ export function diffAudit(before: AuditResult, after: AuditResult): DiffResult {
 
 const ruleMap = new Map<string, Rule>(rules.map((r) => [r.id, r]));
 
-export function getRuleById(id: string): Rule | undefined {
-  if (activeLocale) {
-    const active = getActiveRules();
-    return active.find((r) => r.id === id);
-  }
-  const bundled = ruleMap.get(id);
-  if (bundled) return bundled;
-  return additionalRules.find((r) => r.id === id);
+export function getRuleById(
+  id: string,
+  options?: { locale?: string; additionalRules?: Rule[] },
+): Rule | undefined {
+  const rule = ruleMap.get(id) ?? options?.additionalRules?.find((r) => r.id === id);
+  if (!rule) return undefined;
+  return options?.locale ? applyLocale([rule], options.locale)[0] : rule;
 }

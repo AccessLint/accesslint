@@ -176,13 +176,13 @@ export const Experimental = {
 
 ### Disabling rules
 
-Disable specific rules globally in your preview file:
+Extend the addon's audit options from your preview file:
 
 ```ts
 // .storybook/preview.ts
-import { configureRules } from "@accesslint/core";
+import { setAuditOptions } from "@accesslint/storybook-addon/preview";
 
-configureRules({
+setAuditOptions({
   disabledRules: ["accesslint-045"], // e.g. disable landmark region rule
 });
 ```

@@ -1,13 +1,8 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { rules, configureRules, getActiveRules, getRuleById, runAudit } from "../rules/index";
+import { describe, it, expect } from "vitest";
+import { rules, getActiveRules, getRuleById, runAudit } from "../rules/index";
 import { registerLocale, translateViolations } from "./registry";
 import { en } from "./en";
 import { es } from "./es";
-
-beforeEach(() => {
-  // Reset to no locale between tests
-  configureRules({ locale: undefined, additionalRules: [], disabledRules: [], includeAAA: false });
-});
 
 describe("i18n locale support", () => {
   it("returns original descriptions when no locale is set", () => {
@@ -22,9 +17,8 @@ describe("i18n locale support", () => {
     registerLocale("test", {
       "text-alternatives/img-alt": { description: "Test description", guidance: "Test guidance" },
     });
-    configureRules({ locale: "test" });
 
-    const active = getActiveRules();
+    const active = getActiveRules({ locale: "test" });
     const imgAlt = active.find((r) => r.id === "text-alternatives/img-alt")!;
     expect(imgAlt.description).toBe("Test description");
     expect(imgAlt.guidance).toBe("Test guidance");
@@ -34,9 +28,8 @@ describe("i18n locale support", () => {
     registerLocale("partial", {
       "text-alternatives/img-alt": { description: "Translated img-alt" },
     });
-    configureRules({ locale: "partial" });
 
-    const active = getActiveRules();
+    const active = getActiveRules({ locale: "partial" });
     const linkName = active.find((r) => r.id === "navigable/link-name")!;
     const original = rules.find((r) => r.id === "navigable/link-name")!;
     expect(linkName.description).toBe(original.description);
@@ -47,9 +40,8 @@ describe("i18n locale support", () => {
     registerLocale("no-guidance", {
       "text-alternatives/img-alt": { description: "Translated description only" },
     });
-    configureRules({ locale: "no-guidance" });
 
-    const active = getActiveRules();
+    const active = getActiveRules({ locale: "no-guidance" });
     const imgAlt = active.find((r) => r.id === "text-alternatives/img-alt")!;
     expect(imgAlt.description).toBe("Translated description only");
     expect(imgAlt.guidance).toBe(rules.find((r) => r.id === "text-alternatives/img-alt")!.guidance);
@@ -61,36 +53,64 @@ describe("i18n locale support", () => {
     registerLocale("mutate-check", {
       "text-alternatives/img-alt": { description: "Mutated?" },
     });
-    configureRules({ locale: "mutate-check" });
-    getActiveRules();
+    getActiveRules({ locale: "mutate-check" });
 
     expect(rules.find((r) => r.id === "text-alternatives/img-alt")!.description).toBe(originalDesc);
   });
 
-  it("resets when locale is cleared", () => {
+  it("locale only applies when passed in options", () => {
     registerLocale("temp", {
       "text-alternatives/img-alt": { description: "Temporary" },
     });
-    configureRules({ locale: "temp" });
-    expect(getActiveRules().find((r) => r.id === "text-alternatives/img-alt")!.description).toBe(
-      "Temporary",
-    );
+    expect(
+      getActiveRules({ locale: "temp" }).find((r) => r.id === "text-alternatives/img-alt")!
+        .description,
+    ).toBe("Temporary");
 
-    configureRules({ locale: undefined });
     const original = rules.find((r) => r.id === "text-alternatives/img-alt")!;
     expect(getActiveRules().find((r) => r.id === "text-alternatives/img-alt")!.description).toBe(
       original.description,
     );
   });
 
-  it("getRuleById respects active locale", () => {
+  it("getRuleById applies locale via options", () => {
     registerLocale("lookup", {
       "text-alternatives/img-alt": { description: "Lookup translation" },
     });
-    configureRules({ locale: "lookup" });
 
-    const rule = getRuleById("text-alternatives/img-alt")!;
+    const rule = getRuleById("text-alternatives/img-alt", { locale: "lookup" })!;
     expect(rule.description).toBe("Lookup translation");
+
+    // Without locale option, returns untranslated rule
+    const untranslated = getRuleById("text-alternatives/img-alt")!;
+    expect(untranslated.description).toBe(
+      rules.find((r) => r.id === "text-alternatives/img-alt")!.description,
+    );
+  });
+
+  it("getRuleById looks up additionalRules by id", () => {
+    const custom = {
+      id: "custom/my-rule",
+      category: "custom",
+      wcag: ["1.1.1"],
+      level: "A" as const,
+      description: "Custom rule",
+      run: () => [],
+    };
+    expect(getRuleById("custom/my-rule", { additionalRules: [custom] })).toBe(custom);
+    expect(getRuleById("custom/my-rule")).toBeUndefined();
+  });
+
+  it("runAudit translates violation messages when locale is passed", () => {
+    registerLocale("es", es);
+    // Parsing "<button></button>" gives an unlabeled button → button-name violation
+    const doc = new DOMParser().parseFromString(
+      '<html lang="en"><head><title>T</title></head><body><main><button></button></main></body></html>',
+      "text/html",
+    );
+    const result = runAudit(doc, { locale: "es" });
+    const buttonName = result.violations.find((v) => v.ruleId === "labels-and-names/button-name");
+    expect(buttonName?.message).toBe("El botón no tiene texto discernible.");
   });
 
   it("English locale entries match all built-in rules", () => {

@@ -1,4 +1,9 @@
-import { createChunkedAudit, getActiveRules, getRuleById, configureRules } from "@accesslint/core";
+import {
+  createChunkedAudit,
+  getActiveRules,
+  getRuleById,
+  type AuditOptions,
+} from "@accesslint/core";
 import { addons } from "storybook/preview-api";
 import { RESULT_EVENT } from "./constants";
 
@@ -13,10 +18,29 @@ export const parameters = {
 // Defined by the accesslintTest() Vite plugin when tags.skip is configured
 declare const __ACCESSLINT_SKIP_TAGS__: string[];
 
-// Disable rules that don't apply to individual components in Storybook
-configureRules({
+// Options for every audit this preview kicks off. Disable rules that don't
+// apply to individual components rendered in Storybook. Callers may extend
+// these with {@link setAuditOptions}.
+let AUDIT_OPTIONS: AuditOptions = {
   disabledRules: ["accesslint-045"],
-});
+};
+
+/**
+ * Merge additional audit options (disabledRules, additionalRules, includeAAA,
+ * componentMode, locale) into the options used for every Storybook audit.
+ * Call from your `.storybook/preview.ts` after importing the addon.
+ */
+export function setAuditOptions(options: AuditOptions): void {
+  AUDIT_OPTIONS = {
+    ...AUDIT_OPTIONS,
+    ...options,
+    disabledRules: [...(AUDIT_OPTIONS.disabledRules ?? []), ...(options.disabledRules ?? [])],
+    additionalRules: [
+      ...(AUDIT_OPTIONS.additionalRules ?? []),
+      ...(options.additionalRules ?? []),
+    ],
+  };
+}
 
 const BUDGET_MS = 12;
 
@@ -108,7 +132,7 @@ export const afterEach = async ({
     return;
   }
 
-  const audit = createChunkedAudit(document);
+  const audit = createChunkedAudit(document, AUDIT_OPTIONS);
   while (audit.processChunk(BUDGET_MS)) {
     await yieldToMain();
   }
@@ -122,7 +146,7 @@ export const afterEach = async ({
   const status = hasViolations ? mode : "passed";
   const result = {
     violations: enriched,
-    ruleCount: getActiveRules().length,
+    ruleCount: getActiveRules(AUDIT_OPTIONS).length,
   };
 
   addons.getChannel().emit(RESULT_EVENT, { storyId: id, result, status });

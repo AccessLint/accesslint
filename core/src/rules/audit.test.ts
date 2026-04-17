@@ -1,11 +1,7 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect } from "vitest";
 import { makeDoc } from "../test-helpers";
-import { runAudit, diffAudit, configureRules, getActiveRules, createChunkedAudit } from "./index";
+import { runAudit, diffAudit, getActiveRules, createChunkedAudit } from "./index";
 import { generateDoc, SMALL_SIZE } from "../bench/fixtures";
-
-afterEach(() => {
-  configureRules({ componentMode: false, disabledRules: [], includeAAA: false });
-});
 
 describe("runAudit integration", () => {
   it("returns violations on a realistic document", () => {
@@ -76,8 +72,7 @@ describe("componentMode", () => {
   ];
 
   it("excludes page-level rules when componentMode is true", () => {
-    configureRules({ componentMode: true });
-    const active = getActiveRules();
+    const active = getActiveRules({ componentMode: true });
     const activeIds = active.map((r) => r.id);
 
     for (const id of PAGE_LEVEL_RULES) {
@@ -86,8 +81,7 @@ describe("componentMode", () => {
   });
 
   it("still includes component-level rules", () => {
-    configureRules({ componentMode: true });
-    const active = getActiveRules();
+    const active = getActiveRules({ componentMode: true });
     const activeIds = active.map((r) => r.id);
 
     expect(activeIds).toContain("text-alternatives/img-alt");
@@ -99,9 +93,8 @@ describe("componentMode", () => {
   });
 
   it("suppresses page-level violations on component fragments", () => {
-    configureRules({ componentMode: true });
     const doc = makeDoc('<div><img src="photo.jpg"><a href="/"></a></div>');
-    const result = runAudit(doc);
+    const result = runAudit(doc, { componentMode: true });
 
     // Should find component-level violations
     const ruleIds = result.violations.map((v) => v.ruleId);
@@ -115,8 +108,7 @@ describe("componentMode", () => {
   });
 
   it("includes page-level rules when componentMode is false", () => {
-    configureRules({ componentMode: false });
-    const active = getActiveRules();
+    const active = getActiveRules({ componentMode: false });
     const activeIds = active.map((r) => r.id);
 
     for (const id of PAGE_LEVEL_RULES) {
@@ -186,10 +178,13 @@ describe("diffAudit", () => {
   });
 
   it("correctly classifies a mix of added, fixed, and unchanged", () => {
-    configureRules({ componentMode: true });
-    const before = runAudit(makeDoc('<div><img src="a.jpg"><button>OK</button></div>'));
+    const before = runAudit(makeDoc('<div><img src="a.jpg"><button>OK</button></div>'), {
+      componentMode: true,
+    });
     // Fix the img, break the button
-    const after = runAudit(makeDoc('<div><img src="a.jpg" alt="photo"><button></button></div>'));
+    const after = runAudit(makeDoc('<div><img src="a.jpg" alt="photo"><button></button></div>'), {
+      componentMode: true,
+    });
 
     const diff = diffAudit(before, after);
     expect(diff.fixed.some((v) => v.ruleId === "text-alternatives/img-alt")).toBe(true);
@@ -198,10 +193,6 @@ describe("diffAudit", () => {
 });
 
 describe("skippedRules", () => {
-  afterEach(() => {
-    configureRules({ additionalRules: [] });
-  });
-
   it("collects rules that throw into skippedRules", () => {
     const throwingRule = {
       id: "test/throws",
@@ -214,11 +205,10 @@ describe("skippedRules", () => {
       },
     };
 
-    configureRules({ additionalRules: [throwingRule] });
     const doc = makeDoc(
       '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
     );
-    const result = runAudit(doc);
+    const result = runAudit(doc, { additionalRules: [throwingRule] });
 
     expect(result.skippedRules).toEqual([{ ruleId: "test/throws", error: "boom" }]);
   });
@@ -244,11 +234,10 @@ describe("skippedRules", () => {
       },
     };
 
-    configureRules({ additionalRules: [throwingRule] });
     const doc = makeDoc(
       '<html lang="en"><head><title>T</title></head><body><main><h1>Hi</h1></main></body></html>',
     );
-    const audit = createChunkedAudit(doc);
+    const audit = createChunkedAudit(doc, { additionalRules: [throwingRule] });
 
     // Process all rules in one chunk
     while (audit.processChunk(10_000)) {}

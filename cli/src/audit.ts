@@ -1,10 +1,5 @@
 import { JSDOM, VirtualConsole } from "jsdom";
-import {
-  runAudit,
-  configureRules,
-  type AuditResult,
-  type ConfigureOptions,
-} from "@accesslint/core";
+import { runAudit, type AuditOptions as CoreAuditOptions, type AuditResult } from "@accesslint/core";
 
 export interface AuditOptions {
   includeAAA?: boolean;
@@ -37,18 +32,17 @@ function ensureGlobals(window: typeof globalThis): void {
 }
 
 export function audit(html: string, options: AuditOptions = {}): AuditResult {
-  const config: ConfigureOptions = {
+  const config: CoreAuditOptions = {
     componentMode: options.componentMode ?? isHTMLFragment(html),
   };
   if (options.includeAAA) config.includeAAA = true;
   if (options.disabledRules?.length) config.disabledRules = options.disabledRules;
-  configureRules(config);
 
   const virtualConsole = new VirtualConsole();
   const dom = new JSDOM(html, { pretendToBeVisual: true, virtualConsole });
   ensureGlobals(dom.window as unknown as typeof globalThis);
 
-  const result = runAudit(dom.window.document as unknown as Document);
+  const result = runAudit(dom.window.document as unknown as Document, config);
 
   // Strip non-serializable element references
   result.violations = result.violations.map(({ element: _el, ...rest }: any) => rest);

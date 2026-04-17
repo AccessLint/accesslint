@@ -107,9 +107,19 @@ describe("sample.html accessibility audit", () => {
 
 ## API
 
-### `runAudit(doc: Document): AuditResult`
+### `runAudit(doc: Document, options?: AuditOptions): AuditResult`
 
-Run all active rules against a document and return violations.
+Run all active rules against a document and return violations. All options are per-call and non-mutating — no global state is touched.
+
+```ts
+interface AuditOptions {
+  additionalRules?: Rule[];
+  disabledRules?: string[];
+  includeAAA?: boolean;
+  componentMode?: boolean;
+  locale?: string;
+}
+```
 
 ```ts
 interface AuditResult {
@@ -130,12 +140,12 @@ interface Violation {
 }
 ```
 
-### `createChunkedAudit(doc: Document): ChunkedAudit`
+### `createChunkedAudit(doc: Document, options?: AuditOptions): ChunkedAudit`
 
 Create a chunked audit that processes rules in time-boxed batches to avoid long tasks.
 
 ```js
-const audit = createChunkedAudit(document);
+const audit = createChunkedAudit(document, { includeAAA: true });
 
 function processNext() {
   const hasMore = audit.processChunk(16); // 16ms budget per frame
@@ -146,35 +156,17 @@ function processNext() {
 processNext();
 ```
 
-### `configureRules(options: ConfigureOptions)`
-
-Customize which rules are active.
-
-```js
-import { configureRules } from "@accesslint/core";
-
-// Disable a rule
-configureRules({
-  disabledRules: ["navigable/heading-order"],
-});
-
-// Include AAA-level rules (excluded by default)
-configureRules({
-  includeAAA: true,
-});
-```
-
 ### `rules`
 
 Array of all bundled `Rule` objects.
 
-### `getActiveRules(): Rule[]`
+### `getActiveRules(options?: AuditOptions): Rule[]`
 
-Returns bundled rules minus user-disabled rules, excluding AAA-level rules unless `includeAAA` is set (plus any additional rules from `configureRules()`).
+Returns bundled rules filtered by the given options: excludes AAA-level rules unless `includeAAA` is set, excludes page-level rules when `componentMode` is true, excludes ids in `disabledRules`, and appends `additionalRules`. When `locale` is passed, returns shallow-cloned rules with translated descriptions and guidance.
 
-### `getRuleById(id: string): Rule | undefined`
+### `getRuleById(id, options?: { locale?: string; additionalRules?: Rule[] }): Rule | undefined`
 
-Look up a rule by its ID.
+Look up a rule by its ID. Pass `locale` to get the translated rule, or `additionalRules` to also search custom rules.
 
 ### Utilities
 
@@ -191,9 +183,9 @@ Helpers for building custom rules:
 
 ## Rules
 
-Covers WCAG 2.2 Level A and AA, plus best-practice rules. One additional AAA-level rule (`distinguishable/color-contrast-enhanced`) is bundled but excluded by default; include it via `configureRules({ includeAAA: true })`.
+Covers WCAG 2.2 Level A and AA, plus best-practice rules. One additional AAA-level rule (`distinguishable/color-contrast-enhanced`) is bundled but excluded by default; include it via `runAudit(doc, { includeAAA: true })`.
 
-Rule IDs match the `ruleId` field in violations and are used with `configureRules()` and `getRuleById()`.
+Rule IDs match the `ruleId` field in violations and are used with the `disabledRules` option and `getRuleById()`.
 
 <details>
 <summary>View all rules</summary>

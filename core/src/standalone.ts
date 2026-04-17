@@ -2,12 +2,8 @@
 
 // Core audit
 export { rules, runAudit, getRuleById, getActiveRules, clearAllCaches } from "./rules/index";
-export type { ChunkedAudit } from "./rules/index";
+export type { ChunkedAudit, AuditOptions } from "./rules/index";
 export { createChunkedAudit } from "./rules/index";
-
-// Configuration
-export { configureRules } from "./rules/index";
-export type { ConfigureOptions } from "./rules/index";
 
 // Declarative rule engine
 export { compileDeclarativeRule, validateDeclarativeRule } from "./rules/engine";
