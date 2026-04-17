@@ -7,4 +7,6 @@ export default defineConfig({
   fixedExtension: false,
   dts: true,
   treeshake: true,
+  // publint/attw run after the vite iife build via the package.json script chain,
+  // so the complete dist/ (including dist/index.iife.js) is validated.
 });

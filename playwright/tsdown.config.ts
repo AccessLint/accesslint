@@ -13,5 +13,5 @@ const shared = {
 
 export default defineConfig([
   { entry: ["./src/index.ts"], ...shared },
-  { entry: ["./src/matchers.ts"], ...shared },
+  { entry: ["./src/matchers.ts"], ...shared, publint: true, attw: true },
 ]);

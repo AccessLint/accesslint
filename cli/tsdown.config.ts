@@ -17,6 +17,8 @@ export default defineConfig([
     entry: ["./src/audit.ts", "./src/inline-css.ts", "./src/ssrf-guard.ts", "./src/safe-fetch.ts"],
     deps: { neverBundle: ["jsdom", "@accesslint/core"] },
     dts: true,
+    publint: true,
+    attw: true,
     ...nodeDefaults,
   },
 ]);

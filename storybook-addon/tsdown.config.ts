@@ -68,6 +68,8 @@ configs.push({
   format: ["esm", "cjs"] as const,
   dts: true,
   deps: { neverBundle: external },
+  publint: true,
+  attw: true,
   ...browserDefaults,
 });
 

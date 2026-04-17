@@ -23,7 +23,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown && vite build --config vite.iife.config.ts",
+    "build": "tsdown && vite build --config vite.iife.config.ts && publint && attw --pack --exclude-entrypoints ./iife",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:memory": "vitest run --config vite.memory.config.ts",
