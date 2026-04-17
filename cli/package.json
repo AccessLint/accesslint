@@ -21,7 +21,8 @@
   ],
   "scripts": {
     "build": "tsdown",
-    "start": "bun src/cli.ts"
+    "start": "bun src/cli.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@accesslint/core": "workspace:*",
@@ -32,7 +33,8 @@
     "@types/node": "^25.3.0",
     "citty": "^0.1.6",
     "tsdown": "^0.21.9",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
   },
   "license": "MIT"
 }
