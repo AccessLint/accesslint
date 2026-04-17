@@ -3,6 +3,7 @@ import { diffAudit } from "@accesslint/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { audit, getStoredAudit } from "../lib/state.js";
 import { formatDiff } from "../lib/format.js";
+import { checkHtmlSize } from "../lib/limits.js";
 
 export const diffHtmlSchema = {
   html: z.string().describe("Updated HTML to audit and compare"),
@@ -21,6 +22,13 @@ export function registerDiffHtml(server: McpServer): void {
     "Audit new HTML and diff against a previously named audit. Use after audit_html with a name to verify fixes.",
     diffHtmlSchema,
     async ({ html, before, min_impact }) => {
+      const check = checkHtmlSize(html);
+      if (!check.ok) {
+        return {
+          content: [{ type: "text", text: `Error: ${check.error}` }],
+          isError: true,
+        };
+      }
       const beforeResult = getStoredAudit(before);
       if (!beforeResult) {
         return {
