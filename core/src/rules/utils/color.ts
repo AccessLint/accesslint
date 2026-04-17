@@ -1,3 +1,5 @@
+import { getWindow } from "./dom";
+
 let _computedStyleCache = new WeakMap<Element, CSSStyleDeclaration>();
 let _effectiveBgCache = new WeakMap<Element, [number, number, number] | null>();
 let _overImageCache = new WeakMap<Element, boolean>();
@@ -29,7 +31,8 @@ export function clearColorCaches(): void {
 export function getCachedComputedStyle(el: Element): CSSStyleDeclaration {
   let style = _computedStyleCache.get(el);
   if (style) return style;
-  style = getComputedStyle(el);
+  const win = getWindow(el);
+  style = win ? win.getComputedStyle(el) : getComputedStyle(el);
   _computedStyleCache.set(el, style);
   return style;
 }
@@ -430,7 +433,8 @@ export function hasPseudoElementBackground(el: Element): boolean {
   while (current) {
     for (const pseudo of ["::before", "::after"] as const) {
       try {
-        const ps = getComputedStyle(current, pseudo);
+        const win = getWindow(current);
+        const ps = win ? win.getComputedStyle(current, pseudo) : getComputedStyle(current, pseudo);
         const content = ps.content;
         // No pseudo-element if content is none/normal/empty
         if (!content || content === "none" || content === "normal" || content === '""') continue;
