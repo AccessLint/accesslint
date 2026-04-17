@@ -16,7 +16,8 @@
     "typecheck": "turbo run typecheck",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "ci": "turbo run build typecheck test && bun run lint && bun run format:check"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.2",
