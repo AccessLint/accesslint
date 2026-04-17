@@ -1,7 +1,7 @@
 let _computedStyleCache = new WeakMap<Element, CSSStyleDeclaration>();
 let _effectiveBgCache = new WeakMap<Element, [number, number, number] | null>();
 let _overImageCache = new WeakMap<Element, boolean>();
-// null = not yet tested; real browsers return 'none', jsdom returns '' (not implemented)
+// null = not yet tested; real browsers return 'none', DOM-only runtimes return '' (unimplemented)
 let _pseudoElementStylesSupported: boolean | null = null;
 
 function supportsPseudoElementStyles(): boolean {
@@ -9,8 +9,14 @@ function supportsPseudoElementStyles(): boolean {
   if (typeof getComputedStyle !== "function" || typeof document === "undefined") {
     return (_pseudoElementStylesSupported = false);
   }
+  // Must be attached to the document: Chrome 147+ returns "" for pseudo-element
+  // content on detached elements, making the check a false negative.
   const div = document.createElement("div");
-  _pseudoElementStylesSupported = getComputedStyle(div, "::before").content !== "";
+  const root = document.body ?? document.documentElement;
+  root.appendChild(div);
+  const content = getComputedStyle(div, "::before").content;
+  root.removeChild(div);
+  _pseudoElementStylesSupported = content !== "";
   return _pseudoElementStylesSupported;
 }
 
