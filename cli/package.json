@@ -20,7 +20,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/cli.ts --target=node --outdir=dist --external jsdom && bun build src/audit.ts src/inline-css.ts src/ssrf-guard.ts src/safe-fetch.ts --target=node --outdir=dist --external jsdom --external @accesslint/core && tsc --emitDeclarationOnly",
+    "build": "tsdown",
     "start": "bun src/cli.ts"
   },
   "dependencies": {
@@ -31,6 +31,7 @@
     "@types/jsdom": "^28.0.0",
     "@types/node": "^25.3.0",
     "citty": "^0.1.6",
+    "tsdown": "^0.21.9",
     "typescript": "^5.7.0"
   },
   "license": "MIT"
