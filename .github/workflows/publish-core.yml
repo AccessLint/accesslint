@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: core/act-fixtures
-          key: act-fixtures-${{ hashFiles('core/src/act/act-mapping.ts') }}
+          key: act-fixtures-${{ hashFiles('core/src/act/act-mapping.ts', 'core/src/rules/**/*.ts') }}
 
       - name: Download ACT fixtures
         run: bun run act:download
