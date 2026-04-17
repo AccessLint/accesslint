@@ -26,7 +26,7 @@
     "test:act": "vitest run src/act/act.test.ts",
     "act:check": "npx tsx src/act/check-conformance.ts",
     "test:browser": "vitest run --config vite.browser.config.ts",
-    "test:browser:act": "npm run build && npx playwright test src/act/act-browser.spec.ts",
+    "test:browser:act": "npx playwright test src/act/act-browser.spec.ts",
     "prepublishOnly": "npm run build",
     "release": "scripts/release.sh"
   },

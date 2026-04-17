@@ -50,7 +50,7 @@ jobs:
         working-directory: core
 
       - name: Run browser ACT tests
-        run: bun run test:browser
+        run: bun run test:browser:act
         working-directory: core
 
       - name: Upload EARL report
