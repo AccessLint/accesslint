@@ -22,7 +22,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "start": "bun src/cli.ts",
+    "dev": "bun src/cli.ts",
     "test": "vitest run",
     "prepublishOnly": "bun run build"
   },
