@@ -115,8 +115,8 @@ export function generateEarlReport(outcomes: FixtureOutcome[], version: string):
     shortdesc: "WCAG 2.1 accessibility testing engine for browsers and DOM environments",
     description:
       "Automated accessibility testing engine covering WCAG 2.1 Level A, AA, and AAA. Runs in any browser or DOM environment with zero dependencies.",
-    homepage: "https://github.com/AccessLint/core",
-    license: "https://raw.githubusercontent.com/AccessLint/core/main/LICENSE",
+    homepage: "https://github.com/AccessLint/accesslint/tree/main/core",
+    license: "https://raw.githubusercontent.com/AccessLint/accesslint/main/core/LICENSE",
     vendor: "AccessLint",
     release: {
       "@type": "Version",

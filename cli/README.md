@@ -1,6 +1,6 @@
 # @accesslint/cli
 
-CLI tool for auditing HTML accessibility using [@accesslint/core](https://github.com/AccessLint/core).
+CLI tool for auditing HTML accessibility using [@accesslint/core](https://github.com/AccessLint/accesslint/tree/main/core).
 
 ## Install
 

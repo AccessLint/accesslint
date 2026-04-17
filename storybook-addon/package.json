@@ -13,7 +13,7 @@
     "directory": "storybook-addon"
   },
   "bugs": {
-    "url": "https://github.com/AccessLint/core/issues"
+    "url": "https://github.com/AccessLint/accesslint/issues"
   },
   "type": "module",
   "exports": {

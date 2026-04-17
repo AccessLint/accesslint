@@ -1,5 +1,5 @@
 [![npm version](https://img.shields.io/npm/v/@accesslint/storybook-addon)](https://www.npmjs.com/package/@accesslint/storybook-addon)
-[![license](https://img.shields.io/github/license/AccessLint/storybook-addon)](https://github.com/AccessLint/storybook-addon/blob/main/LICENSE)
+[![license](https://img.shields.io/github/license/AccessLint/accesslint)](https://github.com/AccessLint/accesslint/blob/main/core/LICENSE)
 
 # @accesslint/storybook-addon
 
@@ -292,7 +292,7 @@ Returns AccessLint's preview annotations for use with `setProjectAnnotations` in
 
 ## Issues
 
-Please report issues in the [AccessLint core repository](https://github.com/AccessLint/core/issues).
+Please report issues in the [AccessLint monorepo](https://github.com/AccessLint/accesslint/issues).
 
 ## License
 

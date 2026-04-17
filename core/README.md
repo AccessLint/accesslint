@@ -1,7 +1,7 @@
 # @accesslint/core
 
 [![npm version](https://img.shields.io/npm/v/@accesslint/core)](https://www.npmjs.com/package/@accesslint/core)
-[![license](https://img.shields.io/npm/l/@accesslint/core)](https://github.com/AccessLint/core/blob/main/LICENSE)
+[![license](https://img.shields.io/npm/l/@accesslint/core)](https://github.com/AccessLint/accesslint/blob/main/core/LICENSE)
 
 Pure accessibility rule engine with zero browser dependencies. Covers WCAG 2.2 Level A and AA with best-practice rules included.
 
@@ -310,7 +310,7 @@ npm run bench   # performance benchmarks
 npm run build   # produces dist/index.js, dist/index.cjs, dist/index.d.ts, dist/index.iife.js
 ```
 
-Found a bug or have a suggestion? [Open an issue](https://github.com/AccessLint/core/issues).
+Found a bug or have a suggestion? [Open an issue](https://github.com/AccessLint/accesslint/issues).
 
 ## License
 

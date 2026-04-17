@@ -12,7 +12,7 @@
     "directory": "playwright"
   },
   "bugs": {
-    "url": "https://github.com/AccessLint/playwright/issues"
+    "url": "https://github.com/AccessLint/accesslint/issues"
   },
   "type": "module",
   "exports": {
