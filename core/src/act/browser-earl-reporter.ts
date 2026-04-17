@@ -51,11 +51,9 @@ export default class BrowserEarlReporter implements Reporter {
     const status = result.status; // "passed" | "failed" | "timedOut" | "skipped" | "interrupted"
     const testcaseTitle = test.title.replace(/^\[[^\]]+\]\s*/, "");
 
-    // Skipped tests (external stylesheets, Shadow DOM) can't be evaluated
-    if (status === "skipped") return;
-
-    // Timed-out or interrupted tests — outcome couldn't be determined
-    if (status === "timedOut" || status === "interrupted") {
+    // Skipped tests (external stylesheets, Shadow DOM) can't be evaluated —
+    // record as cantTell so the EARL report reflects total coverage.
+    if (status === "skipped" || status === "timedOut" || status === "interrupted") {
       this.outcomes.push({
         testcaseId,
         testcaseTitle,
@@ -63,7 +61,7 @@ export default class BrowserEarlReporter implements Reporter {
         coreRuleId,
         expected,
         actual: "cantTell",
-        correct: false,
+        correct: isCorrectOutcome(expected, "cantTell"),
       });
       return;
     }
