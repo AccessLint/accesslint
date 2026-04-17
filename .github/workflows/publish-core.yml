@@ -70,3 +70,25 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.BENCH_DISPATCH_TOKEN }}
 
+  deploy-earl:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: earl-report-browser
+
+      - name: Commit and push EARL report
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add earl-report-browser.json
+          git diff --cached --quiet && exit 0
+          git commit -m "Update EARL report for ${GITHUB_REF_NAME}"
+          git push
