@@ -42,7 +42,7 @@ jobs:
           restore-keys: turbo-act-${{ runner.os }}-
 
       - name: Run ACT conformance gate
-        run: npx turbo run act:check --filter=@accesslint/core
+        run: npx turbo run act --filter=@accesslint/core
 
       - name: Upload EARL report
         if: always()

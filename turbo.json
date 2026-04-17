@@ -29,7 +29,7 @@
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json"]
     },
-    "act:download": {
+    "act:fixtures": {
       "inputs": [
         "src/rules/**/*.ts",
         "src/act/act-mapping.ts",
@@ -42,19 +42,23 @@
         "act-fixtures/act-testcases.json"
       ]
     },
-    "test:browser:act": {
-      "dependsOn": ["build", "act:download"],
+    "act:test": {
+      "dependsOn": ["build", "act:fixtures"],
       "inputs": ["src/act/**", "src/integration/**", "playwright.config.ts", "package.json"],
       "outputs": ["act-fixtures/earl-report-browser.json"]
     },
     "act:check": {
-      "dependsOn": ["test:browser:act"],
+      "dependsOn": ["act:test"],
       "inputs": [
         "src/act/check-conformance.ts",
         "src/act/earl-report.ts",
         "act-fixtures/act-testcases.json",
         "act-fixtures/earl-report-browser.json"
       ],
+      "cache": false
+    },
+    "act": {
+      "dependsOn": ["act:check"],
       "cache": false
     }
   }

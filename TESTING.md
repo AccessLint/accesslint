@@ -25,12 +25,12 @@ Browser tests share helpers via `core/src/integration/vitest-browser-helpers.ts`
 ## 3. ACT conformance — Playwright
 
 **Location:** `core/src/act/act-browser.spec.ts` (+ downloaded fixtures)
-**Runs via:** `bun run --filter=@accesslint/core test:browser:act`
+**Runs via:** `npx turbo run act --filter=@accesslint/core` (full pipeline) or `bun run --filter=@accesslint/core act:test` (just the Playwright spec)
 **Environment:** Playwright in a separate process, driving Chromium against the [W3C ACT-R fixture corpus](https://act-rules.github.io/).
 
 This is how we score conformance against the published rule set. Don't add rule tests here — add them at layer 1 or 2, and let ACT act as the downstream conformance gate.
 
-Fixtures are downloaded on demand (`bun run act:download`) and cached in `core/act-fixtures/`. CI caches them across runs via `hashFiles('core/src/act/act-mapping.ts')`.
+The turbo pipeline has three stages: `act:fixtures` (download + process), `act:test` (run the Playwright spec, emits the EARL report), `act:check` (enforce the 80% conformance gate). Turbo handles ordering and caching automatically; rule source changes invalidate `act:fixtures`.
 
 ## Memory / perf benchmarks
 
@@ -53,7 +53,7 @@ Fixtures are downloaded on demand (`bun run act:download`) and cached in `core/a
 | Core unit tests with coverage              | `bun run --filter=@accesslint/core test:coverage`    |
 | Core browser tests (requires Chromium)     | `bun run --filter=@accesslint/core test:browser`     |
 | Core memory/perf benchmarks                | `bun run --filter=@accesslint/core test:memory`      |
-| ACT conformance against W3C fixture corpus | `bun run --filter=@accesslint/core test:browser:act` |
+| ACT conformance against W3C fixture corpus | `npx turbo run act --filter=@accesslint/core`        |
 
 ## Writing a new rule test: which file?
 
