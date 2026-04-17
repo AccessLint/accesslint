@@ -71,6 +71,21 @@ const ACT_TESTCASE_URL_PREFIX =
 const ACT_RULE_URL_PREFIX =
   "https://www.w3.org/WAI/standards-guidelines/act/rules";
 
+/**
+ * Whether an actual outcome satisfies the expected outcome per ACT semantics.
+ * The engine cannot distinguish "passed" from "inapplicable", so either one
+ * satisfies an expected "passed" or "inapplicable".
+ */
+export function isCorrectOutcome(
+  expected: "passed" | "failed" | "inapplicable",
+  actual: "passed" | "failed" | "cantTell" | "inapplicable",
+): boolean {
+  if (actual === "cantTell") return false;
+  if (expected === "failed") return actual === "failed";
+  // expected is "passed" or "inapplicable" — either actual satisfies
+  return actual === "passed" || actual === "inapplicable";
+}
+
 export function generateEarlReport(
   outcomes: FixtureOutcome[],
   version: string,

@@ -8,7 +8,7 @@ import type {
 } from "@playwright/test/reporter";
 import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
-import { generateEarlReport, type FixtureOutcome } from "./earl-report";
+import { generateEarlReport, isCorrectOutcome, type FixtureOutcome } from "./earl-report";
 
 const EARL_OUTPUT_PATH = resolve(
   import.meta.dirname,
@@ -91,7 +91,7 @@ export default class BrowserEarlReporter implements Reporter {
       coreRuleId,
       expected,
       actual,
-      correct: actual === expected || (expected === "inapplicable" && actual === "passed"),
+      correct: isCorrectOutcome(expected, actual),
     });
   }
 

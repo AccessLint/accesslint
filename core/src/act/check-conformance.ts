@@ -4,7 +4,7 @@
  */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import type { EarlReport } from "./earl-report";
+import { isCorrectOutcome, type EarlReport } from "./earl-report";
 
 const EARL_PATH = resolve(
   import.meta.dirname,
@@ -76,15 +76,15 @@ function main() {
     const expected = expectedByTestcase.get(testcaseId);
     if (!expected) continue;
 
-    // Determine correctness per ACT conformance:
-    // - "passed" satisfies expected "passed" or "inapplicable"
-    // - "failed" satisfies expected "failed"
-    // - "inapplicable" satisfies expected "passed" or "inapplicable"
-    const actualOutcome = assertion.result.outcome.replace("earl:", "");
-    const correct =
-      actualOutcome === expected ||
-      (expected === "inapplicable" && (actualOutcome === "passed" || actualOutcome === "inapplicable")) ||
-      (expected === "passed" && actualOutcome === "inapplicable");
+    const actualOutcome = assertion.result.outcome.replace("earl:", "") as
+      | "passed"
+      | "failed"
+      | "cantTell"
+      | "inapplicable";
+    const correct = isCorrectOutcome(
+      expected as "passed" | "failed" | "inapplicable",
+      actualOutcome,
+    );
 
     const stats = ruleStats.get(coreRuleId) ?? { total: 0, passed: 0, failed: 0, cantTell: 0 };
     stats.total++;
