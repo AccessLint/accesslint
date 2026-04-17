@@ -53,20 +53,24 @@ jobs:
           path: core/act-fixtures/earl-report-browser.json
 
       - name: Notify a11y-agent
+        if: ${{ env.A11Y_AGENT_DISPATCH_TOKEN != '' }}
         run: |
           gh api repos/AccessLint/a11y-agent/dispatches \
             -f event_type=core-published \
             -f 'client_payload[version]'="${GITHUB_REF_NAME#core/v}"
         env:
           GH_TOKEN: ${{ secrets.A11Y_AGENT_DISPATCH_TOKEN }}
+          A11Y_AGENT_DISPATCH_TOKEN: ${{ secrets.A11Y_AGENT_DISPATCH_TOKEN }}
 
       - name: Notify accesslint-bench
+        if: ${{ env.BENCH_DISPATCH_TOKEN != '' }}
         run: |
           gh api repos/AccessLint/accesslint-bench/dispatches \
             -f event_type=core-published \
             -f 'client_payload[version]'="${GITHUB_REF_NAME#core/v}"
         env:
           GH_TOKEN: ${{ secrets.BENCH_DISPATCH_TOKEN }}
+          BENCH_DISPATCH_TOKEN: ${{ secrets.BENCH_DISPATCH_TOKEN }}
 
   deploy-earl:
     needs: publish
