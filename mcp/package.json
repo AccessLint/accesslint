@@ -14,6 +14,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "prepublishOnly": "bun run build"
   },

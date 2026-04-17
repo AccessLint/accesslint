@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "build": "tsdown",
+    "typecheck": "tsc --noEmit",
     "start": "bun src/cli.ts",
     "test": "vitest run"
   },

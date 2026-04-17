@@ -24,6 +24,7 @@
   ],
   "scripts": {
     "build": "tsdown && vite build --config vite.iife.config.ts && publint && attw --pack --exclude-entrypoints ./iife",
+    "typecheck": "tsc --noEmit",
     "test": "vitest run --project unit",
     "test:browser": "vitest run --project browser",
     "test:coverage": "vitest run --project unit --coverage",
