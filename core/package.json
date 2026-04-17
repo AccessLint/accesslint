@@ -24,12 +24,12 @@
   ],
   "scripts": {
     "build": "tsdown && vite build --config vite.iife.config.ts && publint && attw --pack --exclude-entrypoints ./iife",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:memory": "vitest run --config vite.memory.config.ts",
+    "test": "vitest run --project unit",
+    "test:coverage": "vitest run --project unit --coverage",
+    "test:memory": "vitest run --project memory",
     "act:download": "scripts/download-act-fixtures.sh && npx tsx src/act/download-fixtures.ts",
     "act:check": "npx tsx src/act/check-conformance.ts",
-    "test:browser": "vitest run --config vite.browser.config.ts",
+    "test:browser": "vitest run --project browser",
     "test:browser:act": "npx playwright test src/act/act-browser.spec.ts",
     "prepublishOnly": "npm run build",
     "release": "scripts/release.sh"
