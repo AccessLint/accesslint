@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+.turbo
+act-fixtures
+test-results
+bun.lock
+*.min.js
