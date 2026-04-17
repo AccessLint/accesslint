@@ -28,12 +28,12 @@ failed=0
 skipped=0
 
 # Extract URLs from the index
-urls=$(python3 -c "
-import json, sys
-data = json.load(open('$INDEX_FILE'))
-for tc in data['testcases']:
-    if tc.get('approved'):
-        print(tc['testcaseId'] + ' ' + tc['url'])
+urls=$(node --input-type=module -e "
+import { readFileSync } from 'node:fs';
+const data = JSON.parse(readFileSync('$INDEX_FILE', 'utf8'));
+for (const tc of data.testcases) {
+  if (tc.approved) console.log(tc.testcaseId + ' ' + tc.url);
+}
 ")
 
 total=$(echo "$urls" | wc -l | tr -d ' ')
