@@ -16,7 +16,7 @@ const mockRunAudit = vi.mocked(runAudit);
 const mockGetRuleById = vi.mocked(getRuleById);
 
 function auditResult(violations: Violation[]): AuditResult {
-  return { url: "about:blank", timestamp: 0, violations, ruleCount: 1 };
+  return { url: "about:blank", timestamp: 0, violations, ruleCount: 1, skippedRules: [] };
 }
 
 function violation(overrides: Partial<Violation> = {}): Violation {
@@ -121,6 +121,7 @@ describe("toBeAccessible", () => {
     mockRunAudit.mockReturnValue(auditResult([violation({ selector: "img" })]));
     mockGetRuleById.mockReturnValue({
       id: "img-alt",
+      category: "text-alternatives",
       wcag: ["1.1.1"],
       level: "A",
       description: "Images must have alt text",
