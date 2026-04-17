@@ -3,7 +3,8 @@
   "version": "0.3.3",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AccessLint/cli"
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "cli"
   },
   "description": "CLI tool for auditing HTML accessibility using @accesslint/core",
   "type": "module",

@@ -9,7 +9,8 @@
   "homepage": "https://www.accesslint.com/storybook?ref=npm_storybook",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AccessLint/storybook-addon.git"
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "storybook-addon"
   },
   "bugs": {
     "url": "https://github.com/AccessLint/core/issues"

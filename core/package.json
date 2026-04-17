@@ -38,7 +38,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/AccessLint/core.git"
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "core"
   },
   "license": "MIT",
   "publishConfig": {
