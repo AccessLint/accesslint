@@ -25,6 +25,9 @@
       "inputs": ["src/**", "tsconfig*.json", "package.json", "vite.*.config.ts"],
       "outputs": ["coverage/**"]
     },
+    "test:memory": {
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json"]
