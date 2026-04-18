@@ -1,9 +1,36 @@
 import { describe, it, expect } from "vitest";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { gzipSync } from "node:zlib";
 
-const bundlePath = resolve(__dirname, "../dist/index.cjs");
+const distDir = resolve(__dirname, "../dist");
+const bundlePath = resolve(distDir, "index.cjs");
 const bundleExists = existsSync(bundlePath);
+
+/**
+ * Bundle size budgets (bytes). Set at ~10% above observed sizes at the
+ * time of last tuning so growth is caught early. Bump deliberately when
+ * a size increase is justified — surprise regressions fail CI.
+ */
+const SIZE_BUDGETS: Record<string, { raw: number; gzip: number }> = {
+  "index.iife.js": { raw: 185_000, gzip: 50_000 },
+  "index.cjs": { raw: 410_000, gzip: 100_000 },
+  "index.js": { raw: 410_000, gzip: 100_000 },
+  "index.d.ts": { raw: 12_000, gzip: 4_000 },
+  "index.d.cts": { raw: 12_000, gzip: 4_000 },
+};
+
+describe.skipIf(!bundleExists)("bundle size budgets (requires npm run build)", () => {
+  for (const [file, budget] of Object.entries(SIZE_BUDGETS)) {
+    const path = resolve(distDir, file);
+    it(`${file} stays within byte budget`, () => {
+      const raw = statSync(path).size;
+      const gzip = gzipSync(readFileSync(path)).length;
+      expect(raw, `${file} raw size exceeded budget`).toBeLessThanOrEqual(budget.raw);
+      expect(gzip, `${file} gzipped size exceeded budget`).toBeLessThanOrEqual(budget.gzip);
+    });
+  }
+});
 
 describe.skipIf(!bundleExists)("CJS bundle smoke test (requires npm run build)", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
