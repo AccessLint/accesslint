@@ -1,9 +1,9 @@
 ---
-title: "A synchronous `toBeAccessible()` matcher for Jest"
+title: "Introducing `@accesslint/jest`: synchronous accessibility assertions"
 summary: "@accesslint/jest is a Jest adapter that runs WCAG 2.2 checks against any Testing-Library-rendered element — synchronously, under jsdom or happy-dom, with no dependency on axe-core. Here's what it changes, what it doesn't, and how to migrate."
 ---
 
-# A synchronous `toBeAccessible()` matcher for Jest
+# Introducing `@accesslint/jest`: synchronous accessibility assertions
 
 Accessibility testing has a strong culture in the JavaScript ecosystem — largely thanks to `axe-core` and the `jest-axe` wrapper, which have introduced a lot of teams to catching WCAG violations in CI. [`@accesslint/jest`](https://www.npmjs.com/package/@accesslint/jest) is a newer adapter that targets the same goal with a different shape: a **synchronous** `toBeAccessible()` matcher that runs WCAG 2.2 Level A and AA checks against any DOM your Testing Library render produces.
 
