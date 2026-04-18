@@ -28,6 +28,11 @@
     "test:memory": {
       "cache": false
     },
+    "test:memory:browser": {
+      "dependsOn": ["build"],
+      "inputs": ["src/bench/**", "playwright.config.ts"],
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json"]

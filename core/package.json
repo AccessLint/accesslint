@@ -29,6 +29,7 @@
     "test:browser": "vitest run --project browser",
     "test:coverage": "vitest run --project unit --coverage",
     "test:memory": "vitest run --project memory",
+    "test:memory:browser": "npx playwright test --project=memory",
     "act": "echo 'ACT conformance suite complete'",
     "act:fixtures": "scripts/download-act-fixtures.sh && npx tsx src/act/download-fixtures.ts",
     "act:test": "npx playwright test src/act/act-browser.spec.ts",
