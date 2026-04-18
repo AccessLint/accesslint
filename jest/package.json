@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/jest",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Accessibility assertions for Jest — toBeAccessible() matcher powered by AccessLint",
   "license": "MIT",
   "publishConfig": {
