@@ -19,6 +19,7 @@ interface RuleStats {
 
 interface Fixture {
   testcaseId: string;
+  coreRuleId: string;
   expected: "passed" | "failed" | "inapplicable";
 }
 
@@ -32,7 +33,11 @@ function main() {
     process.exit(1);
   }
 
-  // Build a lookup from testcaseId to expected outcome
+  // Build a lookup from (coreRuleId, testcaseId) to expected outcome.
+  // Keying by testcaseId alone collapses cross-rule conflicts — e.g. the
+  // same 18pt #000/#666 fixture passes afw4f7 (AA contrast) but fails
+  // 09o5cg (AAA contrast), and the second entry would overwrite the first,
+  // scoring correct assertions against the wrong expected.
   let fixtures: Fixture[];
   try {
     fixtures = JSON.parse(readFileSync(FIXTURES_PATH, "utf-8"));
@@ -40,9 +45,11 @@ function main() {
     console.error(`Failed to read fixtures at ${FIXTURES_PATH}`);
     process.exit(1);
   }
-  const expectedByTestcase = new Map<string, string>();
+  const expectedByRuleTestcase = new Map<string, string>();
+  const fixtureKey = (coreRuleId: string, testcaseId: string) =>
+    `${coreRuleId}|${testcaseId}`;
   for (const f of fixtures) {
-    expectedByTestcase.set(f.testcaseId, f.expected);
+    expectedByRuleTestcase.set(fixtureKey(f.coreRuleId, f.testcaseId), f.expected);
   }
 
   // Aggregate per core-rule stats from flat assertedThat array
@@ -67,7 +74,7 @@ function main() {
     if (!sourceMatch) continue;
     const testcaseId = sourceMatch[1];
 
-    const expected = expectedByTestcase.get(testcaseId);
+    const expected = expectedByRuleTestcase.get(fixtureKey(coreRuleId, testcaseId));
     if (!expected) continue;
 
     const actualOutcome = assertion.result.outcome.replace("earl:", "") as
