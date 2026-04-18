@@ -178,6 +178,66 @@ test.describe("accesslintAudit", () => {
     const scriptCount = await page.evaluate(() => document.querySelectorAll("script").length);
     expect(scriptCount).toBe(1);
   });
+
+  test("failOn=critical filters out non-critical violations", async ({ page }) => {
+    await page.setContent(INACCESSIBLE_HTML);
+    const baseline = await accesslintAudit(page);
+    const filtered = await accesslintAudit(page, { failOn: "critical" });
+    expect(baseline.violations.length).toBeGreaterThan(0);
+    for (const v of filtered.violations) {
+      expect(v.impact).toBe("critical");
+    }
+  });
+
+  test("failOn=serious still returns critical violations", async ({ page }) => {
+    await page.setContent(INACCESSIBLE_HTML);
+    const result = await accesslintAudit(page, { failOn: "serious" });
+    const ruleIds = result.violations.map((v) => v.ruleId);
+    // img-alt is critical — survives a "serious" threshold
+    expect(ruleIds).toContain("text-alternatives/img-alt");
+  });
+
+  test("includeAAA=true runs AAA-level rules", async ({ page }) => {
+    // Low-contrast text to trigger the AAA enhanced contrast rule
+    await page.setContent(`
+      <!DOCTYPE html>
+      <html lang="en">
+      <head><meta charset="utf-8"><title>AAA</title></head>
+      <body><main><h1>Hi</h1><p style="color:#888;background:#fff">low contrast</p></main></body>
+      </html>`);
+
+    const withoutAAA = await accesslintAudit(page);
+    const withAAA = await accesslintAudit(page, { includeAAA: true });
+
+    const aaaRuleId = "distinguishable/color-contrast-enhanced";
+    expect(withoutAAA.violations.map((v) => v.ruleId)).not.toContain(aaaRuleId);
+    expect(withAAA.ruleCount).toBeGreaterThan(withoutAAA.ruleCount);
+  });
+
+  test("componentMode=true skips page-level rules on a Page", async ({ page }) => {
+    await page.setContent(INACCESSIBLE_HTML); // no <html lang>, triggers html-has-lang
+    const full = await accesslintAudit(page);
+    const component = await accesslintAudit(page, { componentMode: true });
+    expect(full.violations.map((v) => v.ruleId)).toContain("readable/html-has-lang");
+    expect(component.violations.map((v) => v.ruleId)).not.toContain("readable/html-has-lang");
+  });
+
+  test("componentMode defaults to true for Locator targets", async ({ page }) => {
+    // INACCESSIBLE_HTML has both a missing <html lang> (page-level rule) and
+    // an <img> without alt inside <main>. A locator-scoped audit should skip
+    // page-level rules by default, so html-has-lang must not appear.
+    await page.setContent(INACCESSIBLE_HTML);
+    const result = await accesslintAudit(page.locator("main"));
+    const ruleIds = result.violations.map((v) => v.ruleId);
+    expect(ruleIds).not.toContain("readable/html-has-lang");
+  });
+
+  test("locale is forwarded to the core audit", async ({ page }) => {
+    await page.setContent(INACCESSIBLE_HTML);
+    // Smoke test: passing a locale doesn't throw and returns violations.
+    const result = await accesslintAudit(page, { locale: "en" });
+    expect(result.violations.length).toBeGreaterThan(0);
+  });
 });
 
 test.describe("iframe auditing", () => {

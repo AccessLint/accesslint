@@ -1,181 +1,26 @@
 /**
  * Snapshot baseline — capture current violations and only fail on regressions.
  *
- * Violation identity uses `ruleId + stableSelector` where the selector comes
- * from Playwright's public `locator(css).normalize()` API (v1.59+), producing
- * role-based / semantic selectors (e.g. `getByRole('img', { name: 'Submit' })`)
- * that are resilient to class-name and ID churn. Older Playwright versions
- * fall back to tag-path selectors.
+ * Generic snapshot file I/O + comparison logic lives in
+ * `@accesslint/matchers-internal/snapshot` (shared across all matcher
+ * packages). This file owns the Playwright-specific pieces: page-settle
+ * heuristic, selector stabilization via `locator.normalize()`, and frame
+ * navigation for `>>>iframe>`-prefixed violation selectors.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
 import type { Page, Locator, Frame } from "@playwright/test";
 import type { AuditViolation } from "./audit";
 
-export interface SnapshotViolation {
-  ruleId: string;
-  selector: string;
-}
-
-export interface SnapshotResult {
-  pass: boolean;
-  newViolations: SnapshotViolation[];
-  fixedViolations: SnapshotViolation[];
-  updated: boolean;
-  created: boolean;
-}
-
-// ---------------------------------------------------------------------------
-// Name validation
-// ---------------------------------------------------------------------------
-
-export function validateSnapshotName(name: string): void {
-  if (!name || typeof name !== "string") {
-    throw new Error("Snapshot name must be a non-empty string");
-  }
-  if (/[/\\:*?"<>|]/.test(name)) {
-    throw new Error(
-      `Snapshot name "${name}" contains invalid characters ` +
-        `(path separators and special characters are not allowed)`,
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Path resolution
-// ---------------------------------------------------------------------------
-
-export function resolveSnapshotPath(name: string, dir?: string): string {
-  validateSnapshotName(name);
-  const base = dir || resolve(process.cwd(), "accessibility-snapshots");
-  return resolve(base, `${name}.json`);
-}
-
-// ---------------------------------------------------------------------------
-// File I/O
-// ---------------------------------------------------------------------------
-
-export function loadSnapshot(path: string): SnapshotViolation[] | null {
-  try {
-    const data = readFileSync(path, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-export function saveSnapshot(path: string, violations: SnapshotViolation[]): void {
-  const sorted = [...violations].sort(
-    (a, b) => a.ruleId.localeCompare(b.ruleId) || a.selector.localeCompare(b.selector),
-  );
-  mkdirSync(dirname(path), { recursive: true });
-  writeFileSync(path, JSON.stringify(sorted, null, 2) + "\n");
-}
-
-// ---------------------------------------------------------------------------
-// Comparison
-// ---------------------------------------------------------------------------
-
-function violationKey(v: SnapshotViolation): string {
-  return `${v.ruleId}\0${v.selector}`;
-}
-
-export function compareViolations(
-  current: SnapshotViolation[],
-  baseline: SnapshotViolation[],
-): { newViolations: SnapshotViolation[]; fixedViolations: SnapshotViolation[] } {
-  // Count-based comparison to handle duplicate ruleId+selector pairs
-  // (e.g. multiple <img> elements that all resolve to getByRole('img'))
-  const baselineCounts = new Map<string, number>();
-  for (const v of baseline) {
-    const key = violationKey(v);
-    baselineCounts.set(key, (baselineCounts.get(key) ?? 0) + 1);
-  }
-
-  const remaining = new Map(baselineCounts);
-  const newViolations: SnapshotViolation[] = [];
-  for (const v of current) {
-    const key = violationKey(v);
-    const count = remaining.get(key) ?? 0;
-    if (count > 0) {
-      remaining.set(key, count - 1);
-    } else {
-      newViolations.push(v);
-    }
-  }
-
-  const currentCounts = new Map<string, number>();
-  for (const v of current) {
-    const key = violationKey(v);
-    currentCounts.set(key, (currentCounts.get(key) ?? 0) + 1);
-  }
-
-  const remainingCurrent = new Map(currentCounts);
-  const fixedViolations: SnapshotViolation[] = [];
-  for (const v of baseline) {
-    const key = violationKey(v);
-    const count = remainingCurrent.get(key) ?? 0;
-    if (count > 0) {
-      remainingCurrent.set(key, count - 1);
-    } else {
-      fixedViolations.push(v);
-    }
-  }
-
-  return { newViolations, fixedViolations };
-}
-
-// ---------------------------------------------------------------------------
-// Evaluate snapshot (create / compare / ratchet / update)
-// ---------------------------------------------------------------------------
-
-export function evaluateSnapshot(
-  currentViolations: SnapshotViolation[],
-  snapshotPath: string,
-  options?: { update?: boolean },
-): SnapshotResult {
-  const update = options?.update ?? false;
-  const baseline = loadSnapshot(snapshotPath);
-
-  // No snapshot file → create it, test passes
-  if (baseline === null) {
-    saveSnapshot(snapshotPath, currentViolations);
-    return {
-      pass: true,
-      newViolations: [],
-      fixedViolations: [],
-      updated: false,
-      created: true,
-    };
-  }
-
-  // Force update (ACCESSLINT_UPDATE=1 or playwright test -u)
-  if (update) {
-    saveSnapshot(snapshotPath, currentViolations);
-    return {
-      pass: true,
-      newViolations: [],
-      fixedViolations: [],
-      updated: true,
-      created: false,
-    };
-  }
-
-  const { newViolations, fixedViolations } = compareViolations(currentViolations, baseline);
-
-  // Ratchet down — auto-update when violations only decreased
-  if (newViolations.length === 0 && fixedViolations.length > 0) {
-    saveSnapshot(snapshotPath, currentViolations);
-  }
-
-  return {
-    pass: newViolations.length === 0,
-    newViolations,
-    fixedViolations,
-    updated: fixedViolations.length > 0 && newViolations.length === 0,
-    created: false,
-  };
-}
+export {
+  validateSnapshotName,
+  resolveSnapshotPath,
+  loadSnapshot,
+  saveSnapshot,
+  compareViolations,
+  evaluateSnapshot,
+  type SnapshotViolation,
+  type SnapshotResult,
+} from "@accesslint/matchers-internal/snapshot";
+import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
 // ---------------------------------------------------------------------------
 // Page settle heuristic
@@ -314,16 +159,10 @@ async function findFrameByPrefix(page: Page, prefix: string): Promise<Frame | nu
 /**
  * Convert audit violations into snapshot violations with **stable selectors**.
  *
- * Uses Playwright's `InjectedScript.generateSelectorSimple()` — the same
- * engine behind codegen — to produce selectors that favor ARIA roles,
- * accessible names, text content, and test IDs over CSS classes and random
- * IDs.  The internal selector format is then converted to the human-readable
- * Locator API form via `asLocator()`.
- *
- * For iframe violations (`>>>iframe>`), navigates to the inner frame and
- * stabilizes the element selector within that frame's context.
- *
- * Falls back to a tag-path selector if injection fails.
+ * Uses Playwright's public `locator(css).normalize()` to rewrite CSS selectors
+ * as role-based locator calls. For iframe violations (`>>>iframe>`), navigates
+ * to the inner frame and stabilizes the element selector within that frame's
+ * context. Falls back to tag-path selectors when normalization fails.
  */
 export async function toStableViolations(
   target: Page | Locator,

@@ -4,23 +4,43 @@
  * Works with both Page and Locator targets.
  */
 import { createRequire } from "node:module";
-import { getRuleById } from "@accesslint/core";
 import type { Page, Locator, Frame } from "@playwright/test";
+import {
+  applyFailOnFilter,
+  formatViolation as formatViolationShared,
+  type BaseAccessibleMatcherOptions,
+  type Impact,
+} from "@accesslint/matchers-internal/audit";
+import type { Violation } from "@accesslint/core";
 
 const require = createRequire(import.meta.url);
 const iifePath = require.resolve("@accesslint/core/iife");
 
-export interface AccessibleMatcherOptions {
-  disabledRules?: string[];
+export type { Impact } from "@accesslint/matchers-internal/audit";
+
+export interface AccessibleMatcherOptions extends BaseAccessibleMatcherOptions {
+  /** Also audit iframe content. Defaults to true for Page targets. */
   includeFrames?: boolean;
+  /** Also audit shadow DOM content. Defaults to true. */
   includeShadowDom?: boolean;
+}
+
+/**
+ * Options subset that `@accesslint/core`'s `runAudit` accepts in-page. Needs
+ * to be JSON-serializable because `page.evaluate` sends it across the boundary.
+ */
+interface CoreAuditOptions {
+  disabledRules?: string[];
+  includeAAA?: boolean;
+  componentMode?: boolean;
+  locale?: string;
 }
 
 export interface AuditViolation {
   ruleId: string;
   selector: string;
   html: string;
-  impact: "critical" | "serious" | "moderate" | "minor";
+  impact: Impact;
   message: string;
 }
 
@@ -49,8 +69,11 @@ async function ensureInjected(target: Page | Frame): Promise<void> {
   }
 }
 
-async function auditShadowDom(target: Page | Frame): Promise<AuditViolation[]> {
-  return target.evaluate(() => {
+async function auditShadowDom(
+  target: Page | Frame,
+  coreOpts: CoreAuditOptions,
+): Promise<AuditViolation[]> {
+  return target.evaluate((opts) => {
     const { getActiveRules, clearAllCaches } = (window as any).AccessLint;
 
     function findShadowRoots(root: Node): ShadowRoot[] {
@@ -72,7 +95,7 @@ async function auditShadowDom(target: Page | Frame): Promise<AuditViolation[]> {
 
     for (const shadowRoot of shadowRoots) {
       clearAllCaches();
-      const rules = getActiveRules();
+      const rules = getActiveRules(opts);
       for (const rule of rules) {
         try {
           const ruleViolations = rule.run(shadowRoot);
@@ -95,7 +118,7 @@ async function auditShadowDom(target: Page | Frame): Promise<AuditViolation[]> {
         impact: v.impact,
         message: v.message,
       }));
-  });
+  }, coreOpts);
 }
 
 async function getFrameSelectorPrefix(frame: Frame): Promise<string> {
@@ -117,7 +140,11 @@ async function getFrameSelectorPrefix(frame: Frame): Promise<string> {
   return parts.join(" ");
 }
 
-async function auditFrames(page: Page, includeShadowDom: boolean): Promise<AuditViolation[]> {
+async function auditFrames(
+  page: Page,
+  includeShadowDom: boolean,
+  coreOpts: CoreAuditOptions,
+): Promise<AuditViolation[]> {
   const violations: AuditViolation[] = [];
   const mainFrame = page.mainFrame();
 
@@ -129,9 +156,9 @@ async function auditFrames(page: Page, includeShadowDom: boolean): Promise<Audit
       await ensureInjected(frame);
       const prefix = await getFrameSelectorPrefix(frame);
 
-      const frameViolations: AuditViolation[] = await frame.evaluate(() => {
+      const frameViolations: AuditViolation[] = await frame.evaluate((opts) => {
         const { runAudit } = (window as any).AccessLint;
-        const raw = runAudit(document);
+        const raw = runAudit(document, opts);
         return raw.violations.map((v: any) => ({
           ruleId: v.ruleId,
           selector: v.selector,
@@ -139,7 +166,7 @@ async function auditFrames(page: Page, includeShadowDom: boolean): Promise<Audit
           impact: v.impact,
           message: v.message,
         }));
-      });
+      }, coreOpts);
 
       for (const v of frameViolations) {
         v.selector = prefix + " " + v.selector;
@@ -147,7 +174,7 @@ async function auditFrames(page: Page, includeShadowDom: boolean): Promise<Audit
       }
 
       if (includeShadowDom) {
-        const shadowViolations = await auditShadowDom(frame);
+        const shadowViolations = await auditShadowDom(frame, coreOpts);
         for (const v of shadowViolations) {
           v.selector = prefix + " " + v.selector;
           violations.push(v);
@@ -168,12 +195,19 @@ export async function accesslintAudit(
   const page = getPage(target);
   await ensureInjected(page);
 
+  const coreOpts: CoreAuditOptions = {
+    disabledRules: options?.disabledRules,
+    includeAAA: options?.includeAAA,
+    componentMode: options?.componentMode ?? !isPage(target),
+    locale: options?.locale,
+  };
+
   let result: AuditResult;
 
   if (isPage(target)) {
-    result = await page.evaluate(() => {
+    result = await page.evaluate((opts) => {
       const { runAudit } = (window as any).AccessLint;
-      const raw = runAudit(document);
+      const raw = runAudit(document, opts);
       return {
         url: raw.url,
         timestamp: raw.timestamp,
@@ -186,21 +220,25 @@ export async function accesslintAudit(
           message: v.message,
         })),
       };
-    });
+    }, coreOpts);
 
     if (options?.includeShadowDom !== false) {
-      const shadowViolations = await auditShadowDom(page);
+      const shadowViolations = await auditShadowDom(page, coreOpts);
       result.violations.push(...shadowViolations);
     }
 
     if (options?.includeFrames !== false) {
-      const frameViolations = await auditFrames(page, options?.includeShadowDom !== false);
+      const frameViolations = await auditFrames(
+        page,
+        options?.includeShadowDom !== false,
+        coreOpts,
+      );
       result.violations.push(...frameViolations);
     }
   } else {
-    result = await target.evaluate((el) => {
+    result = await target.evaluate((el, opts) => {
       const { runAudit } = (window as any).AccessLint;
-      const raw = runAudit(document);
+      const raw = runAudit(document, opts);
       const scoped = raw.violations.filter((v: any) => {
         try {
           const violationEl = el.ownerDocument.querySelector(v.selector);
@@ -221,20 +259,23 @@ export async function accesslintAudit(
           message: v.message,
         })),
       };
-    });
+    }, coreOpts);
   }
 
-  if (options?.disabledRules?.length) {
-    const disabled = new Set(options.disabledRules);
-    result.violations = result.violations.filter((v) => !disabled.has(v.ruleId));
-  }
+  result.violations = applyFailOnFilter(result.violations, options?.failOn);
 
   return result;
 }
 
+/**
+ * Format an audit violation into the shared failure-message block used across
+ * @accesslint/jest, @accesslint/vitest, and @accesslint/playwright.
+ *
+ * Adapts the Playwright `AuditViolation` shape (which doesn't carry `element`
+ * or structured `fix` fields — those are stripped when the audit result
+ * crosses the page boundary) to the `Violation` shape that the shared
+ * formatter expects.
+ */
 export function formatViolation(v: AuditViolation): string {
-  const rule = getRuleById(v.ruleId);
-  const wcag = rule?.wcag?.length ? ` (${rule.wcag.join(", ")})` : "";
-  const level = rule?.level ? ` [${rule.level}]` : "";
-  return `  ${v.ruleId}${level}${wcag}: ${v.message}\n    ${v.selector}`;
+  return formatViolationShared(v as unknown as Violation);
 }

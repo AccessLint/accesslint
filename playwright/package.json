@@ -54,6 +54,7 @@
     "@accesslint/core": "workspace:*"
   },
   "devDependencies": {
+    "@accesslint/matchers-internal": "workspace:*",
     "@playwright/test": "^1.59.0",
     "@types/node": "^25.2.3",
     "tsdown": "^0.21.9",

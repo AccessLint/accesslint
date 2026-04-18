@@ -61,6 +61,18 @@ await expect(page).toBeAccessible({
   /** Rule IDs to disable for this assertion. */
   disabledRules: ["distinguishable/color-contrast"],
 
+  /** Include AAA-level rules (excluded by default). */
+  includeAAA: true,
+
+  /** Skip page-level rules — defaults to true for Locator targets. */
+  componentMode: true,
+
+  /** Translated rule messages (e.g. "en", "es"). */
+  locale: "es",
+
+  /** Minimum impact that causes failure. "minor" (default) fails on anything. */
+  failOn: "serious",
+
   /** Audit iframe content as well as the top-level page. */
   includeFrames: true,
 
@@ -78,10 +90,16 @@ await expect(page).toBeAccessible({
 | Option             | Description                                                                      |
 | ------------------ | -------------------------------------------------------------------------------- |
 | `disabledRules`    | Rule IDs to skip for this assertion.                                             |
+| `includeAAA`       | Include AAA-level rules (excluded by default).                                   |
+| `componentMode`    | Skip page-level rules. Defaults to `true` for Locator targets, `false` for Page. |
+| `locale`           | Language for violation messages.                                                 |
+| `failOn`           | Minimum impact to fail on: `critical`, `serious`, `moderate`, `minor`.           |
 | `includeFrames`    | Also audit iframe content.                                                       |
 | `includeShadowDom` | Also audit shadow DOM content.                                                   |
 | `snapshot`         | Compare against a baseline; see [Snapshot baselines](#snapshot-baselines) below. |
 | `snapshotDir`      | Directory for snapshot files.                                                    |
+
+> `additionalRules` (supported by `@accesslint/jest` and `@accesslint/vitest`) isn't available here yet — rule functions can't cross the browser-page boundary. Let us know if you need it.
 
 ### Snapshot baselines
 
@@ -117,16 +135,16 @@ test("check specific violations", async ({ page }) => {
 
 ### Failure messages
 
-When violations are found, the matcher reports each one with its rule ID, WCAG level, success criterion, description, and the selector of the offending element:
+Failures include impact, WCAG criterion, level, selector, and — when available — remediation guidance:
 
 ```
 Expected no accessibility violations, but found 2:
 
-  text-alternatives/img-alt [A] (1.1.1): Image element missing alt attribute.
-    body > img
+  [critical] text-alternatives/img-alt (WCAG 1.1.1, A) — Images must have alternate text
+    selector: body > img
 
-  distinguishable/color-contrast [AA] (1.4.3): Text must have sufficient color contrast.
-    p.subtitle
+  [serious] distinguishable/color-contrast (WCAG 1.4.3, AA) — Text must have sufficient color contrast
+    selector: p.subtitle
 ```
 
 ## What it checks
