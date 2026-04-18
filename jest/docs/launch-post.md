@@ -23,7 +23,7 @@ Three things are different once `@accesslint/jest` is in your setup file.
 
 ### 1. The matcher is synchronous
 
-`toBeAccessible()` runs the audit and returns immediately. No `await`, no intermediate `results` variable.
+`toBeAccessible()` runs the audit inline — no `await`, no Promise, no intermediate `results` variable:
 
 ```ts
 // Before
@@ -45,7 +45,7 @@ test("login form is accessible", () => {
 });
 ```
 
-Some teams find this easier to thread through snapshot assertions and error-path tests, where mixing `async` with the rest of a synchronous assertion chain adds friction.
+At suite scale, the shape of that call starts to matter for CI cost. A Testing Library suite that sprinkles a11y assertions across dozens of component tests runs thousands of them on every PR. Each async matcher yields to the microtask queue and allocates a Promise; sync matchers don't. Per-assertion, the savings are small; across a full CI run, they compound into a modest but real reduction in the test-runtime budget. Sync also matches the shape of other jest-dom matchers (`toBeInTheDocument`, `toHaveStyle`), so a11y assertions read the same as the rest of the test body.
 
 ### 2. Color contrast runs under jsdom and happy-dom
 
