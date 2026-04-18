@@ -19,6 +19,12 @@ on:
         description: "Deterministic sampling seed"
         default: "42"
         type: string
+  workflow_run:
+    # Re-benchmark after every successful @accesslint/core publish so perf
+    # regressions land on the workflow summary without anyone remembering
+    # to click the dispatch button.
+    workflows: ["Publish @accesslint/core"]
+    types: [completed]
 
 env:
   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
@@ -34,6 +40,9 @@ concurrency:
 
 jobs:
   bench:
+    # For workflow_run triggers, only run on a successful upstream publish —
+    # a failed publish shouldn't kick off an hour of benchmark compute.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
