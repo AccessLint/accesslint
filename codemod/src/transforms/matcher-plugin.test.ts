@@ -152,6 +152,25 @@ test("x", async () => {
     expect(output).toContain("expect(container).toBeAccessible()");
   });
 
+  it("collapses even when toHaveNoViolations is registered globally (not imported)", () => {
+    // leafygreen-ui / many other projects register the matcher in a global
+    // jest setup file, so individual test files only import `axe`.
+    const input = `import { axe } from "jest-axe";
+
+test("x", async () => {
+  const container = document.createElement("div");
+  const results = await axe(container);
+  expect(results).toHaveNoViolations();
+});
+`;
+    const output = run(input, jestAxeOpts);
+    expect(output).toContain('import "@accesslint/jest"');
+    expect(output).not.toContain("jest-axe");
+    expect(output).toContain("expect(container).toBeAccessible()");
+    expect(output).not.toContain("toHaveNoViolations");
+    expect(output).not.toContain("await axe");
+  });
+
   it("returns source unchanged when jest-axe is not used", () => {
     const input = `import { render } from "@testing-library/react";
 

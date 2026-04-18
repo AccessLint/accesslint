@@ -89,15 +89,18 @@ const transform = (file: FileInfo, api: API, options: Options): string | null | 
   let mutated = false;
   const warnings: string[] = [];
 
+  const effectiveMatcher = names.matcher ?? resolved.matcherName;
+
   if (names.matcher) {
     mutated = removeExpectExtend(j, root, names.matcher) || mutated;
   }
 
-  if (names.axe && names.matcher) {
+  if (names.axe) {
     mutated =
-      collapseAxeThenAssert(j, root, names.axe, names.matcher, resolved.targetMatcher) || mutated;
+      collapseAxeThenAssert(j, root, names.axe, effectiveMatcher, resolved.targetMatcher) ||
+      mutated;
     mutated =
-      collapseInlineAxeAssert(j, root, names.axe, names.matcher, resolved.targetMatcher) ||
+      collapseInlineAxeAssert(j, root, names.axe, effectiveMatcher, resolved.targetMatcher) ||
       mutated;
   }
 
