@@ -12,6 +12,7 @@
     "matchers-internal",
     "mcp",
     "playwright",
+    "report",
     "storybook-addon",
     "vitest"
   ],

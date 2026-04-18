@@ -1,0 +1,73 @@
+{
+  "name": "@accesslint/report",
+  "version": "0.1.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "report"
+  },
+  "description": "Generate trend reports from @accesslint snapshot history",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "accesslint-report": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./history": {
+      "import": {
+        "types": "./dist/history.d.ts",
+        "default": "./dist/history.js"
+      },
+      "require": {
+        "types": "./dist/history.d.cts",
+        "default": "./dist/history.cjs"
+      }
+    },
+    "./aggregate": {
+      "import": {
+        "types": "./dist/aggregate.d.ts",
+        "default": "./dist/aggregate.js"
+      },
+      "require": {
+        "types": "./dist/aggregate.d.cts",
+        "default": "./dist/aggregate.cjs"
+      }
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "dev": "bun src/cli.ts",
+    "test": "vitest run",
+    "prepublishOnly": "bun run build"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "citty": "^0.1.6",
+    "tsdown": "^0.21.9",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
+  },
+  "license": "MIT"
+}
