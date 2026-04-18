@@ -8,7 +8,16 @@ const distDir = resolve(__dirname, "../dist");
 const bundlePath = resolve(distDir, "index.cjs");
 const esmPath = resolve(distDir, "index.js");
 const iifePath = resolve(distDir, "index.iife.js");
-const bundleExists = existsSync(bundlePath);
+
+// Fail fast with a clear message if dist/ isn't present. Turbo's test task
+// dependsOn build, so this should never happen in a correctly wired run;
+// if it does, the gate surfaces the misconfiguration loudly instead of
+// silently skipping every test in this file.
+if (!existsSync(bundlePath)) {
+  throw new Error(
+    `Bundle tests require ${bundlePath} — run 'turbo run build --filter=@accesslint/core' first.`,
+  );
+}
 
 /**
  * Bundle size budgets (bytes). Set at ~10% above observed sizes at the
@@ -23,7 +32,7 @@ const SIZE_BUDGETS: Record<string, { raw: number; gzip: number }> = {
   "index.d.cts": { raw: 12_000, gzip: 4_000 },
 };
 
-describe.skipIf(!bundleExists)("bundle size budgets (requires npm run build)", () => {
+describe("bundle size budgets", () => {
   for (const [file, budget] of Object.entries(SIZE_BUDGETS)) {
     const path = resolve(distDir, file);
     it(`${file} stays within byte budget`, () => {
@@ -35,9 +44,9 @@ describe.skipIf(!bundleExists)("bundle size budgets (requires npm run build)", (
   }
 });
 
-describe.skipIf(!bundleExists)("CJS bundle smoke test (requires npm run build)", () => {
+describe("CJS bundle smoke test", () => {
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const bundle = bundleExists ? require(bundlePath) : null;
+  const bundle = require(bundlePath);
 
   it("exports runAudit", () => {
     expect(typeof bundle.runAudit).toBe("function");
@@ -89,7 +98,7 @@ describe.skipIf(!bundleExists)("CJS bundle smoke test (requires npm run build)",
   });
 });
 
-describe.skipIf(!bundleExists)("ESM bundle smoke test (requires npm run build)", () => {
+describe("ESM bundle smoke test", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let esm: any;
   beforeAll(async () => {
@@ -114,7 +123,7 @@ describe.skipIf(!bundleExists)("ESM bundle smoke test (requires npm run build)",
   });
 });
 
-describe.skipIf(!bundleExists)("ESM/CJS export parity (requires npm run build)", () => {
+describe("ESM/CJS export parity", () => {
   it("exposes the same export names in both formats", async () => {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const cjs = require(bundlePath);
@@ -127,7 +136,7 @@ describe.skipIf(!bundleExists)("ESM/CJS export parity (requires npm run build)",
   });
 });
 
-describe.skipIf(!bundleExists)("IIFE bundle smoke test (requires npm run build)", () => {
+describe("IIFE bundle smoke test", () => {
   // Evaluate the IIFE in a fresh function scope so `var AccessLint` stays
   // local — mirrors what happens when the script is dropped in a browser
   // without interfering with other tests' globals.
