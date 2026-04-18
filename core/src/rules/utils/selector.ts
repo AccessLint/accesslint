@@ -24,6 +24,26 @@ const ANCHOR_ATTRS = [
   "aria-label",
 ];
 
+/**
+ * Return the strongest stable anchor for an element, formatted as
+ * `attr=value` (e.g. `data-testid=submit`), or null if no anchor is
+ * present. Priority matches ANCHOR_ATTRS with `id` considered ahead of
+ * the rest when present. Used by snapshot matchers to identify an
+ * element across DOM refactors.
+ */
+export function extractAnchor(el: Element): string | null {
+  if (el.id && el.id.length > 0 && el.id.length < 100) {
+    return `id=${el.id}`;
+  }
+  for (const attr of ANCHOR_ATTRS) {
+    const val = el.getAttribute(attr);
+    if (val != null && val.length > 0 && val.length < 100) {
+      return `${attr}=${val}`;
+    }
+  }
+  return null;
+}
+
 /** Build a CSS segment for one element using stable attributes when available. */
 function buildSegment(el: Element): string {
   const tag = el.tagName.toLowerCase();

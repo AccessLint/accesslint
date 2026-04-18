@@ -109,7 +109,9 @@ When you have existing violations that can't be fixed immediately, snapshot base
 await expect(page).toBeAccessible({ snapshot: "dashboard" });
 ```
 
-Snapshots are stored in `accessibility-snapshots/` and should be committed to version control. Violations are identified by stable Playwright selectors (like `getByRole('img')`) so snapshots survive class-name and ID churn.
+Snapshots are stored in `accessibility-snapshots/` and should be committed to version control. Violations are identified by a tiered multi-signal matcher from [`@accesslint/heal-diff`](../heal-diff): exact Playwright locator first, then anchor attribute, then ARIA role + name, then HTML fingerprint, then relative-location. When a later tier matches the baseline auto-heals to the new selector and the test still passes; a `"healed"` event is logged to `.history.ndjson`.
+
+Per-violation PNG screenshots are captured by default into `<snapshotName>-screenshots/` alongside the JSON. When a violation can't heal but weaker signals suggest it's the same element in a new place, the failure output prints baseline and current screenshot paths so you can confirm visually. Disable with `toBeAccessible({ snapshot: "x", visualSnapshots: false })`.
 
 When violations are fixed, the baseline ratchets down automatically. To force-update all snapshots to the current state:
 
@@ -118,6 +120,17 @@ npx playwright test -u
 # or
 ACCESSLINT_UPDATE=1 npx playwright test
 ```
+
+### Trend reports
+
+Every create / ratchet-down / force-update / healed event appends a record to `accessibility-snapshots/.history.ndjson`. Generate a trend report from that history with [`@accesslint/report`](../report):
+
+```sh
+npx @accesslint/report --format md > a11y-report.md
+npx @accesslint/report --format html --out a11y-report.html
+```
+
+The report shows a stacked chart of total violations per snapshot over time and a per-rule movement table with WCAG metadata joined from `@accesslint/core`. The sidecar file is append-only and safe to commit.
 
 ### Standalone function
 

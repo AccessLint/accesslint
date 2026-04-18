@@ -25,6 +25,11 @@ export interface SnapshotMatcherOptions extends AccessibleMatcherOptions {
   snapshot?: string;
   /** Directory to store snapshot files. Defaults to `{cwd}/accessibility-snapshots/`. */
   snapshotDir?: string;
+  /**
+   * Capture per-violation PNG screenshots alongside the baseline so the
+   * "likely moved" failure hint can show visual context. Defaults to true.
+   */
+  visualSnapshots?: boolean;
 }
 
 const require = createRequire(import.meta.url);
@@ -58,32 +63,62 @@ export async function toBeAccessible(target: Page | Locator, options?: SnapshotM
 
     const result = await accesslintAudit(target, options);
     const snapshotPath = resolveSnapshotPath(options.snapshot, options.snapshotDir);
-    const stableViolations = await toStableViolations(target, result.violations);
+    const stableViolations = await toStableViolations(target, result.violations, {
+      snapshotPath,
+      visualSnapshots: options.visualSnapshots,
+    });
     const update = isUpdateMode();
-    const snap = evaluateSnapshot(stableViolations, snapshotPath, { update });
+    const snap = evaluateSnapshot(stableViolations, snapshotPath, {
+      update,
+      name: options.snapshot,
+    });
 
     return {
       pass: snap.pass,
       name: "toBeAccessible",
       message: () => {
         if (snap.pass) {
+          const parts: string[] = [];
           if (snap.created) {
-            return (
+            parts.push(
               `Snapshot "${options.snapshot}" created with ` +
-              `${stableViolations.length} baseline violation(s)`
+                `${stableViolations.length} baseline violation(s)`,
             );
+          } else if (snap.updated) {
+            const reasons: string[] = [];
+            if (snap.fixedViolations.length > 0)
+              reasons.push(`${snap.fixedViolations.length} fixed`);
+            if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
+            const verb = snap.fixedViolations.length > 0 ? "ratcheted" : "updated";
+            parts.push(`Snapshot "${options.snapshot}" ${verb} (${reasons.join(", ")})`);
+          } else {
+            parts.push("Expected accessibility violations beyond snapshot, but none were found");
           }
-          if (snap.updated) {
-            return `Snapshot "${options.snapshot}" updated`;
+          for (const h of snap.healed) {
+            parts.push(`  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`);
           }
-          return "Expected accessibility violations beyond snapshot, but none were found";
+          return parts.join("\n");
         }
 
-        const summary = snap.newViolations.map((v) => `  ${v.ruleId}: ${v.selector}`).join("\n");
-        return (
+        const lines: string[] = [
           `Expected no new accessibility violations beyond snapshot ` +
-          `"${options.snapshot}", but found ${snap.newViolations.length} new:\n\n${summary}`
-        );
+            `"${options.snapshot}", but found ${snap.newViolations.length} new:`,
+        ];
+        for (const v of snap.newViolations) {
+          lines.push(`  ${v.ruleId}: ${v.selector}`);
+          const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
+          if (hint) {
+            lines.push(`    likely moved from: ${hint.candidate.selector}`);
+            lines.push(`    matched on: ${hint.sharedSignals.join(", ")}`);
+            if (v.screenshotPath && hint.candidate.screenshotPath) {
+              lines.push(`    baseline screenshot: ${hint.candidate.screenshotPath}`);
+              lines.push(`    current screenshot:  ${v.screenshotPath}`);
+            }
+            lines.push(`    if same: run with ACCESSLINT_UPDATE=1`);
+            lines.push(`    if new: add a data-testid to disambiguate`);
+          }
+        }
+        return lines.join("\n");
       },
     };
   }

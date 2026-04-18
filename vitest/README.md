@@ -162,7 +162,26 @@ expect(container).toBeAccessible({ snapshot: "login-form" });
 - **Ratchet-down** — when only fixed violations are detected (none added), the baseline updates automatically.
 - **Force refresh** the baseline with `ACCESSLINT_UPDATE=1` or Vitest's `-u` / `--update` flag.
 
-Violation identity is `ruleId + getSelector(v.element)`. Because the matcher runs in happy-dom / jsdom with no browser, the selector is a tag-path rather than an ARIA-role selector — baselines are more sensitive to DOM refactors than the browser-based Playwright equivalent.
+Violation identity starts at `ruleId + selector` and falls back through a tiered multi-signal matcher powered by [`@accesslint/heal-diff`](../heal-diff):
+
+1. Exact selector match (fast path).
+2. Anchor attribute (`data-testid`, `id`, `name`, `href`, `for`, `aria-label`).
+3. Computed ARIA role + accessible name.
+4. HTML fingerprint (normalized outerHTML hash).
+5. Relative location (nearest landmark trail), uniqueness-gated.
+
+When a non-exact tier matches the baseline's selector auto-heals to the current one, the snapshot is rewritten, and a `"healed"` event is logged to `.history.ndjson`. The test still passes. When no tier matches but weaker signals overlap, the failure message attaches a `likely moved from:` hint so you can tell "same issue, different selector" from "genuinely new issue" at a glance.
+
+### Trend reports
+
+Every create / ratchet-down / force-update event appends a record to `accessibility-snapshots/.history.ndjson` alongside the baseline JSON files. Generate a trend report from that history with [`@accesslint/report`](../report):
+
+```sh
+npx @accesslint/report --format md > a11y-report.md
+npx @accesslint/report --format html --out a11y-report.html
+```
+
+The report shows a stacked chart of total violations per snapshot over time, plus a per-rule movement table that joins in WCAG metadata from `@accesslint/core`. The sidecar file is append-only and safe to commit; merge conflicts on it resolve trivially by concatenating both sides.
 
 ## Audit memoization (opt-in fixture)
 

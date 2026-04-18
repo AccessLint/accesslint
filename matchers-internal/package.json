@@ -63,7 +63,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@accesslint/core": "workspace:*"
+    "@accesslint/core": "workspace:*",
+    "@accesslint/heal-diff": "workspace:*"
   },
   "devDependencies": {
     "happy-dom": "^20.6.1",

@@ -7,7 +7,10 @@
  * heuristic, selector stabilization via `locator.normalize()`, and frame
  * navigation for `>>>iframe>`-prefixed violation selectors.
  */
+import { mkdirSync, writeFileSync } from "node:fs";
+import { basename, dirname, resolve } from "node:path";
 import type { Page, Locator, Frame } from "@playwright/test";
+import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import type { AuditViolation } from "./audit";
 
 export {
@@ -17,8 +20,11 @@ export {
   saveSnapshot,
   compareViolations,
   evaluateSnapshot,
+  screenshotsDirFor,
   type SnapshotViolation,
   type SnapshotResult,
+  type HealedViolation,
+  type LikelyMovedHint,
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
@@ -164,9 +170,22 @@ async function findFrameByPrefix(page: Page, prefix: string): Promise<Frame | nu
  * to the inner frame and stabilizes the element selector within that frame's
  * context. Falls back to tag-path selectors when normalization fails.
  */
+export interface ToStableViolationsOptions {
+  /**
+   * When set, per-violation PNG screenshots are captured (bounded
+   * concurrency) and written to `<snapshotPath>-screenshots/`. The
+   * `screenshotPath` on each returned violation points at the written
+   * file. Skipped silently when an individual capture fails.
+   */
+  snapshotPath?: string;
+  /** Disable screenshot capture entirely. Defaults to true when snapshotPath is set. */
+  visualSnapshots?: boolean;
+}
+
 export async function toStableViolations(
   target: Page | Locator,
   violations: AuditViolation[],
+  options?: ToStableViolationsOptions,
 ): Promise<SnapshotViolation[]> {
   if (violations.length === 0) return [];
 
@@ -210,16 +229,20 @@ export async function toStableViolations(
     }
   }
 
-  // Stabilize main-frame selectors
+  // Stabilize main-frame selectors + capture extra signals in the same frame
   const stableMain = await stabilizeSelectors(page, mainSelectors);
+  const mainSignals = await captureMainFrameSignals(page, mainSelectors, violations, mainIndices);
   for (let i = 0; i < mainIndices.length; i++) {
-    result[mainIndices[i]] = {
-      ruleId: violations[mainIndices[i]].ruleId,
+    const idx = mainIndices[i];
+    result[idx] = {
+      ruleId: violations[idx].ruleId,
       selector: stableMain[i],
+      ...mainSignals[i],
     };
   }
 
-  // Stabilize iframe selectors within their frame context
+  // Stabilize iframe selectors within their frame context (signals best-effort
+  // skipped in iframes for now).
   for (const [prefix, { indices, suffixes }] of iframeGroups) {
     let stableSuffixes: string[];
     try {
@@ -236,7 +259,208 @@ export async function toStableViolations(
     }
   }
 
+  const wantScreenshots =
+    options?.visualSnapshots !== false && options?.snapshotPath !== undefined;
+  if (wantScreenshots && options?.snapshotPath) {
+    await captureScreenshots(page, options.snapshotPath, mainIndices, mainSelectors, result);
+  }
+
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Main-frame signal capture (anchor, role, htmlFingerprint, relativeLocation, tag)
+// ---------------------------------------------------------------------------
+
+interface RawSignals {
+  anchor?: string;
+  role?: string;
+  html?: string;
+  relativeLocation?: string;
+  tag?: string;
+}
+
+async function captureMainFrameSignals(
+  page: Page,
+  cssSelectors: string[],
+  violations: AuditViolation[],
+  mainIndices: number[],
+): Promise<Array<Partial<SnapshotViolation>>> {
+  if (cssSelectors.length === 0) return [];
+
+  let raw: RawSignals[];
+  try {
+    raw = await page.evaluate(
+      (args: { selectors: string[] }) => {
+        const AL = (window as unknown as { AccessLint?: Record<string, unknown> }).AccessLint;
+        const extractAnchor = (AL?.extractAnchor as ((el: Element) => string | null) | undefined);
+        const getComputedRole = (AL?.getComputedRole as ((el: Element) => string | null) | undefined);
+        const getAccessibleName = (AL?.getAccessibleName as ((el: Element) => string) | undefined);
+        const getHtmlSnippet = (AL?.getHtmlSnippet as ((el: Element) => string) | undefined);
+
+        const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form", "fieldset"]);
+        const LANDMARK_ROLES = new Set([
+          "banner",
+          "complementary",
+          "contentinfo",
+          "form",
+          "main",
+          "navigation",
+          "region",
+          "search",
+        ]);
+
+        function isLandmark(el: Element): boolean {
+          if (LANDMARK_TAGS.has(el.tagName.toLowerCase())) return true;
+          const explicit = el.getAttribute("role");
+          return explicit != null && LANDMARK_ROLES.has(explicit);
+        }
+
+        function segmentFor(el: Element): string {
+          const tag = el.tagName.toLowerCase();
+          if (el.id) return `${tag}#${el.id}`;
+          const role = el.getAttribute("role");
+          return role ? `${tag}[role=${role}]` : tag;
+        }
+
+        function buildRelativeLocation(el: Element): string | null {
+          let current: Element | null = el.parentElement;
+          while (current) {
+            if (isLandmark(current)) {
+              let trail = segmentFor(current);
+              let near: string | null = null;
+              let scan: Element | null = el;
+              for (let depth = 0; scan && depth < 4 && !near; depth++, scan = scan.parentElement) {
+                for (let i = 0; i < scan.children.length; i++) {
+                  const sib = scan.children[i];
+                  if (sib === el) continue;
+                  const text = (sib.textContent ?? "").trim().replace(/\s+/g, " ");
+                  if (text.length > 0 && text.length <= 40) {
+                    near = text;
+                    break;
+                  }
+                }
+              }
+              if (near) trail = `${trail} > near "${near}"`;
+              return trail;
+            }
+            current = current.parentElement;
+          }
+          return null;
+        }
+
+        return args.selectors.map((sel): RawSignals => {
+          try {
+            const el = sel ? document.querySelector(sel) : document.documentElement;
+            if (!el) return {};
+            const out: RawSignals = { tag: el.tagName.toLowerCase() };
+            const anchor = extractAnchor?.(el);
+            if (anchor) out.anchor = anchor;
+            const role = getComputedRole?.(el);
+            if (role) {
+              const name = (getAccessibleName?.(el) ?? "").trim();
+              out.role = name ? `${role}[name="${name}"]` : role;
+            }
+            const html = getHtmlSnippet?.(el);
+            if (html) out.html = html;
+            const rel = buildRelativeLocation(el);
+            if (rel) out.relativeLocation = rel;
+            return out;
+          } catch {
+            return {};
+          }
+        });
+      },
+      { selectors: cssSelectors },
+    );
+  } catch {
+    raw = cssSelectors.map(() => ({}));
+  }
+
+  return raw.map((sig, i): Partial<SnapshotViolation> => {
+    const out: Partial<SnapshotViolation> = {};
+    if (sig.anchor) out.anchor = sig.anchor;
+    if (sig.role) out.role = sig.role;
+    if (sig.tag) out.tag = sig.tag;
+    if (sig.relativeLocation) out.relativeLocation = sig.relativeLocation;
+    const html = sig.html ?? violations[mainIndices[i]].html;
+    if (html) out.htmlFingerprint = sha1Short(normalizeHtml(html));
+    return out;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Screenshot capture
+// ---------------------------------------------------------------------------
+
+const SCREENSHOT_CONCURRENCY = 4;
+
+function slugForDiscriminator(input: string): string {
+  return input
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40);
+}
+
+function ruleSlug(ruleId: string): string {
+  return ruleId.replace(/\//g, "_");
+}
+
+function screenshotFilename(
+  v: SnapshotViolation,
+  existing: Set<string>,
+): string {
+  const rule = ruleSlug(v.ruleId);
+  const disc = v.anchor
+    ? slugForDiscriminator(v.anchor)
+    : v.htmlFingerprint
+      ? v.htmlFingerprint.slice(0, 8)
+      : "x";
+  const base = `${rule}_${disc}`;
+  let name = `${base}.png`;
+  let i = 1;
+  while (existing.has(name)) {
+    name = `${base}_${i}.png`;
+    i++;
+  }
+  existing.add(name);
+  return name;
+}
+
+async function captureScreenshots(
+  page: Page,
+  snapshotPath: string,
+  mainIndices: number[],
+  cssSelectors: string[],
+  result: SnapshotViolation[],
+): Promise<void> {
+  const baselineName = basename(snapshotPath).replace(/\.json$/i, "");
+  const dir = resolve(dirname(snapshotPath), `${baselineName}-screenshots`);
+  mkdirSync(dir, { recursive: true });
+
+  const used = new Set<string>();
+  const queue: Array<() => Promise<void>> = [];
+
+  for (let i = 0; i < mainIndices.length; i++) {
+    const idx = mainIndices[i];
+    const css = cssSelectors[i];
+    if (!css) continue;
+    const filename = screenshotFilename(result[idx], used);
+    queue.push(async () => {
+      try {
+        const locator = page.locator(css).first();
+        const png = await locator.screenshot({ omitBackground: true, timeout: 1000 });
+        writeFileSync(resolve(dir, filename), png);
+        result[idx].screenshotPath = `${baselineName}-screenshots/${filename}`;
+      } catch {
+        /* element detached, off-screen, or timeout — skip */
+      }
+    });
+  }
+
+  for (let i = 0; i < queue.length; i += SCREENSHOT_CONCURRENCY) {
+    await Promise.all(queue.slice(i, i + SCREENSHOT_CONCURRENCY).map((fn) => fn()));
+  }
 }
 
 async function tagPathFallback(target: Page | Frame, selectors: string[]): Promise<string[]> {

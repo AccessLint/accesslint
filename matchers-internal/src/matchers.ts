@@ -45,7 +45,10 @@ export const toBeAccessible = function (
     const violations = getOrAudit(received, options);
     const snapshotPath = resolveSnapshotPath(options.snapshot, options.snapshotDir);
     const current = toSnapshotViolations(violations);
-    const snap = evaluateSnapshot(current, snapshotPath, { update: isUpdateMode() });
+    const snap = evaluateSnapshot(current, snapshotPath, {
+      update: isUpdateMode(),
+      name: options.snapshot,
+    });
 
     return {
       pass: snap.pass,
@@ -103,26 +106,54 @@ function getOrAudit(el: Element, options?: AccessibleMatcherOptions): Violation[
 
 function snapshotMessage(snap: SnapshotResult, name: string, current: SnapshotViolation[]): string {
   if (snap.pass) {
+    const parts: string[] = [];
+
     if (snap.created) {
-      return (
+      parts.push(
         `Snapshot "${name}" created with ${current.length} baseline violation(s). ` +
-        `Future runs fail only on new violations.`
+          `Future runs fail only on new violations.`,
+      );
+    } else if (snap.updated) {
+      const reasons: string[] = [];
+      if (snap.fixedViolations.length > 0) reasons.push(`${snap.fixedViolations.length} fixed`);
+      if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
+      const verb = snap.fixedViolations.length > 0 ? "ratcheted" : "updated";
+      parts.push(
+        `Snapshot "${name}" ${verb} (${reasons.join(", ")}); ${current.length} remaining.`,
+      );
+    } else {
+      parts.push(`Matches snapshot "${name}" (${current.length} baseline violation(s)).`);
+    }
+
+    for (const h of snap.healed) {
+      parts.push(
+        `  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`,
       );
     }
-    if (snap.updated) {
-      return (
-        `Snapshot "${name}" ratcheted — ${snap.fixedViolations.length} violation(s) ` +
-        `fixed, ${current.length} remaining.`
-      );
-    }
-    return `Matches snapshot "${name}" (${current.length} baseline violation(s)).`;
+
+    return parts.join("\n");
   }
 
-  const summary = snap.newViolations.map((v) => `  ${v.ruleId}: ${v.selector}`).join("\n");
-  return (
+  const lines: string[] = [];
+  lines.push(
     `Expected no new accessibility violations beyond snapshot "${name}", ` +
-    `but found ${snap.newViolations.length} new:\n\n${summary}`
+      `but found ${snap.newViolations.length} new:`,
   );
+  for (const v of snap.newViolations) {
+    lines.push(`  ${v.ruleId}: ${v.selector}`);
+    const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
+    if (hint) {
+      lines.push(`    likely moved from: ${hint.candidate.selector}`);
+      lines.push(`    matched on: ${hint.sharedSignals.join(", ")}`);
+      if (v.screenshotPath && hint.candidate.screenshotPath) {
+        lines.push(`    baseline screenshot: ${hint.candidate.screenshotPath}`);
+        lines.push(`    current screenshot:  ${v.screenshotPath}`);
+      }
+      lines.push(`    if same: run with ACCESSLINT_UPDATE=1`);
+      lines.push(`    if new: add a data-testid to disambiguate`);
+    }
+  }
+  return lines.join("\n");
 }
 
 export const accesslintMatchers = { toBeAccessible };

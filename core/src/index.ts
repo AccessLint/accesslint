@@ -37,7 +37,12 @@ export {
   clearComputedRoleCache,
 } from "./rules/utils/aria";
 
-export { getSelector, getHtmlSnippet, querySelectorShadowAware } from "./rules/utils/selector";
+export {
+  getSelector,
+  getHtmlSnippet,
+  querySelectorShadowAware,
+  extractAnchor,
+} from "./rules/utils/selector";
 
 // Cache clearing (useful for test helpers and extension integration)
 export { clearAriaAttrAuditCache } from "./rules/aria/aria-attr-audit";
