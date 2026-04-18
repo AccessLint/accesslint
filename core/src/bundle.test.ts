@@ -114,6 +114,19 @@ describe.skipIf(!bundleExists)("ESM bundle smoke test (requires npm run build)",
   });
 });
 
+describe.skipIf(!bundleExists)("ESM/CJS export parity (requires npm run build)", () => {
+  it("exposes the same export names in both formats", async () => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const cjs = require(bundlePath);
+    const esm = await import(/* @vite-ignore */ pathToFileURL(esmPath).href);
+    // ESM modules carry a 'default' key when a CJS module is re-exported;
+    // strip it so we compare the named-export surface.
+    const esmKeys = new Set(Object.keys(esm).filter((k) => k !== "default"));
+    const cjsKeys = new Set(Object.keys(cjs).filter((k) => k !== "default"));
+    expect(esmKeys).toEqual(cjsKeys);
+  });
+});
+
 describe.skipIf(!bundleExists)("IIFE bundle smoke test (requires npm run build)", () => {
   // Evaluate the IIFE in a fresh function scope so `var AccessLint` stays
   // local — mirrors what happens when the script is dropped in a browser
