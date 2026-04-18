@@ -1,0 +1,130 @@
+name: Web Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      size:
+        description: "Sample size (total sites across all shards)"
+        default: "5000"
+        type: string
+      concurrency:
+        description: "Concurrent audits per shard"
+        default: "5"
+        type: string
+      timeout:
+        description: "Per-site timeout in milliseconds"
+        default: "15000"
+        type: string
+      seed:
+        description: "Deterministic sampling seed"
+        default: "42"
+        type: string
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+  BENCH_SIZE: ${{ github.event.inputs.size || '5000' }}
+  BENCH_CONCURRENCY: ${{ github.event.inputs.concurrency || '5' }}
+  BENCH_TIMEOUT: ${{ github.event.inputs.timeout || '15000' }}
+  BENCH_SEED: ${{ github.event.inputs.seed || '42' }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Build @accesslint/core (needed for IIFE injection)
+        run: npx turbo run build --filter=@accesslint/core
+
+      - run: bunx playwright install --with-deps chromium
+
+      - name: Run web benchmark (shard ${{ matrix.shard }}/20)
+        working-directory: bench
+        run: >-
+          bun run bench:web --
+          --size=${{ env.BENCH_SIZE }}
+          --concurrency=${{ env.BENCH_CONCURRENCY }}
+          --timeout=${{ env.BENCH_TIMEOUT }}
+          --seed=${{ env.BENCH_SEED }}
+          --shard=${{ matrix.shard }}/20
+        continue-on-error: true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: web-bench-shard-${{ matrix.shard }}
+          path: bench/results/web-bench-shard-${{ matrix.shard }}.jsonl
+
+  aggregate:
+    runs-on: ubuntu-latest
+    needs: bench
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Build @accesslint/core (aggregate script needs workspace dep resolved)
+        run: npx turbo run build --filter=@accesslint/core
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: web-bench-shard-*
+          merge-multiple: true
+          path: bench/results
+
+      - name: Merge shard results
+        working-directory: bench
+        run: cat results/web-bench-shard-*.jsonl > results/web-bench.jsonl
+
+      - name: Generate aggregate summary
+        working-directory: bench
+        run: >-
+          bun run bench:aggregate --
+          --input=results/web-bench.jsonl
+          --output=results/summary.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-bench-results
+          path: |
+            bench/results/web-bench.jsonl
+            bench/results/summary.json
+
+      - name: Append to job summary
+        working-directory: bench
+        run: |
+          jq -r '
+            "## Web Benchmark results",
+            "",
+            "Sites tested: \(.totalSites) (\(.okSites) ok, \(.errorSites) errors)",
+            "Generated at: \(.generatedAt)",
+            "",
+            "### Performance (ms)",
+            "",
+            "| Tool | Mean | Median | P95 | Min | Max |",
+            "|---|---|---|---|---|---|",
+            "| axe-core | \(.axeStats.mean) | \(.axeStats.median) | \(.axeStats.p95) | \(.axeStats.min) | \(.axeStats.max) |",
+            "| @accesslint/core | \(.alStats.mean) | \(.alStats.median) | \(.alStats.p95) | \(.alStats.min) | \(.alStats.max) |",
+            "",
+            "### Total violations",
+            "",
+            "- axe-core: \(.axeViolationsTotal)",
+            "- @accesslint/core: \(.alViolationsTotal)"
+          ' results/summary.json >> "$GITHUB_STEP_SUMMARY"
