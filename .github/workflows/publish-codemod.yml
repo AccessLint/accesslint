@@ -1,0 +1,55 @@
+name: Publish @accesslint/codemod
+
+on:
+  push:
+    tags: ["codemod/v*"]
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install
+
+      - run: npx turbo run build --filter=...@accesslint/codemod
+
+      - name: Replace workspace:* with published versions
+        working-directory: codemod
+        run: |
+          node -e "
+          const fs = require('fs'), path = require('path');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          for (const sec of ['dependencies', 'devDependencies', 'peerDependencies']) {
+            for (const [name, ver] of Object.entries(pkg[sec] ?? {})) {
+              if (ver === 'workspace:*') {
+                const dir = name.split('/')[1];
+                const dep = JSON.parse(fs.readFileSync(path.join('..', dir, 'package.json'), 'utf8'));
+                pkg[sec][name] = dep.version;
+              }
+            }
+          }
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - run: npm publish --provenance --access public
+        working-directory: codemod
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/codemod v${GITHUB_REF_NAME#codemod/v}"
+        env:
+          GH_TOKEN: ${{ github.token }}

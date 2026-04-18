@@ -6,6 +6,7 @@
     "core",
     "cli",
     "bench",
+    "codemod",
     "jest",
     "matchers-internal",
     "mcp",

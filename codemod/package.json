@@ -1,0 +1,57 @@
+{
+  "name": "@accesslint/codemod",
+  "version": "0.1.1",
+  "description": "Codemod that migrates jest-axe projects to @accesslint/jest",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "codemod"
+  },
+  "bugs": {
+    "url": "https://github.com/AccessLint/accesslint/issues"
+  },
+  "type": "module",
+  "bin": {
+    "codemod": "./dist/cli.js",
+    "accesslint-codemod": "./dist/cli.js"
+  },
+  "exports": {
+    "./transforms/matcher-plugin": "./dist/transforms/matcher-plugin.js",
+    "./transforms": "./dist/transforms/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "dev": "bun src/cli.ts",
+    "test": "vitest run",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "citty": "^0.1.6",
+    "jscodeshift": "^17.1.2"
+  },
+  "devDependencies": {
+    "@types/jscodeshift": "^17.0.3",
+    "@types/node": "^25.3.0",
+    "tsdown": "^0.21.9",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
+  },
+  "keywords": [
+    "accesslint",
+    "codemod",
+    "jscodeshift",
+    "jest-axe",
+    "migration",
+    "accessibility",
+    "a11y",
+    "jest"
+  ]
+}
