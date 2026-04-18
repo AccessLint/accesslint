@@ -47,7 +47,11 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "history.js",
+    "history.d.ts",
+    "aggregate.js",
+    "aggregate.d.ts"
   ],
   "scripts": {
     "build": "tsdown",
