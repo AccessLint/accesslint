@@ -35,10 +35,7 @@ export function setAuditOptions(options: AuditOptions): void {
     ...AUDIT_OPTIONS,
     ...options,
     disabledRules: [...(AUDIT_OPTIONS.disabledRules ?? []), ...(options.disabledRules ?? [])],
-    additionalRules: [
-      ...(AUDIT_OPTIONS.additionalRules ?? []),
-      ...(options.additionalRules ?? []),
-    ],
+    additionalRules: [...(AUDIT_OPTIONS.additionalRules ?? []), ...(options.additionalRules ?? [])],
   };
 }
 

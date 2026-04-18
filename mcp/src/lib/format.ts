@@ -45,7 +45,7 @@ function enrichViolation(v: Violation): EnrichedViolation {
     context: v.context,
     fix: v.fix,
     fixability: rule?.fixability,
-    browserHint: (rule as Record<string, unknown>)?.browserHint as string | undefined,
+    browserHint: rule?.browserHint,
     guidance: rule?.guidance,
   };
 }

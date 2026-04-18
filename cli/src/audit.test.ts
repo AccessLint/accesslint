@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { audit, isHTMLFragment } from "./audit";
+import { audit, isHTMLFragment } from "./audit.js";
 
 describe("isHTMLFragment", () => {
   it("detects a full document by doctype", () => {

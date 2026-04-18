@@ -80,7 +80,9 @@ export async function runRuleByActId(
       // values are populated for layout-sensitive rules.
       void cdoc.body?.getBoundingClientRect();
 
-      const iwin = iframe.contentWindow as (Window & { AccessLint?: AccessLintBrowserGlobal }) | null;
+      const iwin = iframe.contentWindow as
+        | (Window & { AccessLint?: AccessLintBrowserGlobal })
+        | null;
       if (!iwin?.AccessLint) throw new Error("AccessLint missing in iframe realm");
       iwin.AccessLint.clearAllCaches();
       const matching = iwin.AccessLint.rules.filter((r) => r.actRuleIds?.includes(actId));

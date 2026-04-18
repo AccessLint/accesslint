@@ -47,13 +47,13 @@ The turbo pipeline has three stages: `act:fixtures` (download + process), `act:t
 
 ## Quick reference
 
-| Task                                       | Command                                              |
-| ------------------------------------------ | ---------------------------------------------------- |
-| All unit tests across the repo             | `bun run test`                                       |
-| Core unit tests with coverage              | `bun run --filter=@accesslint/core test:coverage`    |
-| Core browser tests (requires Chromium)     | `bun run --filter=@accesslint/core test:browser`     |
-| Core memory/perf benchmarks                | `bun run --filter=@accesslint/core test:memory`      |
-| ACT conformance against W3C fixture corpus | `npx turbo run act --filter=@accesslint/core`        |
+| Task                                       | Command                                           |
+| ------------------------------------------ | ------------------------------------------------- |
+| All unit tests across the repo             | `bun run test`                                    |
+| Core unit tests with coverage              | `bun run --filter=@accesslint/core test:coverage` |
+| Core browser tests (requires Chromium)     | `bun run --filter=@accesslint/core test:browser`  |
+| Core memory/perf benchmarks                | `bun run --filter=@accesslint/core test:memory`   |
+| ACT conformance against W3C fixture corpus | `npx turbo run act --filter=@accesslint/core`     |
 
 ## Writing a new rule test: which file?
 

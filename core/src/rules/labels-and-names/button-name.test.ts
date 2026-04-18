@@ -46,7 +46,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes div role=button with aria-label", () => {
-    expectNoViolations(buttonName, "<html><body><div role='button' aria-label='X'></div></body></html>");
+    expectNoViolations(
+      buttonName,
+      "<html><body><div role='button' aria-label='X'></div></body></html>",
+    );
   });
 
   it("reports empty button", () => {
@@ -64,10 +67,14 @@ describe(RULE_ID, () => {
   });
 
   it("reports button whose aria-labelledby points to a missing id", () => {
-    expectViolations(buttonName, "<html><body><button aria-labelledby='missing'></button></body></html>", {
-      count: 1,
-      ruleId: RULE_ID,
-    });
+    expectViolations(
+      buttonName,
+      "<html><body><button aria-labelledby='missing'></button></body></html>",
+      {
+        count: 1,
+        ruleId: RULE_ID,
+      },
+    );
   });
 
   it("reports button with only an icon and no accessible name", () => {

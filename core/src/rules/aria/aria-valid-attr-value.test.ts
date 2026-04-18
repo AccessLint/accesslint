@@ -20,7 +20,10 @@ describe(RULE_ID, () => {
   });
 
   it("passes valid token on aria-live", () => {
-    expectNoViolations(ariaValidAttrValue, "<html><body><div aria-live='polite'></div></body></html>");
+    expectNoViolations(
+      ariaValidAttrValue,
+      "<html><body><div aria-live='polite'></div></body></html>",
+    );
   });
 
   it("passes aria-labelledby pointing at an existing id", () => {

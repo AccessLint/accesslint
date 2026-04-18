@@ -46,8 +46,7 @@ function main() {
     process.exit(1);
   }
   const expectedByRuleTestcase = new Map<string, string>();
-  const fixtureKey = (coreRuleId: string, testcaseId: string) =>
-    `${coreRuleId}|${testcaseId}`;
+  const fixtureKey = (coreRuleId: string, testcaseId: string) => `${coreRuleId}|${testcaseId}`;
   for (const f of fixtures) {
     expectedByRuleTestcase.set(fixtureKey(f.coreRuleId, f.testcaseId), f.expected);
   }

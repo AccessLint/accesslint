@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { inlineCSS } from "./inline-css";
+import { inlineCSS } from "./inline-css.js";
 
 describe("inlineCSS", () => {
   it("returns the input unchanged when there are no stylesheet links", async () => {

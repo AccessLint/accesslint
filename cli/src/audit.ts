@@ -1,5 +1,9 @@
 import { JSDOM, VirtualConsole } from "jsdom";
-import { runAudit, type AuditOptions as CoreAuditOptions, type AuditResult } from "@accesslint/core";
+import {
+  runAudit,
+  type AuditOptions as CoreAuditOptions,
+  type AuditResult,
+} from "@accesslint/core";
 
 export interface AuditOptions {
   includeAAA?: boolean;

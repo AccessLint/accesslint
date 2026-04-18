@@ -54,7 +54,7 @@
     "@accesslint/core": "workspace:*"
   },
   "devDependencies": {
-    "@playwright/test": "^1.50.0",
+    "@playwright/test": "^1.59.0",
     "@types/node": "^25.2.3",
     "tsdown": "^0.21.9",
     "typescript": "^5.7.0"
