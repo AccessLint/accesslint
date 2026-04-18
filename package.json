@@ -5,6 +5,8 @@
   "workspaces": [
     "core",
     "cli",
+    "jest",
+    "matchers-internal",
     "mcp",
     "playwright",
     "storybook-addon",

@@ -189,11 +189,7 @@ describe("evaluateSnapshot", () => {
     dir = tempDir();
     const path = join(dir, "force.json");
     saveSnapshot(path, [{ ruleId: "a", selector: "img" }]);
-    const result = evaluateSnapshot(
-      [{ ruleId: "b", selector: "html" }],
-      path,
-      { update: true },
-    );
+    const result = evaluateSnapshot([{ ruleId: "b", selector: "html" }], path, { update: true });
     expect(result.pass).toBe(true);
     expect(result.updated).toBe(true);
     expect(loadSnapshot(path)).toEqual([{ ruleId: "b", selector: "html" }]);

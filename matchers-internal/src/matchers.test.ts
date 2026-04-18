@@ -151,9 +151,7 @@ describe("toBeAccessible", () => {
     const img = document.createElement("img");
     el.appendChild(img);
 
-    mockRunAudit.mockReturnValue(
-      auditResult([violation({ impact: "critical", element: img })]),
-    );
+    mockRunAudit.mockReturnValue(auditResult([violation({ impact: "critical", element: img })]));
 
     const result = toBeAccessible.call(context, el, { failOn: "serious" });
     expect(result.pass).toBe(false);
@@ -254,7 +252,7 @@ describe("toBeAccessible", () => {
       wcag: ["1.1.1"],
       level: "A",
       description: "Images must have alt text",
-      guidance: "Decorative images should have alt=\"\"",
+      guidance: 'Decorative images should have alt=""',
       run: () => [],
     });
 
@@ -351,10 +349,7 @@ describe("toBeAccessible", () => {
 
       // Second run: an additional violation appears
       mockRunAudit.mockReturnValueOnce(
-        auditResult([
-          violation({ element: img1 }),
-          violation({ element: img2 }),
-        ]),
+        auditResult([violation({ element: img1 }), violation({ element: img2 })]),
       );
       const result = toBeAccessible.call(context, el, { snapshot: "new", snapshotDir });
       expect(result.pass).toBe(false);

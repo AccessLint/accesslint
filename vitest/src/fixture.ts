@@ -15,7 +15,7 @@
  *   });
  */
 import { test as base } from "vitest";
-import type { Violation } from "@accesslint/core";
+import { clearCachedAudit, setFixtureActive } from "@accesslint/matchers-internal";
 
 export interface A11yFixture {
   /**
@@ -23,59 +23,6 @@ export interface A11yFixture {
    * the DOM between assertions to force a fresh audit on the next matcher.
    */
   refresh(): void;
-}
-
-type Cache = Map<string, Violation[]>;
-
-const CACHE_KEY = Symbol.for("accesslint.vitest.audit-cache");
-
-interface DocumentWithCache extends Document {
-  [CACHE_KEY]?: Cache;
-}
-
-function cache(doc: Document): Cache {
-  const d = doc as DocumentWithCache;
-  let c = d[CACHE_KEY];
-  if (!c) {
-    c = new Map();
-    d[CACHE_KEY] = c;
-  }
-  return c;
-}
-
-export function getCachedAudit(doc: Document, key: string): Violation[] | undefined {
-  return cache(doc).get(key);
-}
-
-export function setCachedAudit(doc: Document, key: string, violations: Violation[]): void {
-  cache(doc).set(key, violations);
-}
-
-export function clearCachedAudit(doc: Document): void {
-  delete (doc as DocumentWithCache)[CACHE_KEY];
-}
-
-/**
- * Is audit caching enabled for `doc`? The matcher consults this to decide
- * whether to reuse cached audits — we only cache when the fixture has
- * explicitly opted in for this test.
- */
-const FIXTURE_ACTIVE_KEY = Symbol.for("accesslint.vitest.fixture-active");
-
-interface DocumentWithFixture extends Document {
-  [FIXTURE_ACTIVE_KEY]?: boolean;
-}
-
-export function isFixtureActive(doc: Document): boolean {
-  return !!(doc as DocumentWithFixture)[FIXTURE_ACTIVE_KEY];
-}
-
-function setFixtureActive(doc: Document, active: boolean): void {
-  if (active) {
-    (doc as DocumentWithFixture)[FIXTURE_ACTIVE_KEY] = true;
-  } else {
-    delete (doc as DocumentWithFixture)[FIXTURE_ACTIVE_KEY];
-  }
 }
 
 export const test = base.extend<{ a11y: A11yFixture }>({

@@ -9,6 +9,6 @@
     "rootDir": "src",
     "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
-  "include": ["src", "matchers.d.ts"],
-  "exclude": ["node_modules", "dist"]
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }

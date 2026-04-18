@@ -1,0 +1,74 @@
+{
+  "name": "@accesslint/matchers-internal",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Internal shared matcher logic for @accesslint/vitest and @accesslint/jest. Not published.",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./audit": {
+      "import": {
+        "types": "./dist/audit.d.ts",
+        "default": "./dist/audit.js"
+      },
+      "require": {
+        "types": "./dist/audit.d.cts",
+        "default": "./dist/audit.cjs"
+      }
+    },
+    "./cache": {
+      "import": {
+        "types": "./dist/cache.d.ts",
+        "default": "./dist/cache.js"
+      },
+      "require": {
+        "types": "./dist/cache.d.cts",
+        "default": "./dist/cache.cjs"
+      }
+    },
+    "./matchers": {
+      "import": {
+        "types": "./dist/matchers.d.ts",
+        "default": "./dist/matchers.js"
+      },
+      "require": {
+        "types": "./dist/matchers.d.cts",
+        "default": "./dist/matchers.cjs"
+      }
+    },
+    "./snapshot": {
+      "import": {
+        "types": "./dist/snapshot.d.ts",
+        "default": "./dist/snapshot.js"
+      },
+      "require": {
+        "types": "./dist/snapshot.d.cts",
+        "default": "./dist/snapshot.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*"
+  },
+  "devDependencies": {
+    "happy-dom": "^20.6.1",
+    "tsdown": "^0.21.9",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  }
+}

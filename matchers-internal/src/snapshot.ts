@@ -193,7 +193,11 @@ export function isUpdateMode(): boolean {
   if (process.env.ACCESSLINT_UPDATE === "1") return true;
 
   try {
-    const expectRef = (globalThis as { expect?: { getState?: () => { snapshotState?: { _updateSnapshot?: string } } } }).expect;
+    const expectRef = (
+      globalThis as {
+        expect?: { getState?: () => { snapshotState?: { _updateSnapshot?: string } } };
+      }
+    ).expect;
     const state = expectRef?.getState?.();
     const mode = state?.snapshotState?._updateSnapshot;
     return mode === "all" || mode === "new";

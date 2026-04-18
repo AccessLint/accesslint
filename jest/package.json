@@ -1,7 +1,7 @@
 {
-  "name": "@accesslint/vitest",
-  "version": "0.3.0",
-  "description": "Accessibility assertions for Vitest — toBeAccessible() matcher powered by AccessLint",
+  "name": "@accesslint/jest",
+  "version": "0.1.0",
+  "description": "Accessibility assertions for Jest — toBeAccessible() matcher powered by AccessLint",
   "license": "MIT",
   "publishConfig": {
     "access": "public"
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AccessLint/accesslint.git",
-    "directory": "vitest"
+    "directory": "jest"
   },
   "bugs": {
     "url": "https://github.com/AccessLint/accesslint/issues"
@@ -25,38 +25,17 @@
         "types": "./dist/index.d.cts",
         "default": "./dist/index.cjs"
       }
-    },
-    "./matchers": {
-      "import": {
-        "types": "./dist/matchers.d.ts",
-        "default": "./dist/matchers.js"
-      },
-      "require": {
-        "types": "./dist/matchers.d.cts",
-        "default": "./dist/matchers.cjs"
-      }
-    },
-    "./fixture": {
-      "import": {
-        "types": "./dist/fixture.d.ts",
-        "default": "./dist/fixture.js"
-      },
-      "require": {
-        "types": "./dist/fixture.d.cts",
-        "default": "./dist/fixture.cjs"
-      }
     }
   },
   "main": "dist/index.cjs",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist/**/*",
-    "*.d.ts"
+    "dist/**/*"
   ],
   "scripts": {
     "build": "tsdown",
-    "test": "vitest run",
+    "test": "jest",
     "typecheck": "tsc --noEmit",
     "prepublishOnly": "bun run build"
   },
@@ -65,22 +44,30 @@
   },
   "devDependencies": {
     "@accesslint/matchers-internal": "workspace:*",
-    "happy-dom": "^20.6.1",
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.14",
+    "expect": "^29.7.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "ts-jest": "^29.2.5",
     "tsdown": "^0.21.9",
-    "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "typescript": "^5.7.0"
   },
   "peerDependencies": {
-    "vitest": ">=2.0.0"
+    "jest": ">=28"
   },
   "keywords": [
-    "vitest",
+    "jest",
     "accessibility",
     "a11y",
     "wcag",
     "aria",
     "accesslint",
     "matcher",
-    "testing"
+    "testing",
+    "jest-axe-alternative",
+    "react-testing-library",
+    "testing-library",
+    "jsdom"
   ]
 }
