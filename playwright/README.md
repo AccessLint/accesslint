@@ -54,15 +54,34 @@ test("navigation is accessible", async ({ page }) => {
 });
 ```
 
-### Disabling rules
-
-To ignore specific rules, pass `disabledRules`:
+## Options
 
 ```ts
 await expect(page).toBeAccessible({
-  disabledRules: ["accesslint-092"],
+  /** Rule IDs to disable for this assertion. */
+  disabledRules: ["distinguishable/color-contrast"],
+
+  /** Audit iframe content as well as the top-level page. */
+  includeFrames: true,
+
+  /** Audit shadow DOM content. */
+  includeShadowDom: true,
+
+  /** Compare against a baseline instead of asserting zero violations. */
+  snapshot: "dashboard",
+
+  /** Where to store snapshot files. Defaults to {cwd}/accessibility-snapshots/. */
+  snapshotDir: "./test/a11y-snapshots",
 });
 ```
+
+| Option             | Description                                                                      |
+| ------------------ | -------------------------------------------------------------------------------- |
+| `disabledRules`    | Rule IDs to skip for this assertion.                                             |
+| `includeFrames`    | Also audit iframe content.                                                       |
+| `includeShadowDom` | Also audit shadow DOM content.                                                   |
+| `snapshot`         | Compare against a baseline; see [Snapshot baselines](#snapshot-baselines) below. |
+| `snapshotDir`      | Directory for snapshot files.                                                    |
 
 ### Snapshot baselines
 
@@ -103,16 +122,16 @@ When violations are found, the matcher reports each one with its rule ID, WCAG l
 ```
 Expected no accessibility violations, but found 2:
 
-  accesslint-011 [A] (1.1.1): Image element missing alt attribute.
+  text-alternatives/img-alt [A] (1.1.1): Image element missing alt attribute.
     body > img
 
-  accesslint-092 [AA] (1.4.3): Text must have sufficient color contrast.
+  distinguishable/color-contrast [AA] (1.4.3): Text must have sufficient color contrast.
     p.subtitle
 ```
 
 ## What it checks
 
-The matcher runs 94 WCAG 2.2 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
+The matcher runs WCAG 2.2 Level A and AA rules via [`@accesslint/core`](../core), covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more. See the [core rules table](../core/README.md#rules) for the full list.
 
 ## TypeScript
 

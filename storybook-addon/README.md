@@ -1,5 +1,5 @@
 [![npm version](https://img.shields.io/npm/v/@accesslint/storybook-addon)](https://www.npmjs.com/package/@accesslint/storybook-addon)
-[![license](https://img.shields.io/github/license/AccessLint/accesslint)](https://github.com/AccessLint/accesslint/blob/main/core/LICENSE)
+[![license](https://img.shields.io/github/license/AccessLint/accesslint)](https://github.com/AccessLint/accesslint/blob/main/storybook-addon/LICENSE)
 
 # @accesslint/storybook-addon
 
@@ -12,6 +12,8 @@ Catch accessibility violations in your Storybook stories as you develop. Powered
 ```sh
 npm install @accesslint/storybook-addon
 ```
+
+`storybook` 9+ and `vitest` 3+ are required as peer dependencies.
 
 Add the addon to your `.storybook/main.ts` (or `.storybook/main.js`):
 
@@ -103,7 +105,7 @@ test("LoginForm is accessible", () => {
 
 ```ts
 await expect(canvasElement).toBeAccessible({
-  disabledRules: ["accesslint-045"],
+  disabledRules: ["landmarks/region"],
 });
 ```
 
@@ -114,10 +116,10 @@ When the assertion fails, the error message lists each violation with its rule I
 ```
 Expected element to have no accessibility violations, but found 2:
 
-  accesslint-001 [A] (1.1.1): Image is missing alt text
+  text-alternatives/img-alt [A] (1.1.1): Image is missing alt text
     img[src="hero.png"]
 
-  accesslint-012 [A] (1.3.1): Form input is missing a label
+  labels-and-names/form-label [A] (1.3.1): Form input is missing a label
     input[type="email"]
 ```
 
@@ -183,7 +185,7 @@ Extend the addon's audit options from your preview file:
 import { setAuditOptions } from "@accesslint/storybook-addon/preview";
 
 setAuditOptions({
-  disabledRules: ["accesslint-045"], // e.g. disable landmark region rule
+  disabledRules: ["landmarks/region"], // e.g. disable landmark region rule
 });
 ```
 

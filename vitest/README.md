@@ -49,6 +49,60 @@ expect(container).toBeAccessible();
 
 Violations are scoped to descendants of the element you pass, so you can test components in isolation. When the element is not the document root, page-level rules (`html-has-lang`, `document-title`, landmarks, etc.) are skipped automatically — override with `componentMode: false` if you want them back.
 
+## Framework recipes
+
+Works with any DOM produced in a jsdom or happy-dom environment.
+
+### React — `@testing-library/react`
+
+```tsx
+import { render } from "@testing-library/react";
+import { LoginForm } from "./LoginForm";
+
+test("LoginForm is accessible", () => {
+  const { container } = render(<LoginForm />);
+  expect(container).toBeAccessible();
+});
+```
+
+### Vue — `@testing-library/vue`
+
+```ts
+import { render } from "@testing-library/vue";
+import LoginForm from "./LoginForm.vue";
+
+test("LoginForm is accessible", () => {
+  const { container } = render(LoginForm);
+  expect(container).toBeAccessible();
+});
+```
+
+### Svelte — `@testing-library/svelte`
+
+```ts
+import { render } from "@testing-library/svelte";
+import LoginForm from "./LoginForm.svelte";
+
+test("LoginForm is accessible", () => {
+  const { container } = render(LoginForm);
+  expect(container).toBeAccessible();
+});
+```
+
+### Angular — `@testing-library/angular`
+
+```ts
+import { render } from "@testing-library/angular";
+import { LoginFormComponent } from "./login-form.component";
+
+test("LoginForm is accessible", async () => {
+  const { container } = await render(LoginFormComponent);
+  expect(container).toBeAccessible();
+});
+```
+
+The matcher accepts anything that's an `Element` — `container`, `screen.getByRole('form')`, a plain `document.createElement(...)`, or `document.body` for a full-page audit.
+
 ## Options
 
 ```ts
@@ -136,7 +190,7 @@ Types are included. Importing the package augments Vitest's `expect` with `toBeA
 
 ## What it checks
 
-94 WCAG 2.2 Level A and AA rules via `@accesslint/core`, covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more.
+WCAG 2.2 Level A and AA rules via [`@accesslint/core`](../core), covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more. See the [core rules table](../core/README.md#rules) for the full list.
 
 ## License
 
