@@ -15,13 +15,13 @@ npm install --save-dev @accesslint/jest
 
 ## Setup
 
-Register the matcher with Jest via `setupFilesAfterEach` in your config:
+Register the matcher with Jest via `setupFilesAfterEnv` in your config:
 
 ```js
 // jest.config.js
 module.exports = {
   testEnvironment: "jsdom",
-  setupFilesAfterEach: ["@accesslint/jest"],
+  setupFilesAfterEnv: ["@accesslint/jest"],
 };
 ```
 

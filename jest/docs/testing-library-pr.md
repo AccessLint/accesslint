@@ -8,7 +8,7 @@ Three file additions + one sidebars.js update.
 
 ### 1. `docs/ecosystem-accesslint-jest.mdx`
 
-```mdx
+````mdx
 ---
 id: ecosystem-accesslint-jest
 title: accesslint/jest
@@ -22,18 +22,19 @@ contrast support and no axe-core dependency.
 ```bash npm2yarn
 npm install --save-dev @accesslint/jest
 ```
+````
 
-Register the matcher once via `setupFilesAfterEach` in your Jest config, then
+Register the matcher once via `setupFilesAfterEnv` in your Jest config, then
 assert on any rendered element:
 
 ```jsx
-import { render } from '@testing-library/react'
-import { LoginForm } from './LoginForm'
+import { render } from "@testing-library/react";
+import { LoginForm } from "./LoginForm";
 
-test('LoginForm is accessible', () => {
-  const { container } = render(<LoginForm />)
-  expect(container).toBeAccessible()
-})
+test("LoginForm is accessible", () => {
+  const { container } = render(<LoginForm />);
+  expect(container).toBeAccessible();
+});
 ```
 
 Violations are scoped to the element you pass, so components can be tested in
@@ -48,7 +49,8 @@ migration guide from `jest-axe`.
 
 [gh]: https://github.com/AccessLint/accesslint/tree/main/jest
 [npm]: https://www.npmjs.com/package/@accesslint/jest
-```
+
+````
 
 ### 2. `docs/ecosystem-accesslint-vitest.mdx`
 
@@ -65,19 +67,19 @@ contrast support and no axe-core dependency.
 
 ```bash npm2yarn
 npm install --save-dev @accesslint/vitest
-```
+````
 
 Add it as a setup file in your Vitest config, then assert on any rendered
 element:
 
 ```jsx
-import { render } from '@testing-library/react'
-import { LoginForm } from './LoginForm'
+import { render } from "@testing-library/react";
+import { LoginForm } from "./LoginForm";
 
-test('LoginForm is accessible', () => {
-  const { container } = render(<LoginForm />)
-  expect(container).toBeAccessible()
-})
+test("LoginForm is accessible", () => {
+  const { container } = render(<LoginForm />);
+  expect(container).toBeAccessible();
+});
 ```
 
 Options include `disabledRules`, `failOn` impact thresholds, an opt-in audit
@@ -89,7 +91,8 @@ snapshot baselines that auto-ratchet as you fix violations.
 
 [gh]: https://github.com/AccessLint/accesslint/tree/main/vitest
 [npm]: https://www.npmjs.com/package/@accesslint/vitest
-```
+
+````
 
 ### 3. `sidebars.js`
 
@@ -112,7 +115,7 @@ Add the two new IDs to the `Ecosystem` category, maintaining alphabetical order:
          'ecosystem-rtl-simple-queries',
          'ecosystem-testing-library-selector',
        ],
-```
+````
 
 (Exact ordering depends on how the current `sidebars.js` groups them — apply the same convention.)
 

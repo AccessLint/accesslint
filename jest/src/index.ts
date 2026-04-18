@@ -3,7 +3,7 @@
  *
  * Usage in jest.config.js:
  *   module.exports = {
- *     setupFilesAfterEach: ["@accesslint/jest"],
+ *     setupFilesAfterEnv: ["@accesslint/jest"],
  *     testEnvironment: "jsdom",
  *   };
  *
