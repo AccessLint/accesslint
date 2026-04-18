@@ -1,0 +1,24 @@
+{
+  "name": "@accesslint/bench",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Performance and concordance benchmarks for @accesslint/core vs axe-core",
+  "type": "module",
+  "scripts": {
+    "bench:web": "tsx src/web-bench.ts",
+    "bench:aggregate": "tsx src/aggregate.ts",
+    "diagnose": "tsx src/web-bench/diagnose.ts",
+    "rule-agreement": "tsx src/web-bench/rule-agreement.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*",
+    "axe-core": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "playwright": "^1.58.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}

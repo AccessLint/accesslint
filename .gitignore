@@ -4,5 +4,6 @@ dist/
 act-fixtures/
 test-results/
 coverage/
+results/
 .env
 .turbo/

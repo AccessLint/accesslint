@@ -33,6 +33,10 @@
       "inputs": ["src/bench/**", "playwright.config.ts"],
       "cache": false
     },
+    "bench:web": {
+      "dependsOn": ["^build"],
+      "cache": false
+    },
     "typecheck": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json"]

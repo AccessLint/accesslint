@@ -5,6 +5,7 @@
   "workspaces": [
     "core",
     "cli",
+    "bench",
     "jest",
     "matchers-internal",
     "mcp",
@@ -19,6 +20,7 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "bench:web": "turbo run bench:web --filter=@accesslint/bench",
     "ci": "turbo run build typecheck test && bun run lint && bun run format:check"
   },
   "devDependencies": {
