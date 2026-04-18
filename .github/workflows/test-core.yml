@@ -24,8 +24,9 @@ jobs:
       - run: bun install
 
       - name: Run unit tests with coverage
-        run: bun run test:coverage
-        working-directory: core
+        # Drive through turbo so the build dep runs first; bundle.test.ts
+        # now fails fast when core/dist/ is missing.
+        run: npx turbo run test:coverage --filter=@accesslint/core
 
   browser:
     runs-on: ubuntu-latest
