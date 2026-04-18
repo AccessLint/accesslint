@@ -1,10 +1,13 @@
-import { describe, it, expect } from "vitest";
+import { beforeAll, describe, it, expect } from "vitest";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 import { gzipSync } from "node:zlib";
 
 const distDir = resolve(__dirname, "../dist");
 const bundlePath = resolve(distDir, "index.cjs");
+const esmPath = resolve(distDir, "index.js");
+const iifePath = resolve(distDir, "index.iife.js");
 const bundleExists = existsSync(bundlePath);
 
 /**
@@ -83,5 +86,56 @@ describe.skipIf(!bundleExists)("CJS bundle smoke test (requires npm run build)",
     const failing = new DOMParser().parseFromString(`<marquee>Spin</marquee>`, "text/html");
     expect(rule.run(passing)).toHaveLength(0);
     expect(rule.run(failing)).toHaveLength(1);
+  });
+});
+
+describe.skipIf(!bundleExists)("ESM bundle smoke test (requires npm run build)", () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let esm: any;
+  beforeAll(async () => {
+    esm = await import(/* @vite-ignore */ pathToFileURL(esmPath).href);
+  });
+
+  it("exports runAudit", () => {
+    expect(typeof esm.runAudit).toBe("function");
+  });
+
+  it("exports rules array", () => {
+    expect(Array.isArray(esm.rules)).toBe(true);
+    expect(esm.rules.length).toBeGreaterThan(0);
+  });
+
+  it("runAudit works against a missing img alt document", () => {
+    const doc = new DOMParser().parseFromString(`<img src="x.png">`, "text/html");
+    const result = esm.runAudit(doc);
+    expect(
+      result.violations.some((v: { ruleId: string }) => v.ruleId === "text-alternatives/img-alt"),
+    ).toBe(true);
+  });
+});
+
+describe.skipIf(!bundleExists)("IIFE bundle smoke test (requires npm run build)", () => {
+  // Evaluate the IIFE in a fresh function scope so `var AccessLint` stays
+  // local — mirrors what happens when the script is dropped in a browser
+  // without interfering with other tests' globals.
+  const code = readFileSync(iifePath, "utf8");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-new-func
+  const iife: any = new Function(`${code}\nreturn AccessLint;`)();
+
+  it("exposes runAudit on the AccessLint global", () => {
+    expect(typeof iife.runAudit).toBe("function");
+  });
+
+  it("exposes the rules array", () => {
+    expect(Array.isArray(iife.rules)).toBe(true);
+    expect(iife.rules.length).toBeGreaterThan(0);
+  });
+
+  it("runAudit works against a missing img alt document", () => {
+    const doc = new DOMParser().parseFromString(`<img src="x.png">`, "text/html");
+    const result = iife.runAudit(doc);
+    expect(
+      result.violations.some((v: { ruleId: string }) => v.ruleId === "text-alternatives/img-alt"),
+    ).toBe(true);
   });
 });
