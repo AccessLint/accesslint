@@ -15,6 +15,13 @@ export default defineConfig({
       testMatch: "browser.spec.ts",
       use: { browserName: "chromium" },
     },
+    {
+      name: "memory",
+      testDir: "src/bench",
+      testMatch: "memory.browser.spec.ts",
+      timeout: 120_000,
+      use: { browserName: "chromium" },
+    },
   ],
   reporter: [["list"], ["./src/act/browser-earl-reporter.ts"]],
 });
