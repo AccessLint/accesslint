@@ -13,9 +13,7 @@ export function axeTagToWcagCriterion(tag: string): string | null {
 
 /** Extract all WCAG criteria from an axe violation's tags array. */
 export function extractAxeWcagCriteria(tags: string[]): string[] {
-  return tags
-    .map(axeTagToWcagCriterion)
-    .filter((c): c is string => c !== null);
+  return tags.map(axeTagToWcagCriterion).filter((c): c is string => c !== null);
 }
 
 /**
@@ -28,13 +26,13 @@ export function extractAxeWcagCriteria(tags: string[]): string[] {
  */
 const KNOWN_OVERLAPPING_PAIRS: [string, string][] = [
   // [stricter, base]
-  ["2.1.3", "2.1.1"],  // Keyboard No Exception (AAA) → Keyboard (A)
-  ["2.4.9", "2.4.4"],  // Link Purpose (Link Only) (AAA) → Link Purpose (In Context) (A)
+  ["2.1.3", "2.1.1"], // Keyboard No Exception (AAA) → Keyboard (A)
+  ["2.4.9", "2.4.4"], // Link Purpose (Link Only) (AAA) → Link Purpose (In Context) (A)
   ["2.4.10", "2.4.6"], // Section Headings (AAA) → Headings and Labels (AA)
-  ["3.2.5", "3.2.2"],  // Change on Request (AAA) → On Input (A)
-  ["3.3.6", "3.3.4"],  // Error Prevention (All) (AAA) → Error Prevention (Legal, etc.) (AA)
-  ["1.4.6", "1.4.3"],  // Contrast (Enhanced) (AAA) → Contrast (Minimum) (AA)
-  ["1.4.9", "1.4.5"],  // Images of Text (No Exception) (AAA) → Images of Text (AA)
+  ["3.2.5", "3.2.2"], // Change on Request (AAA) → On Input (A)
+  ["3.3.6", "3.3.4"], // Error Prevention (All) (AAA) → Error Prevention (Legal, etc.) (AA)
+  ["1.4.6", "1.4.3"], // Contrast (Enhanced) (AAA) → Contrast (Minimum) (AA)
+  ["1.4.9", "1.4.5"], // Images of Text (No Exception) (AAA) → Images of Text (AA)
 ];
 
 /**

@@ -23,7 +23,8 @@ let shardIndex: number | undefined;
 let shardTotal: number | undefined;
 if (shardArg) {
   const parts = shardArg.split("/");
-  if (parts.length !== 2) throw new Error(`Invalid --shard format: ${shardArg} (expected INDEX/TOTAL)`);
+  if (parts.length !== 2)
+    throw new Error(`Invalid --shard format: ${shardArg} (expected INDEX/TOTAL)`);
   shardIndex = parseInt(parts[0], 10);
   shardTotal = parseInt(parts[1], 10);
   if (isNaN(shardIndex) || isNaN(shardTotal) || shardIndex < 1 || shardIndex > shardTotal) {
@@ -31,9 +32,8 @@ if (shardArg) {
   }
 }
 
-const defaultOutput = shardIndex != null
-  ? `results/web-bench-shard-${shardIndex}.jsonl`
-  : "results/web-bench.jsonl";
+const defaultOutput =
+  shardIndex != null ? `results/web-bench-shard-${shardIndex}.jsonl` : "results/web-bench.jsonl";
 
 const options: BenchOptions = {
   sampleSize: parseInt(parseArg("size") ?? "5000", 10),
@@ -45,7 +45,9 @@ const options: BenchOptions = {
   shardTotal,
 };
 
-console.log(`\nWeb Benchmark: ${options.sampleSize} sites, concurrency=${options.concurrency}, timeout=${options.timeout}ms\n`);
+console.log(
+  `\nWeb Benchmark: ${options.sampleSize} sites, concurrency=${options.concurrency}, timeout=${options.timeout}ms\n`,
+);
 
 // Download and sample sites
 const allSites = await downloadAndSample(options.sampleSize, options.seed);
@@ -57,7 +59,9 @@ if (options.shardIndex != null && options.shardTotal != null) {
   const start = (options.shardIndex - 1) * chunkSize;
   const end = Math.min(start + chunkSize, allSites.length);
   sites = allSites.slice(start, end);
-  console.log(`Shard ${options.shardIndex}/${options.shardTotal}: sites ${start + 1}–${end} of ${allSites.length}`);
+  console.log(
+    `Shard ${options.shardIndex}/${options.shardTotal}: sites ${start + 1}–${end} of ${allSites.length}`,
+  );
 }
 
 // Launch browser
@@ -88,9 +92,7 @@ async function runWithConcurrency<T>(
       await fn(items[index]);
     }
   }
-  await Promise.all(
-    Array.from({ length: Math.min(concurrency, items.length) }, () => worker()),
-  );
+  await Promise.all(Array.from({ length: Math.min(concurrency, items.length) }, () => worker()));
 }
 
 // Run audits

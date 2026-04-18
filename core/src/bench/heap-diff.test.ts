@@ -7,9 +7,7 @@ import type { HeapSnapshot } from "./heap-diff";
  * (type, name, id, self_size, edge_count), which matches what Chromium
  * actually emits.
  */
-function makeSnapshot(
-  nodes: Array<{ type: string; name: string; id?: number }>,
-): HeapSnapshot {
+function makeSnapshot(nodes: Array<{ type: string; name: string; id?: number }>): HeapSnapshot {
   const typeEnum = [
     "hidden",
     "array",
@@ -112,7 +110,7 @@ describe("diffCounts", () => {
 
   it("reports classes that disappeared", () => {
     const before = new Map([["Gone", 4]]);
-    const after = new Map([]);
+    const after = new Map<string, number>();
     const delta = diffCounts(before, after);
     expect(delta.get("Gone")).toBe(-4);
   });

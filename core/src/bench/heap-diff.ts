@@ -94,9 +94,7 @@ export function diffCounts(
  * diagnostic test output and PR comment bodies.
  */
 export function formatTopDeltas(delta: Map<string, number>, top = 20): string {
-  const sorted = [...delta.entries()].sort(
-    ([, a], [, b]) => Math.abs(b) - Math.abs(a),
-  );
+  const sorted = [...delta.entries()].sort(([, a], [, b]) => Math.abs(b) - Math.abs(a));
   const lines = sorted.slice(0, top).map(([name, n]) => {
     const sign = n > 0 ? "+" : "";
     return `  ${sign}${n}\t${name}`;

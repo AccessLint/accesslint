@@ -60,9 +60,8 @@ for (const key of ["both", "axeOnly", "alOnly"] as const) {
     const d = s.detail;
     const axeNodes = d?.axeNodeCount ?? "?";
     const alNodes = d?.alNodeCount ?? "?";
-    const jaccard = d && d.elementUnion > 0
-      ? (d.elementIntersection / d.elementUnion).toFixed(2)
-      : "n/a";
+    const jaccard =
+      d && d.elementUnion > 0 ? (d.elementIntersection / d.elementUnion).toFixed(2) : "n/a";
     console.log(
       `  ${s.origin} (rank ${s.rank})` +
         `  axe:[${d?.axeRuleIds.join(",") ?? ""}] nodes=${axeNodes}` +

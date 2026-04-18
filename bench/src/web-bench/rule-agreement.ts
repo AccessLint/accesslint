@@ -16,10 +16,11 @@
 import { readFileSync } from "node:fs";
 import type { SiteResult } from "./types.js";
 
-const file = process.argv.find((a) => !a.startsWith("--") && a.endsWith(".jsonl"))
-  ?? "results/web-bench.jsonl";
+const file =
+  process.argv.find((a) => !a.startsWith("--") && a.endsWith(".jsonl")) ??
+  "results/web-bench.jsonl";
 const thresholdArg = process.argv.find((a) => a.startsWith("--threshold="));
-const threshold = thresholdArg ? parseFloat(thresholdArg.split("=")[1]) : 0.80;
+const threshold = thresholdArg ? parseFloat(thresholdArg.split("=")[1]) : 0.8;
 
 const lines = readFileSync(file, "utf-8").split("\n").filter(Boolean);
 const results: SiteResult[] = lines.map((l) => JSON.parse(l));
@@ -82,9 +83,7 @@ for (const r of ok) {
 
   for (const stats of ruleStats.values()) {
     if (!alRuleCriteria.has(stats.ruleId)) {
-      const axeFoundAny = [...stats.wcagCriteria].some((c) =>
-        r.axeWcagCriteria.includes(c),
-      );
+      const axeFoundAny = [...stats.wcagCriteria].some((c) => r.axeWcagCriteria.includes(c));
       if (!axeFoundAny) stats.pagesNeitherFound++;
     }
   }
@@ -104,10 +103,8 @@ interface RuleReport {
 const reports: RuleReport[] = [];
 
 for (const stats of ruleStats.values()) {
-  const agreement =
-    (stats.pagesAxeAgrees + stats.pagesNeitherFound) / totalPages;
-  const precision =
-    stats.pagesFired > 0 ? stats.pagesAxeAgrees / stats.pagesFired : 0;
+  const agreement = (stats.pagesAxeAgrees + stats.pagesNeitherFound) / totalPages;
+  const precision = stats.pagesFired > 0 ? stats.pagesAxeAgrees / stats.pagesFired : 0;
   const alOnly = stats.pagesFired - stats.pagesAxeAgrees;
   const axeCovers = [...stats.wcagCriteria].some((c) => axeCoveredCriteria.has(c));
 
@@ -147,7 +144,9 @@ for (const r of reports) {
 
 console.log("-".repeat(95));
 console.log(`\nTotal rules that fired: ${reports.length}`);
-console.log(`Rules below ${(threshold * 100).toFixed(0)}% precision (axe-covered): ${belowThreshold.length}`);
+console.log(
+  `Rules below ${(threshold * 100).toFixed(0)}% precision (axe-covered): ${belowThreshold.length}`,
+);
 
 if (belowThreshold.length > 0) {
   console.log(`\nRules to disable:\n  ${belowThreshold.join("\n  ")}`);

@@ -130,7 +130,9 @@ export async function downloadAndSample(
 
   const filtered = allSites.filter((s) => !isBlocked(hostnameFromOrigin(s.origin), blocklist));
   const removed = allSites.length - filtered.length;
-  console.log(`  Filtered out ${removed.toLocaleString()} blocked origins (${filtered.length.toLocaleString()} remaining)`);
+  console.log(
+    `  Filtered out ${removed.toLocaleString()} blocked origins (${filtered.length.toLocaleString()} remaining)`,
+  );
 
   const effectiveSeed = seed ?? Date.now();
   console.log(`  Sampling ${sampleSize} sites (seed: ${effectiveSeed})`);

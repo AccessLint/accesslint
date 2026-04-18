@@ -37,7 +37,10 @@ function bootstrapKappaCI(
 
   const kappas: number[] = [];
   for (let i = 0; i < iterations; i++) {
-    let a = 0, b = 0, c = 0, d = 0;
+    let a = 0,
+      b = 0,
+      c = 0,
+      d = 0;
     for (let j = 0; j < n; j++) {
       const idx = Math.floor(Math.random() * n);
       const p = pages[idx];

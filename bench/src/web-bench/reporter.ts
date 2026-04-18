@@ -139,11 +139,21 @@ export function printSummary(
 
   console.log("\n  Performance (ms)");
   console.log(`  ${"".padEnd(18)} ${"axe-core".padStart(10)}  ${"@accesslint".padStart(12)}`);
-  console.log(`  ${"Mean".padEnd(18)} ${fmtMs(mean(axeTimes)).padStart(10)}  ${fmtMs(mean(alTimes)).padStart(12)}`);
-  console.log(`  ${"Median".padEnd(18)} ${fmtMs(median(axeTimes)).padStart(10)}  ${fmtMs(median(alTimes)).padStart(12)}`);
-  console.log(`  ${"P95".padEnd(18)} ${fmtMs(percentile(axeTimes, 95)).padStart(10)}  ${fmtMs(percentile(alTimes, 95)).padStart(12)}`);
-  console.log(`  ${"Min".padEnd(18)} ${fmtMs(Math.min(...axeTimes)).padStart(10)}  ${fmtMs(Math.min(...alTimes)).padStart(12)}`);
-  console.log(`  ${"Max".padEnd(18)} ${fmtMs(Math.max(...axeTimes)).padStart(10)}  ${fmtMs(Math.max(...alTimes)).padStart(12)}`);
+  console.log(
+    `  ${"Mean".padEnd(18)} ${fmtMs(mean(axeTimes)).padStart(10)}  ${fmtMs(mean(alTimes)).padStart(12)}`,
+  );
+  console.log(
+    `  ${"Median".padEnd(18)} ${fmtMs(median(axeTimes)).padStart(10)}  ${fmtMs(median(alTimes)).padStart(12)}`,
+  );
+  console.log(
+    `  ${"P95".padEnd(18)} ${fmtMs(percentile(axeTimes, 95)).padStart(10)}  ${fmtMs(percentile(alTimes, 95)).padStart(12)}`,
+  );
+  console.log(
+    `  ${"Min".padEnd(18)} ${fmtMs(Math.min(...axeTimes)).padStart(10)}  ${fmtMs(Math.min(...alTimes)).padStart(12)}`,
+  );
+  console.log(
+    `  ${"Max".padEnd(18)} ${fmtMs(Math.max(...axeTimes)).padStart(10)}  ${fmtMs(Math.max(...alTimes)).padStart(12)}`,
+  );
 
   // Violation counts
   const axeViolTotal = ok.reduce((s, r) => s + r.axeViolationCount, 0);
@@ -163,7 +173,7 @@ export function printSummary(
     // Sort by most common criteria first (both + axeOnly + alOnly desc)
     const sorted = concordance
       .slice()
-      .sort((a, b) => (b.both + b.axeOnly + b.alOnly) - (a.both + a.axeOnly + a.alOnly));
+      .sort((a, b) => b.both + b.axeOnly + b.alOnly - (a.both + a.axeOnly + a.alOnly));
 
     for (const c of sorted) {
       const ci = `[${c.kappaCI[0].toFixed(2)},${c.kappaCI[1].toFixed(2)}]`;
@@ -175,9 +185,11 @@ export function printSummary(
     const simpleMeanKappa = mean(concordance.map((c) => c.axeAlKappa));
     // Weighted mean: weight each criterion's kappa by detection count
     const totalWeight = concordance.reduce((s, c) => s + c.both + c.axeOnly + c.alOnly, 0);
-    const weightedMeanKappa = totalWeight > 0
-      ? concordance.reduce((s, c) => s + c.axeAlKappa * (c.both + c.axeOnly + c.alOnly), 0) / totalWeight
-      : 0;
+    const weightedMeanKappa =
+      totalWeight > 0
+        ? concordance.reduce((s, c) => s + c.axeAlKappa * (c.both + c.axeOnly + c.alOnly), 0) /
+          totalWeight
+        : 0;
 
     console.log(`\n  Mean kappa (simple):   ${simpleMeanKappa.toFixed(2)}`);
     console.log(`  Mean kappa (weighted): ${weightedMeanKappa.toFixed(2)}`);

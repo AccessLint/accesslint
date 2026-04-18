@@ -1,12 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { existsSync } from "node:fs";
 import { resolve } from "node:path";
-import {
-  countByClass,
-  diffCounts,
-  formatTopDeltas,
-  takeHeapSnapshot,
-} from "./heap-diff";
+import { countByClass, diffCounts, formatTopDeltas, takeHeapSnapshot } from "./heap-diff";
 import { generateHtml, SMALL_SIZE } from "./fixtures";
 
 const IIFE_PATH = resolve(import.meta.dirname, "../../dist/index.iife.js");

@@ -102,10 +102,7 @@ export const WCAG_CRITERIA_NAMES: Record<string, string> = {
  * Auto-select top-N criteria by total detection count across both tools.
  * Returns a map of criterion → name, sorted by detection count descending.
  */
-export function selectTopCriteria(
-  ok: SiteResult[],
-  topN = 15,
-): Record<string, string> {
+export function selectTopCriteria(ok: SiteResult[], topN = 15): Record<string, string> {
   const counts = new Map<string, number>();
 
   for (const r of ok) {
@@ -115,9 +112,7 @@ export function selectTopCriteria(
     }
   }
 
-  const sorted = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, topN);
+  const sorted = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, topN);
 
   const result: Record<string, string> = {};
   for (const [criterion] of sorted) {

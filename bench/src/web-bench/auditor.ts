@@ -188,9 +188,7 @@ function buildAuditCode(timeout: number): string {
 }
 
 /** Map raw browser results to WCAG criteria and build per-criterion detail. */
-function buildCriteriaDetail(
-  raw: BrowserAuditResult,
-): {
+function buildCriteriaDetail(raw: BrowserAuditResult): {
   axeWcag: string[];
   alWcag: string[];
   detail: CriterionPageResult[];
@@ -267,12 +265,14 @@ export async function auditSite(
   });
 
   try {
-    const result = await Promise.race([deadline, (async (): Promise<SiteResult> => {
-      await page.goto(origin, { waitUntil: "domcontentloaded", timeout });
+    const result = await Promise.race([
+      deadline,
+      (async (): Promise<SiteResult> => {
+        await page.goto(origin, { waitUntil: "domcontentloaded", timeout });
 
-      // Wait for DOM to stabilize (SPA rendering) — up to 3s hard cap
-      // Uses a string to avoid tsx __name transforms on arrow functions
-      await page.evaluate(`new Promise(function(resolve) {
+        // Wait for DOM to stabilize (SPA rendering) — up to 3s hard cap
+        // Uses a string to avoid tsx __name transforms on arrow functions
+        await page.evaluate(`new Promise(function(resolve) {
         var lastCount = document.querySelectorAll('*').length;
         var stableFrames = 0;
         var maxWait = setTimeout(resolve, 3000);
@@ -294,34 +294,35 @@ export async function auditSite(
         requestAnimationFrame(check);
       })`);
 
-      await page.addScriptTag({ path: AXE_PATH });
-      await page.addScriptTag({ path: AL_PATH });
+        await page.addScriptTag({ path: AXE_PATH });
+        await page.addScriptTag({ path: AL_PATH });
 
-      const raw: BrowserAuditResult = await page.evaluate(buildAuditCode(timeout));
-      const { axeWcag, alWcag, detail } = buildCriteriaDetail(raw);
+        const raw: BrowserAuditResult = await page.evaluate(buildAuditCode(timeout));
+        const { axeWcag, alWcag, detail } = buildCriteriaDetail(raw);
 
-      const axeViolationCount = raw.axeViolations.reduce((sum, v) => sum + v.nodeCount, 0);
-      const alViolationCount = raw.alViolations.reduce((sum, v) => sum + v.count, 0);
+        const axeViolationCount = raw.axeViolations.reduce((sum, v) => sum + v.nodeCount, 0);
+        const alViolationCount = raw.alViolations.reduce((sum, v) => sum + v.count, 0);
 
-      return {
-        origin,
-        rank,
-        status: "ok",
-        domElementCount: raw.domElementCount,
-        axeTimeMs: raw.axeTimeMs,
-        alTimeMs: raw.alTimeMs,
-        axeStatus: raw.axeStatus,
-        alStatus: raw.alStatus,
-        axeError: raw.axeError,
-        alError: raw.alError,
-        axeViolationCount,
-        alViolationCount,
-        axeWcagCriteria: axeWcag,
-        alWcagCriteria: alWcag,
-        criteriaDetail: detail,
-        timestamp: new Date().toISOString(),
-      };
-    })()]);
+        return {
+          origin,
+          rank,
+          status: "ok",
+          domElementCount: raw.domElementCount,
+          axeTimeMs: raw.axeTimeMs,
+          alTimeMs: raw.alTimeMs,
+          axeStatus: raw.axeStatus,
+          alStatus: raw.alStatus,
+          axeError: raw.axeError,
+          alError: raw.alError,
+          axeViolationCount,
+          alViolationCount,
+          axeWcagCriteria: axeWcag,
+          alWcagCriteria: alWcag,
+          criteriaDetail: detail,
+          timestamp: new Date().toISOString(),
+        };
+      })(),
+    ]);
     return result;
   } catch (err) {
     return {
@@ -345,9 +346,6 @@ export async function auditSite(
     };
   } finally {
     clearTimeout(timer);
-    await Promise.race([
-      page.close().catch(() => {}),
-      new Promise((r) => setTimeout(r, 5000)),
-    ]);
+    await Promise.race([page.close().catch(() => {}), new Promise((r) => setTimeout(r, 5000))]);
   }
 }
