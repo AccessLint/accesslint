@@ -89,7 +89,13 @@ export async function toBeAccessible(target: Page | Locator, options?: SnapshotM
             if (snap.fixedViolations.length > 0)
               reasons.push(`${snap.fixedViolations.length} fixed`);
             if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
-            const verb = snap.fixedViolations.length > 0 ? "ratcheted" : "updated";
+            if (snap.refreshed.length > 0) reasons.push(`${snap.refreshed.length} refreshed`);
+            const verb =
+              snap.fixedViolations.length > 0
+                ? "ratcheted"
+                : snap.healed.length > 0
+                  ? "updated"
+                  : "refreshed";
             parts.push(`Snapshot "${options.snapshot}" ${verb} (${reasons.join(", ")})`);
           } else {
             parts.push("Expected accessibility violations beyond snapshot, but none were found");

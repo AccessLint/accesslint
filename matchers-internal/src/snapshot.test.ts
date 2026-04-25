@@ -403,6 +403,79 @@ describe("evaluateSnapshot — healing", () => {
     expect(healedEvent?.healedTier).toBe("anchor");
   });
 
+  it("refreshes drifted signals on exact-match runs so non-T1 signals stay fresh", () => {
+    dir = tempDir();
+    const path = join(dir, "refresh.json");
+    saveSnapshot(path, [
+      {
+        ruleId: "color-contrast",
+        selector: "button.primary",
+        visualFingerprint: "abc123",
+        htmlFingerprint: "xyz789",
+      },
+    ]);
+    const result = evaluateSnapshot(
+      [
+        {
+          ruleId: "color-contrast",
+          selector: "button.primary",
+          visualFingerprint: "abc999",
+          htmlFingerprint: "xyz789",
+        },
+      ],
+      path,
+      { name: "refresh" },
+    );
+    expect(result.pass).toBe(true);
+    expect(result.refreshed).toHaveLength(1);
+    expect(result.refreshed[0].changedFields).toEqual(["visualFingerprint"]);
+    expect(result.updated).toBe(true);
+    expect(loadSnapshot(path)?.[0].visualFingerprint).toBe("abc999");
+
+    const history = readHistory(path);
+    const refreshEvent = history.find((h) => h.event === "refreshed");
+    expect(refreshEvent?.refreshedFields).toEqual(["visualFingerprint"]);
+  });
+
+  it("preserves baseline-only signals when current is missing them", () => {
+    dir = tempDir();
+    const path = join(dir, "preserve.json");
+    saveSnapshot(path, [
+      {
+        ruleId: "color-contrast",
+        selector: "button",
+        role: "button[name=Submit]",
+        htmlFingerprint: "old",
+      },
+    ]);
+    const result = evaluateSnapshot(
+      [{ ruleId: "color-contrast", selector: "button", htmlFingerprint: "new" }],
+      path,
+      { name: "preserve" },
+    );
+    expect(result.pass).toBe(true);
+    expect(result.refreshed).toHaveLength(1);
+
+    const saved = loadSnapshot(path)?.[0];
+    expect(saved?.role).toBe("button[name=Submit]"); // preserved
+    expect(saved?.htmlFingerprint).toBe("new"); // refreshed
+  });
+
+  it("does not rewrite baseline when nothing drifted", () => {
+    dir = tempDir();
+    const path = join(dir, "idle.json");
+    const v: SnapshotViolation[] = [
+      { ruleId: "img-alt", selector: "img", htmlFingerprint: "abc" },
+    ];
+    saveSnapshot(path, v);
+    const historyBefore = readHistory(path).length;
+    const result = evaluateSnapshot(v, path, { name: "idle" });
+    expect(result.pass).toBe(true);
+    expect(result.updated).toBe(false);
+    expect(result.refreshed).toHaveLength(0);
+    expect(readHistory(path).length).toBe(historyBefore);
+  });
+
   it("runs screenshot GC: removes PNGs not referenced by the persisted baseline", () => {
     dir = tempDir();
     const path = join(dir, "gc.json");

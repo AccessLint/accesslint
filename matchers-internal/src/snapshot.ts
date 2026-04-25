@@ -58,17 +58,24 @@ export interface LikelyMovedHint {
   sharedSignals: string[];
 }
 
+export interface RefreshedViolation {
+  ruleId: string;
+  selector: string;
+  changedFields: string[];
+}
+
 export interface SnapshotResult {
   pass: boolean;
   newViolations: SnapshotViolation[];
   fixedViolations: SnapshotViolation[];
   healed: HealedViolation[];
+  refreshed: RefreshedViolation[];
   likelyMoved: LikelyMovedHint[];
   updated: boolean;
   created: boolean;
 }
 
-export type HistoryEvent = "created" | "ratchet-down" | "force-update" | "healed";
+export type HistoryEvent = "created" | "ratchet-down" | "force-update" | "healed" | "refreshed";
 
 export interface HistoryRecord {
   ts: string;
@@ -80,6 +87,7 @@ export interface HistoryRecord {
   addedRules: string[];
   removedRules: string[];
   healedTier?: string;
+  refreshedFields?: string[];
 }
 
 export const HISTORY_FILENAME = ".history.ndjson";
@@ -187,6 +195,44 @@ function toDiffItems(list: SnapshotViolation[]): DiffItem<AccesslintSignal>[] {
   return list.map((v) => snapshotViolationToDiffItem(v));
 }
 
+const REFRESHABLE_FIELDS: (keyof SnapshotViolation)[] = [
+  "anchor",
+  "role",
+  "visualFingerprint",
+  "screenshotPath",
+  "htmlFingerprint",
+  "relativeLocation",
+  "tag",
+];
+
+function driftedSignalFields(baseline: SnapshotViolation, current: SnapshotViolation): string[] {
+  const out: string[] = [];
+  for (const field of REFRESHABLE_FIELDS) {
+    const b = baseline[field];
+    const c = current[field];
+    // Only count as drift when current has a value that differs from baseline.
+    // If current lacks a signal that baseline had, keep baseline (don't erase).
+    if (c != null && c !== "" && c !== b) out.push(field);
+  }
+  return out;
+}
+
+/**
+ * Carry forward the baseline entry with any non-empty signal updates from
+ * current overlaid. Baseline-only signals are preserved (current may lack
+ * them transiently when the element detaches or ARIA info is unavailable).
+ */
+function mergedForRefresh(baseline: SnapshotViolation, current: SnapshotViolation): SnapshotViolation {
+  const out: SnapshotViolation = { ...baseline, selector: current.selector };
+  for (const field of REFRESHABLE_FIELDS) {
+    const c = current[field];
+    if (c != null && c !== "") {
+      (out[field] as string | undefined) = c;
+    }
+  }
+  return out;
+}
+
 function fromDiffItem(item: DiffItem<AccesslintSignal>): SnapshotViolation {
   // We always stash the original SnapshotViolation in payload, so recovery
   // is just a cast. Fall back to reconstructing from signals if missing.
@@ -218,6 +264,7 @@ export function diffSnapshots(
   newViolations: SnapshotViolation[];
   fixedViolations: SnapshotViolation[];
   healed: HealedViolation[];
+  refreshed: RefreshedViolation[];
   likelyMoved: LikelyMovedHint[];
   reconciledBaseline: SnapshotViolation[];
   raw: DiffResult<AccesslintSignal>;
@@ -246,14 +293,39 @@ export function diffSnapshots(
     sharedSignals: lm.sharedSignals,
   }));
 
-  // Reconciled baseline: exact matches stay (baseline copy); healed entries
-  // get replaced with the current-run item; new entries are ignored (failure
-  // path); fixed entries dropped.
+  // Reconciled baseline: exact matches carry forward but refresh any signals
+  // that drifted since baseline was written (otherwise non-T1 signals rot
+  // across quiet periods and auto-heal reliability slowly degrades); healed
+  // entries get replaced wholesale; new entries ignored (failure path); fixed
+  // entries dropped.
+  const refreshed: RefreshedViolation[] = [];
   const reconciledBaseline: SnapshotViolation[] = [];
-  for (const pair of result.matched) reconciledBaseline.push(fromDiffItem(pair.baseline));
+  for (const pair of result.matched) {
+    const baselineSV = fromDiffItem(pair.baseline);
+    const currentSV = fromDiffItem(pair.current);
+    const changedFields = driftedSignalFields(baselineSV, currentSV);
+    if (changedFields.length > 0) {
+      refreshed.push({
+        ruleId: pair.current.id,
+        selector: currentSV.selector,
+        changedFields,
+      });
+      reconciledBaseline.push(mergedForRefresh(baselineSV, currentSV));
+    } else {
+      reconciledBaseline.push(baselineSV);
+    }
+  }
   for (const pair of result.healed) reconciledBaseline.push(fromDiffItem(pair.current));
 
-  return { newViolations, fixedViolations, healed, likelyMoved, reconciledBaseline, raw: result };
+  return {
+    newViolations,
+    fixedViolations,
+    healed,
+    refreshed,
+    likelyMoved,
+    reconciledBaseline,
+    raw: result,
+  };
 }
 
 /**
@@ -323,6 +395,7 @@ export function evaluateSnapshot(
       newViolations: [],
       fixedViolations: [],
       healed: [],
+      refreshed: [],
       likelyMoved: [],
       updated: false,
       created: true,
@@ -349,6 +422,7 @@ export function evaluateSnapshot(
       newViolations: [],
       fixedViolations: [],
       healed: [],
+      refreshed: [],
       likelyMoved: [],
       updated: true,
       created: false,
@@ -357,10 +431,10 @@ export function evaluateSnapshot(
 
   const pass = d.newViolations.length === 0;
   const shouldRewrite =
-    pass && (d.fixedViolations.length > 0 || d.healed.length > 0);
+    pass && (d.fixedViolations.length > 0 || d.healed.length > 0 || d.refreshed.length > 0);
 
   if (shouldRewrite) {
-    saveSnapshot(snapshotPath, currentViolations);
+    saveSnapshot(snapshotPath, d.reconciledBaseline);
     if (d.fixedViolations.length > 0) {
       appendHistory(snapshotPath, {
         ts: new Date().toISOString(),
@@ -368,7 +442,7 @@ export function evaluateSnapshot(
         event: "ratchet-down",
         added: 0,
         removed: d.fixedViolations.length,
-        total: currentViolations.length,
+        total: d.reconciledBaseline.length,
         addedRules: [],
         removedRules: uniqueRules(d.fixedViolations),
       });
@@ -380,10 +454,25 @@ export function evaluateSnapshot(
         event: "healed",
         added: 0,
         removed: 0,
-        total: currentViolations.length,
+        total: d.reconciledBaseline.length,
         addedRules: [],
         removedRules: [],
         healedTier: h.tier,
+      });
+    }
+    if (d.refreshed.length > 0) {
+      const refreshedFieldSet = new Set<string>();
+      for (const r of d.refreshed) for (const f of r.changedFields) refreshedFieldSet.add(f);
+      appendHistory(snapshotPath, {
+        ts: new Date().toISOString(),
+        name,
+        event: "refreshed",
+        added: 0,
+        removed: 0,
+        total: d.reconciledBaseline.length,
+        addedRules: [],
+        removedRules: [],
+        refreshedFields: [...refreshedFieldSet].sort(),
       });
     }
   }
@@ -393,6 +482,7 @@ export function evaluateSnapshot(
     newViolations: d.newViolations,
     fixedViolations: d.fixedViolations,
     healed: d.healed,
+    refreshed: d.refreshed,
     likelyMoved: d.likelyMoved,
     updated: shouldRewrite,
     created: false,

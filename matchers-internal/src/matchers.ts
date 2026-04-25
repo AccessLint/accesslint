@@ -117,7 +117,13 @@ function snapshotMessage(snap: SnapshotResult, name: string, current: SnapshotVi
       const reasons: string[] = [];
       if (snap.fixedViolations.length > 0) reasons.push(`${snap.fixedViolations.length} fixed`);
       if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
-      const verb = snap.fixedViolations.length > 0 ? "ratcheted" : "updated";
+      if (snap.refreshed.length > 0) reasons.push(`${snap.refreshed.length} refreshed`);
+      const verb =
+        snap.fixedViolations.length > 0
+          ? "ratcheted"
+          : snap.healed.length > 0
+            ? "updated"
+            : "refreshed";
       parts.push(
         `Snapshot "${name}" ${verb} (${reasons.join(", ")}); ${current.length} remaining.`,
       );
