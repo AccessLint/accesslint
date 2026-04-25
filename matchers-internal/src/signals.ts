@@ -58,7 +58,10 @@ export function accesslintTiers(): Tier<AccesslintSignal>[] {
   ];
 }
 
-const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form", "fieldset"]);
+// Section-level anchors for relativeLocation. Not a strict ARIA landmark set
+// (fieldset/section don't map to landmark roles); chosen as stable semantic
+// grouping tags that teams actually write and that survive refactors.
+const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form"]);
 const LANDMARK_ROLES = new Set([
   "banner",
   "complementary",
@@ -84,22 +87,50 @@ function segmentFor(el: Element): string {
   return tag;
 }
 
+const LANDMARK_WALK_LIMIT = 6;
+
 /**
- * Produce a short, wrapper-invariant trail naming the nearest landmark
- * ancestor + the nearest sibling/ancestor with short visible text.
+ * Produce a short, wrapper-invariant trail describing where an element
+ * lives on the page. Combines:
+ *
+ * 1. The nearest landmark ancestor within {@link LANDMARK_WALK_LIMIT}
+ *    ancestors. Pages with no nearby landmark return `null` so tier 6
+ *    of the matcher is skipped (degrade gracefully; don't anchor to
+ *    `<body>` on poorly-structured pages).
+ * 2. An intermediate id- or role-bearing ancestor sitting between the
+ *    element and that landmark, nearest to the element. This is what
+ *    keeps the signal discriminating when the landmark itself is broad
+ *    (e.g. a single `<main>` wrapping everything).
+ * 3. The nearest sibling or ancestor sibling with short visible text,
+ *    quoted. Anchors copy-stable location like `near "Email"` when no
+ *    intermediate id/role exists.
+ *
  * Example: `main > form#login > near "Email"`.
  */
 export function buildRelativeLocation(el: Element): string | null {
-  const trail: string[] = [];
+  const between: Element[] = [];
   let current: Element | null = el.parentElement;
-  while (current) {
+  let landmark: Element | null = null;
+  for (let depth = 0; current && depth < LANDMARK_WALK_LIMIT; depth++) {
     if (isLandmark(current)) {
-      trail.unshift(segmentFor(current));
+      landmark = current;
       break;
     }
+    between.push(current);
     current = current.parentElement;
   }
-  if (trail.length === 0) return null;
+  if (!landmark) return null;
+
+  const trail: string[] = [segmentFor(landmark)];
+
+  // Nearest-to-el id/role crumb inside the landmark. `between` is ordered
+  // el-parent first, so the first hit is closest to the element.
+  for (const ancestor of between) {
+    if (ancestor.id || ancestor.getAttribute("role")) {
+      trail.push(segmentFor(ancestor));
+      break;
+    }
+  }
 
   const nearText = findNearestShortText(el);
   if (nearText) trail.push(`near "${nearText}"`);
