@@ -10,7 +10,7 @@ export const auditBrowserScriptSchema = {
     .optional()
     .default(true)
     .describe(
-      "Include the @accesslint/core IIFE (~165 KB) inline. Set false for repeat audits on the same page where the IIFE is already loaded.",
+      "Bootstrap window.AccessLint by fetching the @accesslint/core IIFE from cdn.jsdelivr.net and evaluating it in-page. The bootstrap is ~1 KB; the IIFE is no longer inlined. Set false for repeat audits on the same page where the IIFE is already loaded. Note: pages with strict CSP may block the CDN fetch; fall back to static audit_html / audit_file in that case.",
     ),
   name: z
     .string()

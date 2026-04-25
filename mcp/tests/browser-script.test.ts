@@ -2,13 +2,18 @@ import { describe, it, expect } from "vitest";
 import { buildBrowserScript, newSessionToken } from "../src/lib/browser-script.js";
 
 describe("buildBrowserScript", () => {
-  it("returns a parseable function expression", () => {
+  it("returns a parseable async function expression", () => {
     const script = buildBrowserScript({
       inject: false,
       sessionToken: "deadbeef",
       coreOptions: {},
     });
-    expect(() => new Function(`return (${script})`)).not.toThrow();
+    // Async function bodies are syntactically valid; AsyncFunction's
+    // constructor enforces the same parsing rules as a real evaluation.
+    const AsyncFn = (async () => {}).constructor as FunctionConstructor;
+    expect(() => new AsyncFn(`return (${script})`)).not.toThrow();
+    // Top-level form: arrow async function expression.
+    expect(script.trimStart().startsWith("async () => {")).toBe(true);
   });
 
   it("embeds the session token verbatim", () => {
@@ -30,24 +35,30 @@ describe("buildBrowserScript", () => {
     expect(script).toContain('"disabledRules":["text-alternatives/img-alt"]');
   });
 
-  it("includes the IIFE bundle when inject=true", () => {
+  it("includes a CDN fetch bootstrap when inject=true", () => {
     const script = buildBrowserScript({
       inject: true,
       sessionToken: "t",
       coreOptions: {},
     });
-    // Bundle is ~165 KB; with inject=false it would be ~600 chars.
-    expect(script.length).toBeGreaterThan(50_000);
-    // Smoke check that the IIFE actually defines window.AccessLint somewhere.
-    expect(script).toMatch(/AccessLint/);
+    // CDN-load replaces inlining: the script fetches the IIFE from jsDelivr
+    // at a version-pinned URL and evaluates it in-page.
+    expect(script).toContain("https://cdn.jsdelivr.net/npm/@accesslint/core@");
+    expect(script).toContain("/dist/index.iife.js");
+    expect(script).toContain("await fetch");
+    expect(script).toContain("new Function(__code)()");
+    // Bootstrap is small — well under what an inlined IIFE would weigh.
+    expect(script.length).toBeLessThan(3_000);
   });
 
-  it("omits the IIFE when inject=false", () => {
+  it("omits the CDN fetch when inject=false", () => {
     const script = buildBrowserScript({
       inject: false,
       sessionToken: "t",
       coreOptions: {},
     });
+    expect(script).not.toContain("cdn.jsdelivr.net");
+    expect(script).not.toContain("await fetch");
     expect(script.length).toBeLessThan(2_000);
   });
 
@@ -60,6 +71,16 @@ describe("buildBrowserScript", () => {
     // The script must surface a helpful error rather than throwing
     // ReferenceError when window.AccessLint is missing.
     expect(script).toContain("window.AccessLint is not loaded");
+  });
+
+  it("surfaces a clear error when the CDN fetch fails", () => {
+    const script = buildBrowserScript({
+      inject: true,
+      sessionToken: "t",
+      coreOptions: {},
+    });
+    expect(script).toContain("Failed to fetch @accesslint/core IIFE");
+    expect(script).toContain("Failed to load @accesslint/core IIFE from CDN");
   });
 });
 
