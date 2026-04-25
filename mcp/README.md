@@ -22,6 +22,8 @@ Add to your MCP client configuration:
 - **audit_html** — Audit an HTML string for WCAG violations. Auto-detects fragments vs full documents.
 - **audit_file** — Read an HTML file from disk and audit it.
 - **audit_url** — Fetch a URL and audit the returned HTML.
+- **audit_browser_script** — Returns a JS snippet to paste into a browser MCP's evaluate tool. Audits the live, JS-rendered page (works for SPAs, web fonts, post-mount ARIA). Pair with **audit_browser_collect**.
+- **audit_browser_collect** — Parse the JSON the evaluate tool returned and store/format it like any other audit.
 - **diff_html** — Audit new HTML and diff against a previously named audit to verify fixes.
 - **list_rules** — List available WCAG rules with optional filters by category, level, fixability, or criterion.
   All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
@@ -39,6 +41,19 @@ To audit React components (`.jsx`/`.tsx`), the agent uses the `audit-react-compo
 3. Passing the rendered HTML to `audit_html` with `component_mode: true`
 
 No extra runtime dependencies are required — the agent renders the component itself based on the source code.
+
+### Live-page auditing (audit-live-page)
+
+For SPAs and any page whose accessibility issues only appear after JS runs, the agent uses the `audit-live-page` prompt. The intended workflow:
+
+1. The developer points the agent at a URL.
+2. The agent navigates a real browser to that URL via a companion browser MCP.
+3. The agent injects `@accesslint/core` and runs the audit in-page.
+4. The agent maps each violation back to the source component in the codebase, then either applies the fixes directly or proposes a plan.
+
+**Requires a companion browser MCP.** Recommended: [`chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp). Also works: `playwright-mcp`, `puppeteer-mcp`, or any MCP that exposes a navigate + evaluate-script surface. If you don't have one, the prompt falls back to `audit_url` with a warning that SPA / computed-style coverage is lost.
+
+`@accesslint/mcp` itself ships zero browser dependencies — the audit logic is sent into whichever browser the companion MCP already drives.
 
 ## Why use this instead of prompting alone?
 

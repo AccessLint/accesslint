@@ -1,0 +1,82 @@
+import { z } from "zod";
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { buildBrowserScript, newSessionToken } from "../lib/browser-script.js";
+import { registerExpectedToken } from "../lib/state.js";
+
+export const auditBrowserScriptSchema = {
+  inject: z
+    .boolean()
+    .optional()
+    .default(true)
+    .describe(
+      "Include the @accesslint/core IIFE (~165 KB) inline. Set false for repeat audits on the same page where the IIFE is already loaded.",
+    ),
+  name: z
+    .string()
+    .optional()
+    .describe(
+      "Token to pair with audit_browser_collect for storage and diffing. The script embeds a session token; collect verifies it.",
+    ),
+  include_aaa: z
+    .boolean()
+    .optional()
+    .describe("Include WCAG AAA-level rules in the audit"),
+  disabled_rules: z
+    .array(z.string())
+    .optional()
+    .describe('List of rule IDs to skip (e.g. ["text-alternatives/img-alt"])'),
+  component_mode: z
+    .boolean()
+    .optional()
+    .describe("Treat the page as a component fragment (skip page-level rules like html-has-lang)"),
+  locale: z.string().optional().describe('Locale for rule messages (e.g. "en", "es")'),
+};
+
+export function registerAuditBrowserScript(server: McpServer): void {
+  server.tool(
+    "audit_browser_script",
+    "Returns a JS function expression to paste into your browser MCP's evaluate tool (e.g. mcp__chrome-devtools__evaluate_script). The script audits the live page using @accesslint/core; pass the result back to audit_browser_collect.",
+    auditBrowserScriptSchema,
+    async ({ inject, name, include_aaa, disabled_rules, component_mode, locale }) => {
+      const sessionToken = newSessionToken();
+      if (name) {
+        registerExpectedToken(name, sessionToken);
+      }
+
+      let script: string;
+      try {
+        script = buildBrowserScript({
+          inject,
+          sessionToken,
+          coreOptions: {
+            includeAAA: include_aaa,
+            disabledRules: disabled_rules,
+            componentMode: component_mode,
+            locale,
+          },
+        });
+      } catch (err) {
+        return {
+          content: [{ type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` }],
+          isError: true,
+        };
+      }
+
+      const collectHint = name
+        ? `audit_browser_collect with name="${name}"`
+        : "audit_browser_collect";
+
+      const instruction =
+        `Pass the script below to your browser MCP's evaluate tool ` +
+        `(chrome-devtools-mcp: evaluate_script, playwright-mcp: browser_evaluate, etc.) ` +
+        `as the function argument. Then pass the raw JSON result to ${collectHint}.`;
+
+      return {
+        content: [
+          { type: "text", text: instruction },
+          { type: "text", text: "```js\n" + script + "\n```" },
+        ],
+      };
+    },
+  );
+}

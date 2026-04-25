@@ -3,6 +3,7 @@ import { audit as cliAudit } from "@accesslint/cli";
 
 const MAX_STORED_AUDITS = 10;
 const storedAudits = new Map<string, AuditResult>();
+const expectedTokens = new Map<string, string>();
 
 export function audit(html: string, options?: { name?: string }): AuditResult {
   const result = cliAudit(html);
@@ -31,4 +32,15 @@ export function getStoredAudit(name: string): AuditResult | undefined {
 
 export function clearStoredAudits(): void {
   storedAudits.clear();
+  expectedTokens.clear();
+}
+
+export function registerExpectedToken(name: string, token: string): void {
+  expectedTokens.set(name, token);
+}
+
+export function consumeExpectedToken(name: string): string | undefined {
+  const token = expectedTokens.get(name);
+  expectedTokens.delete(name);
+  return token;
 }
