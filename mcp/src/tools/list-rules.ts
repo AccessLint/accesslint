@@ -15,6 +15,10 @@ export const listRulesSchema = {
     .optional()
     .describe("Filter by fixability"),
   wcag: z.string().optional().describe('Filter by WCAG criterion (e.g. "1.1.1")'),
+  format: z
+    .enum(["verbose", "compact"])
+    .optional()
+    .describe("Output verbosity. 'compact' is one rule per line; default 'verbose' is a table."),
 };
 
 export function registerListRules(server: McpServer): void {
@@ -22,7 +26,7 @@ export function registerListRules(server: McpServer): void {
     "list_rules",
     "List available accessibility rules with optional filters by category, WCAG level, fixability, or criterion.",
     listRulesSchema,
-    async ({ category, level, fixability, wcag }) => {
+    async ({ category, level, fixability, wcag, format }) => {
       let filtered: Rule[] = getActiveRules();
 
       if (category) {
@@ -39,7 +43,7 @@ export function registerListRules(server: McpServer): void {
       }
 
       return {
-        content: [{ type: "text", text: formatRuleTable(filtered) }],
+        content: [{ type: "text", text: formatRuleTable(filtered, { format }) }],
       };
     },
   );

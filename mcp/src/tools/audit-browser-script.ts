@@ -2,6 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { buildBrowserScript, newSessionToken } from "../lib/browser-script.js";
 import { registerExpectedToken } from "../lib/state.js";
+import { computeDisabledRules } from "../lib/filters.js";
 
 export const auditBrowserScriptSchema = {
   inject: z
@@ -25,6 +26,14 @@ export const auditBrowserScriptSchema = {
     .array(z.string())
     .optional()
     .describe('List of rule IDs to skip (e.g. ["text-alternatives/img-alt"])'),
+  rules: z
+    .array(z.string())
+    .optional()
+    .describe("Allow-list of rule IDs to run (inverse of disabled_rules)"),
+  wcag: z
+    .array(z.string())
+    .optional()
+    .describe('Allow-list of WCAG criteria to run (e.g. ["1.4.3", "2.4.4"])'),
   component_mode: z
     .boolean()
     .optional()
@@ -37,11 +46,18 @@ export function registerAuditBrowserScript(server: McpServer): void {
     "audit_browser_script",
     "Returns a JS function expression to paste into your browser MCP's evaluate tool (e.g. mcp__chrome-devtools__evaluate_script). The script audits the live page using @accesslint/core; pass the result back to audit_browser_collect.",
     auditBrowserScriptSchema,
-    async ({ inject, name, include_aaa, disabled_rules, component_mode, locale }) => {
+    async ({ inject, name, include_aaa, disabled_rules, rules, wcag, component_mode, locale }) => {
       const sessionToken = newSessionToken();
       if (name) {
         registerExpectedToken(name, sessionToken);
       }
+
+      const mergedDisabled = computeDisabledRules({
+        rules,
+        wcag,
+        includeAAA: include_aaa,
+        existingDisabled: disabled_rules,
+      });
 
       let script: string;
       try {
@@ -50,7 +66,7 @@ export function registerAuditBrowserScript(server: McpServer): void {
           sessionToken,
           coreOptions: {
             includeAAA: include_aaa,
-            disabledRules: disabled_rules,
+            disabledRules: mergedDisabled,
             componentMode: component_mode,
             locale,
           },

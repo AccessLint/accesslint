@@ -7,6 +7,9 @@ import { registerAuditBrowserScript } from "./tools/audit-browser-script.js";
 import { registerAuditBrowserCollect } from "./tools/audit-browser-collect.js";
 import { registerDiffHtml } from "./tools/diff-html.js";
 import { registerListRules } from "./tools/list-rules.js";
+import { registerAuditDiff } from "./tools/audit-diff.js";
+import { registerQuickCheck } from "./tools/quick-check.js";
+import { registerExplainRule } from "./tools/explain-rule.js";
 import { registerAuditReactComponentPrompt } from "./prompts/audit-react-component.js";
 import { registerAuditLivePagePrompt } from "./prompts/audit-live-page.js";
 
@@ -28,6 +31,9 @@ registerAuditBrowserScript(server);
 registerAuditBrowserCollect(server);
 registerDiffHtml(server);
 registerListRules(server);
+registerAuditDiff(server);
+registerQuickCheck(server);
+registerExplainRule(server);
 registerAuditReactComponentPrompt(server);
 registerAuditLivePagePrompt(server);
 

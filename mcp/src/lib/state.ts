@@ -5,11 +5,19 @@ const MAX_STORED_AUDITS = 10;
 const storedAudits = new Map<string, AuditResult>();
 const expectedTokens = new Map<string, string>();
 
-export function audit(html: string, options?: { name?: string }): AuditResult {
-  const result = cliAudit(html);
+export interface AuditCallOptions {
+  name?: string;
+  includeAAA?: boolean;
+  componentMode?: boolean;
+  disabledRules?: string[];
+}
 
-  if (options?.name) {
-    storeAudit(options.name, result);
+export function audit(html: string, options?: AuditCallOptions): AuditResult {
+  const { name, ...auditOptions } = options ?? {};
+  const result = cliAudit(html, auditOptions);
+
+  if (name) {
+    storeAudit(name, result);
   }
 
   return result;

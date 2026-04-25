@@ -2,7 +2,7 @@ import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { AuditResult, Violation } from "@accesslint/core";
 import { consumeExpectedToken, storeAudit } from "../lib/state.js";
-import { formatViolations, type Impact } from "../lib/format.js";
+import { formatViolations, type FormatMode, type Impact } from "../lib/format.js";
 
 export const auditBrowserCollectSchema = {
   raw_result: z
@@ -20,6 +20,10 @@ export const auditBrowserCollectSchema = {
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
     .describe("Only show violations at this severity or above"),
+  format: z
+    .enum(["verbose", "compact"])
+    .optional()
+    .describe("Output verbosity. 'compact' fits one violation per line; default 'verbose'."),
 };
 
 interface InPageResult {
@@ -64,6 +68,7 @@ export interface CollectArgs {
   raw_result: string;
   name?: string;
   min_impact?: Impact;
+  format?: FormatMode;
 }
 
 export function collectAuditResult(args: CollectArgs): CollectOutcome {
@@ -118,7 +123,10 @@ export function collectAuditResult(args: CollectArgs): CollectOutcome {
 
   return {
     ok: true,
-    text: formatViolations(result.violations, { minImpact: args.min_impact }),
+    text: formatViolations(result.violations, {
+      minImpact: args.min_impact,
+      format: args.format,
+    }),
     result,
   };
 }
@@ -128,8 +136,8 @@ export function registerAuditBrowserCollect(server: McpServer): void {
     "audit_browser_collect",
     "Parse the JSON returned by your browser MCP's evaluate tool (after running the script from audit_browser_script), store it for later diffing, and format the violations.",
     auditBrowserCollectSchema,
-    async ({ raw_result, name, min_impact }) => {
-      const outcome = collectAuditResult({ raw_result, name, min_impact });
+    async ({ raw_result, name, min_impact, format }) => {
+      const outcome = collectAuditResult({ raw_result, name, min_impact, format });
       return {
         content: [{ type: "text", text: outcome.text }],
         isError: outcome.ok ? undefined : true,

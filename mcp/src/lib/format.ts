@@ -11,9 +11,28 @@ export const IMPACT_ORDER: Record<string, number> = {
 };
 
 export type Impact = "critical" | "serious" | "moderate" | "minor";
+export type FormatMode = "verbose" | "compact";
 
 export interface FormatOptions {
   minImpact?: Impact;
+  format?: FormatMode;
+}
+
+function impactCounts(items: { impact: string }[]): string {
+  const counts: Record<Impact, number> = { critical: 0, serious: 0, moderate: 0, minor: 0 };
+  for (const item of items) {
+    if (item.impact in counts) counts[item.impact as Impact]++;
+  }
+  const parts: string[] = [];
+  for (const key of ["critical", "serious", "moderate", "minor"] as Impact[]) {
+    if (counts[key] > 0) parts.push(`${counts[key]} ${key}`);
+  }
+  return parts.join(", ");
+}
+
+function formatCompactViolation(v: EnrichedViolation): string {
+  const fix = v.fix ? ` [fix: ${formatFixSuggestion(v.fix)}]` : "";
+  return `[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector} — ${v.message}${fix}`;
 }
 
 export function filterByImpact<T extends { impact: string }>(items: T[], minImpact: Impact): T[] {
@@ -182,6 +201,16 @@ export function formatViolations(violations: Violation[], options?: FormatOption
   const truncated = enriched.length > MAX_VIOLATIONS;
   const display = truncated ? enriched.slice(0, MAX_VIOLATIONS) : enriched;
 
+  if (options?.format === "compact") {
+    const counts = impactCounts(display);
+    const header = `${display.length} violation${display.length === 1 ? "" : "s"}: ${counts}`;
+    const lines = display.map(formatCompactViolation);
+    const result = [header, ...lines].join("\n");
+    return truncated
+      ? `${result}\n(Showing ${MAX_VIOLATIONS} of ${filtered.length}. Fix these first, then re-audit.)`
+      : result;
+  }
+
   const groups = groupByRule(display);
   const blocks: string[] = [];
   let violationIndex = 1;
@@ -212,13 +241,26 @@ export function formatViolations(violations: Violation[], options?: FormatOption
 }
 
 export function formatDiff(diff: DiffResult, options?: FormatOptions): string {
-  const lines: string[] = [];
   const fixed = options?.minImpact ? filterByImpact(diff.fixed, options.minImpact) : diff.fixed;
   const added = options?.minImpact ? filterByImpact(diff.added, options.minImpact) : diff.added;
   const unchanged = options?.minImpact
     ? filterByImpact(diff.unchanged, options.minImpact)
     : diff.unchanged;
 
+  if (options?.format === "compact") {
+    const lines: string[] = [
+      `diff: +${added.length} new, -${fixed.length} fixed, ${unchanged.length} unchanged`,
+    ];
+    for (const v of added) {
+      lines.push(`+${formatCompactViolation(enrichViolation(v))}`);
+    }
+    for (const v of fixed) {
+      lines.push(`-[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}`);
+    }
+    return lines.join("\n");
+  }
+
+  const lines: string[] = [];
   lines.push(`Summary: ${fixed.length} fixed, ${added.length} new, ${unchanged.length} remaining`);
 
   if (fixed.length > 0) {
@@ -256,9 +298,17 @@ export function formatDiff(diff: DiffResult, options?: FormatOptions): string {
   return lines.join("\n");
 }
 
-export function formatRuleTable(rules: Rule[]): string {
+export function formatRuleTable(rules: Rule[], options?: { format?: FormatMode }): string {
   if (rules.length === 0) {
     return "No rules match the specified filters.";
+  }
+
+  if (options?.format === "compact") {
+    const header = `${rules.length} rule${rules.length === 1 ? "" : "s"}`;
+    const rows = rules.map(
+      (r) => `${r.id} (${r.level}, ${r.fixability ?? "—"}) — ${r.description}`,
+    );
+    return [header, ...rows].join("\n");
   }
 
   const header = `${rules.length} rule${rules.length === 1 ? "" : "s"}:\n`;

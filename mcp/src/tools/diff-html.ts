@@ -1,9 +1,10 @@
 import { z } from "zod";
-import { diffAudit } from "@accesslint/core";
+import { diffAudit, type DiffResult } from "@accesslint/core";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { audit, getStoredAudit } from "../lib/state.js";
 import { formatDiff } from "../lib/format.js";
 import { checkHtmlSize } from "../lib/limits.js";
+import { filterViolationsByWcag } from "../lib/filters.js";
 
 export const diffHtmlSchema = {
   html: z.string().describe("Updated HTML to audit and compare"),
@@ -14,6 +15,14 @@ export const diffHtmlSchema = {
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
     .describe("Only show violations at this severity or above"),
+  format: z
+    .enum(["verbose", "compact"])
+    .optional()
+    .describe("Output verbosity. 'compact' fits one violation per line; default 'verbose'."),
+  wcag: z
+    .array(z.string())
+    .optional()
+    .describe('Only include violations whose rule maps to these WCAG criteria (e.g. ["1.4.3"])'),
 };
 
 export function registerDiffHtml(server: McpServer): void {
@@ -21,7 +30,7 @@ export function registerDiffHtml(server: McpServer): void {
     "diff_html",
     "Audit new HTML and diff against a previously named audit. Use after audit_html with a name to verify fixes.",
     diffHtmlSchema,
-    async ({ html, before, min_impact }) => {
+    async ({ html, before, min_impact, format, wcag }) => {
       const check = checkHtmlSize(html);
       if (!check.ok) {
         return {
@@ -43,9 +52,18 @@ export function registerDiffHtml(server: McpServer): void {
       }
 
       const afterResult = audit(html);
-      const diff = diffAudit(beforeResult, afterResult);
+      let diff: DiffResult = diffAudit(beforeResult, afterResult);
+      if (wcag && wcag.length > 0) {
+        diff = {
+          added: filterViolationsByWcag(diff.added, wcag),
+          fixed: filterViolationsByWcag(diff.fixed, wcag),
+          unchanged: filterViolationsByWcag(diff.unchanged, wcag),
+        };
+      }
       return {
-        content: [{ type: "text", text: formatDiff(diff, { minImpact: min_impact }) }],
+        content: [
+          { type: "text", text: formatDiff(diff, { minImpact: min_impact, format }) },
+        ],
       };
     },
   );

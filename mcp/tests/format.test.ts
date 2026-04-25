@@ -289,3 +289,79 @@ describe("browserHint visibility", () => {
     expect(output).toContain("Browser hint: Screenshot the image");
   });
 });
+
+describe("compact format", () => {
+  it("formatViolations compact emits one-line summary plus one line per violation", () => {
+    const violations = [
+      makeViolation({ impact: "critical", ruleId: "r1", selector: "img.hero" }),
+      makeViolation({ impact: "serious", ruleId: "r2", selector: "button.primary" }),
+    ];
+    const output = formatViolations(violations, { format: "compact" });
+    const lines = output.split("\n");
+    expect(lines[0]).toBe("2 violations: 1 critical, 1 serious");
+    expect(lines[1]).toContain("[CRITICAL] r1 at img.hero");
+    expect(lines[2]).toContain("[SERIOUS] r2 at button.primary");
+    // Compact must drop verbose fields
+    expect(output).not.toContain("HTML:");
+    expect(output).not.toContain("Browser hint:");
+    expect(output).not.toContain("Guidance:");
+  });
+
+  it("formatViolations compact includes fix directive when present", () => {
+    const violations = [
+      makeViolation({
+        ruleId: "r1",
+        fix: { type: "add-attribute", attribute: "alt", value: "" },
+      }),
+    ];
+    const output = formatViolations(violations, { format: "compact" });
+    expect(output).toContain('[fix: add-attribute alt=""]');
+  });
+
+  it("formatViolations compact handles empty result", () => {
+    expect(formatViolations([], { format: "compact" })).toBe("No accessibility violations found.");
+  });
+
+  it("formatDiff compact uses +/- prefixes and counts header", () => {
+    const diff: DiffResult = {
+      fixed: [makeViolation({ ruleId: "fixed-rule", selector: "input.email" })],
+      added: [
+        makeViolation({
+          ruleId: "added-rule",
+          selector: "img.hero",
+          fix: { type: "add-attribute", attribute: "alt", value: "" },
+        }),
+      ],
+      unchanged: [makeViolation({ ruleId: "still-broken" })],
+    };
+    const output = formatDiff(diff, { format: "compact" });
+    expect(output).toContain("diff: +1 new, -1 fixed, 1 unchanged");
+    expect(output).toContain("+[CRITICAL] added-rule at img.hero");
+    expect(output).toContain("-[CRITICAL] fixed-rule at input.email");
+  });
+
+  it("formatRuleTable compact emits one rule per line", () => {
+    const rules = [
+      {
+        id: "text-alternatives/img-alt",
+        description: "Images must have alt text",
+        level: "A",
+        fixability: "contextual",
+        wcag: ["1.1.1"],
+      },
+      {
+        id: "navigable/link-name",
+        description: "Links must have discernible text",
+        level: "A",
+        fixability: "contextual",
+        wcag: ["2.4.4"],
+      },
+    ] as unknown as Rule[];
+    const output = formatRuleTable(rules, { format: "compact" });
+    const lines = output.split("\n");
+    expect(lines[0]).toBe("2 rules");
+    expect(lines[1]).toBe("text-alternatives/img-alt (A, contextual) — Images must have alt text");
+    expect(lines[2]).toBe("navigable/link-name (A, contextual) — Links must have discernible text");
+    expect(output).not.toContain("|"); // no pipe-table separators
+  });
+});
