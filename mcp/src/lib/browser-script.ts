@@ -17,20 +17,7 @@ const require = createRequire(import.meta.url);
  */
 const CDN_HOST = "https://cdn.jsdelivr.net";
 
-/**
- * When set, the bootstrap inlines the IIFE from the resolved local
- * `@accesslint/core/iife` path instead of fetching from jsDelivr. Used for
- * dev against an unpublished core build.
- */
-const LOCAL_IIFE_ENV = "ACCESSLINT_MCP_USE_LOCAL_IIFE";
-
 let cachedCoreVersion: string | null = null;
-let cachedLocalIife: string | null = null;
-
-function useLocalIife(): boolean {
-  const v = process.env[LOCAL_IIFE_ENV];
-  return v === "1" || v === "true";
-}
 
 function loadCoreVersion(): string {
   if (cachedCoreVersion !== null) return cachedCoreVersion;
@@ -45,13 +32,6 @@ function loadCoreVersion(): string {
   }
   cachedCoreVersion = pkg.version;
   return cachedCoreVersion;
-}
-
-function loadLocalIife(): string {
-  if (cachedLocalIife !== null) return cachedLocalIife;
-  const iifePath = require.resolve("@accesslint/core/iife");
-  cachedLocalIife = readFileSync(iifePath, "utf8");
-  return cachedLocalIife;
 }
 
 function iifeUrl(version: string): string {
@@ -90,25 +70,10 @@ export function buildBrowserScript(opts: BuildScriptOptions): string {
   const tokenJson = JSON.stringify(opts.sessionToken);
   const sourceMap: SourceMapMode = opts.sourceMap ?? "fiber";
 
-  let bootstrap = "";
-  if (opts.inject) {
-    if (useLocalIife()) {
-      // Dev mode: inline the local workspace's built IIFE so the page
-      // sees unpublished changes (e.g. attachReactFiberSource) without a
-      // CDN round-trip. Inflates the script payload by ~165 KB; only
-      // used when ACCESSLINT_MCP_USE_LOCAL_IIFE=1.
-      const inlineIife = JSON.stringify(loadLocalIife());
-      bootstrap = `
-    if (typeof window.AccessLint === "undefined") {
-      try {
-        (0, eval)(${inlineIife});
-      } catch (err) {
-        return { sessionToken: __token, error: "Failed to evaluate local @accesslint/core IIFE: " + String((err && err.message) || err) };
-      }
-    }`;
-    } else {
-      const cdnUrl = JSON.stringify(iifeUrl(loadCoreVersion()));
-      bootstrap = `
+  const cdnUrl = opts.inject ? JSON.stringify(iifeUrl(loadCoreVersion())) : null;
+
+  const bootstrap = cdnUrl
+    ? `
     if (typeof window.AccessLint === "undefined") {
       try {
         const __resp = await fetch(${cdnUrl});
@@ -123,9 +88,8 @@ export function buildBrowserScript(opts: BuildScriptOptions): string {
       } catch (err) {
         return { sessionToken: __token, error: "Failed to load @accesslint/core IIFE from CDN: " + String((err && err.message) || err) };
       }
-    }`;
-    }
-  }
+    }`
+    : "";
 
   const sourceMapBlock =
     sourceMap === "fiber"

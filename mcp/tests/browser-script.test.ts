@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { buildBrowserScript, newSessionToken } from "../src/lib/browser-script.js";
 
 describe("buildBrowserScript", () => {
@@ -81,34 +81,6 @@ describe("buildBrowserScript", () => {
     });
     expect(script).toContain("Failed to fetch @accesslint/core IIFE");
     expect(script).toContain("Failed to load @accesslint/core IIFE from CDN");
-  });
-});
-
-describe("buildBrowserScript local IIFE dev mode", () => {
-  it("inlines the local IIFE when ACCESSLINT_MCP_USE_LOCAL_IIFE=1", async () => {
-    const prev = process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE;
-    process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE = "1";
-    // Re-import a fresh module so the env-derived branch is exercised.
-    vi.resetModules();
-    const { buildBrowserScript: build } = await import("../src/lib/browser-script.js");
-    try {
-      const script = build({
-        inject: true,
-        sessionToken: "t",
-        coreOptions: {},
-      });
-      expect(script).not.toContain("cdn.jsdelivr.net");
-      expect(script).not.toContain("await fetch");
-      // The IIFE assigns to AccessLint, so the inlined string contains
-      // the global initialization.
-      expect(script).toContain("AccessLint");
-      // Inlined IIFE inflates the script considerably.
-      expect(script.length).toBeGreaterThan(50_000);
-    } finally {
-      if (prev === undefined) delete process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE;
-      else process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE = prev;
-      vi.resetModules();
-    }
   });
 });
 
