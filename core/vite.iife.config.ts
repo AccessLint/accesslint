@@ -13,8 +13,12 @@ export default defineConfig({
     emptyOutDir: false,
     rollupOptions: {
       output: {
+        // Read from the local `AccessLint` binding (in scope at footer position
+        // regardless of how the chunk is evaluated) and pin it onto globalThis.
+        // Fixes loaders like `new Function(code)()` where the IIFE's top-level
+        // `var AccessLint = ...` becomes a function-local instead of a global.
         footer:
-          "if(typeof globalThis!=='undefined')globalThis.AccessLintCore=globalThis.AccessLint;",
+          "if(typeof globalThis!=='undefined'){globalThis.AccessLint=AccessLint;globalThis.AccessLintCore=AccessLint;}",
       },
     },
   },
