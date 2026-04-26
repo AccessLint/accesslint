@@ -75,7 +75,10 @@ export function buildBrowserScript(opts: BuildScriptOptions): string {
           return { sessionToken: __token, error: "Failed to fetch @accesslint/core IIFE: HTTP " + __resp.status };
         }
         const __code = await __resp.text();
-        new Function(__code)();
+        // Indirect eval runs in global scope, so the IIFE's top-level
+        // \`var AccessLint = ...\` attaches to globalThis. \`new Function(code)()\`
+        // would scope it to a fresh function and leave window.AccessLint undefined.
+        (0, eval)(__code);
       } catch (err) {
         return { sessionToken: __token, error: "Failed to load @accesslint/core IIFE from CDN: " + String((err && err.message) || err) };
       }

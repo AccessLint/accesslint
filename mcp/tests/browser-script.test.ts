@@ -46,7 +46,7 @@ describe("buildBrowserScript", () => {
     expect(script).toContain("https://cdn.jsdelivr.net/npm/@accesslint/core@");
     expect(script).toContain("/dist/index.iife.js");
     expect(script).toContain("await fetch");
-    expect(script).toContain("new Function(__code)()");
+    expect(script).toContain("(0, eval)(__code)");
     // Bootstrap is small — well under what an inlined IIFE would weigh.
     expect(script.length).toBeLessThan(3_000);
   });
