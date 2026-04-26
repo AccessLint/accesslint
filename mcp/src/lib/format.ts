@@ -1,4 +1,10 @@
-import type { Violation, FixSuggestion, Rule, DiffResult } from "@accesslint/core";
+import type {
+  Violation,
+  FixSuggestion,
+  Rule,
+  DiffResult,
+  SourceLocation,
+} from "@accesslint/core";
 import { getRuleById } from "@accesslint/core";
 
 const MAX_VIOLATIONS = 50;
@@ -30,9 +36,21 @@ function impactCounts(items: { impact: string }[]): string {
   return parts.join(", ");
 }
 
+function formatSourceLocation(loc: SourceLocation): string {
+  const pos = loc.column != null ? `${loc.line}:${loc.column}` : `${loc.line}`;
+  const symbol = loc.symbol ? ` (${loc.symbol})` : "";
+  return `${loc.file}:${pos}${symbol}`;
+}
+
+function formatSourceList(sources: SourceLocation[]): string {
+  return sources.map(formatSourceLocation).join(" ← ");
+}
+
 function formatCompactViolation(v: EnrichedViolation): string {
   const fix = v.fix ? ` [fix: ${formatFixSuggestion(v.fix)}]` : "";
-  return `[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector} — ${v.message}${fix}`;
+  const source =
+    v.source && v.source.length > 0 ? ` @${formatSourceLocation(v.source[0])}` : "";
+  return `[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}${source} — ${v.message}${fix}`;
 }
 
 export function filterByImpact<T extends { impact: string }>(items: T[], minImpact: Impact): T[] {
@@ -51,6 +69,7 @@ interface EnrichedViolation {
   fixability?: string;
   browserHint?: string;
   guidance?: string;
+  source?: SourceLocation[];
 }
 
 function enrichViolation(v: Violation): EnrichedViolation {
@@ -66,6 +85,7 @@ function enrichViolation(v: Violation): EnrichedViolation {
     fixability: rule?.fixability,
     browserHint: rule?.browserHint,
     guidance: rule?.guidance,
+    source: v.source,
   };
 }
 
@@ -116,6 +136,9 @@ function formatSingleViolation(v: EnrichedViolation, index: number): string {
   lines.push(`${index}. [${v.impact.toUpperCase()}] ${v.ruleId}`);
   lines.push(`   ${v.message}`);
   lines.push(`   Element: ${v.selector}`);
+  if (v.source && v.source.length > 0) {
+    lines.push(`   Source: ${formatSourceList(v.source)}`);
+  }
   lines.push(`   HTML: ${v.html}`);
   if (v.fix) {
     lines.push(`   Fix: ${formatFixSuggestion(v.fix)}`);
@@ -171,6 +194,9 @@ function formatGroupedViolations(group: ViolationGroup, startIndex: number): str
     lines.push("");
     lines.push(`   ${num}. ${v.message}`);
     lines.push(`      Element: ${v.selector}`);
+    if (v.source && v.source.length > 0) {
+      lines.push(`      Source: ${formatSourceList(v.source)}`);
+    }
     lines.push(`      HTML: ${v.html}`);
     if (v.fix) {
       lines.push(`      Fix: ${formatFixSuggestion(v.fix)}`);

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { buildBrowserScript, newSessionToken } from "../src/lib/browser-script.js";
 
 describe("buildBrowserScript", () => {
@@ -81,6 +81,85 @@ describe("buildBrowserScript", () => {
     });
     expect(script).toContain("Failed to fetch @accesslint/core IIFE");
     expect(script).toContain("Failed to load @accesslint/core IIFE from CDN");
+  });
+});
+
+describe("buildBrowserScript local IIFE dev mode", () => {
+  it("inlines the local IIFE when ACCESSLINT_MCP_USE_LOCAL_IIFE=1", async () => {
+    const prev = process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE;
+    process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE = "1";
+    // Re-import a fresh module so the env-derived branch is exercised.
+    vi.resetModules();
+    const { buildBrowserScript: build } = await import("../src/lib/browser-script.js");
+    try {
+      const script = build({
+        inject: true,
+        sessionToken: "t",
+        coreOptions: {},
+      });
+      expect(script).not.toContain("cdn.jsdelivr.net");
+      expect(script).not.toContain("await fetch");
+      // The IIFE assigns to AccessLint, so the inlined string contains
+      // the global initialization.
+      expect(script).toContain("AccessLint");
+      // Inlined IIFE inflates the script considerably.
+      expect(script.length).toBeGreaterThan(50_000);
+    } finally {
+      if (prev === undefined) delete process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE;
+      else process.env.ACCESSLINT_MCP_USE_LOCAL_IIFE = prev;
+      vi.resetModules();
+    }
+  });
+});
+
+describe("buildBrowserScript source_map", () => {
+  it("includes the fiber post-processor by default", () => {
+    const script = buildBrowserScript({
+      inject: false,
+      sessionToken: "t",
+      coreOptions: {},
+    });
+    expect(script).toContain("attachReactFiberSource");
+  });
+
+  it("includes the fiber post-processor when sourceMap='fiber'", () => {
+    const script = buildBrowserScript({
+      inject: false,
+      sessionToken: "t",
+      sourceMap: "fiber",
+      coreOptions: {},
+    });
+    expect(script).toContain("attachReactFiberSource");
+  });
+
+  it("omits the fiber post-processor when sourceMap='off'", () => {
+    const script = buildBrowserScript({
+      inject: false,
+      sessionToken: "t",
+      sourceMap: "off",
+      coreOptions: {},
+    });
+    expect(script).not.toContain("attachReactFiberSource");
+  });
+
+  it("projects v.source through the in-page mapping", () => {
+    const script = buildBrowserScript({
+      inject: false,
+      sessionToken: "t",
+      coreOptions: {},
+    });
+    expect(script).toContain("source: v.source");
+  });
+
+  it("guards the fiber call so missing exports don't throw", () => {
+    const script = buildBrowserScript({
+      inject: false,
+      sessionToken: "t",
+      coreOptions: {},
+    });
+    // Older core versions may not export attachReactFiberSource — check
+    // the typeof guard is in place.
+    expect(script).toContain('typeof window.AccessLint.attachReactFiberSource === "function"');
   });
 });
 

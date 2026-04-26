@@ -45,6 +45,55 @@ describe("formatViolations", () => {
     expect(output).toContain('HTML: <img src="photo.jpg">');
   });
 
+  it("renders Source: line when violation carries source locations", () => {
+    const output = formatViolations([
+      makeViolation({
+        source: [
+          {
+            file: "/src/Card.tsx",
+            line: 42,
+            column: 7,
+            symbol: "Card",
+            strategy: "react-fiber",
+            confidence: "high",
+          },
+        ],
+      }),
+    ]);
+    expect(output).toContain("Source: /src/Card.tsx:42:7 (Card)");
+  });
+
+  it("joins multiple source locations with owner-chain separator", () => {
+    const output = formatViolations([
+      makeViolation({
+        source: [
+          { file: "/src/Self.tsx", line: 1, strategy: "react-fiber", confidence: "high" },
+          { file: "/src/Owner.tsx", line: 5, strategy: "react-owner", confidence: "medium" },
+        ],
+      }),
+    ]);
+    expect(output).toContain("Source: /src/Self.tsx:1 ← /src/Owner.tsx:5");
+  });
+
+  it("compact format appends @file:line", () => {
+    const output = formatViolations(
+      [
+        makeViolation({
+          source: [
+            { file: "/src/X.tsx", line: 3, column: 1, strategy: "react-fiber", confidence: "high" },
+          ],
+        }),
+      ],
+      { format: "compact" },
+    );
+    expect(output).toContain("@/src/X.tsx:3:1");
+  });
+
+  it("omits Source: line when no source provided", () => {
+    const output = formatViolations([makeViolation()]);
+    expect(output).not.toContain("Source:");
+  });
+
   it("sorts violations by impact severity", () => {
     const violations = [
       makeViolation({ impact: "minor", ruleId: "minor-rule" }),

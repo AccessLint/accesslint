@@ -39,6 +39,13 @@ export const auditBrowserScriptSchema = {
     .optional()
     .describe("Treat the page as a component fragment (skip page-level rules like html-has-lang)"),
   locale: z.string().optional().describe('Locale for rule messages (e.g. "en", "es")'),
+  source_map: z
+    .enum(["off", "fiber"])
+    .optional()
+    .default("fiber")
+    .describe(
+      "Attach source-code locations to violations. 'fiber' walks React DevTools fibers (`_debugSource`) on the violating element and a few enclosing components — works in dev builds with the JSX `__source` transform (CRA, Next dev, Vite + React) and is a silent no-op otherwise. 'off' skips it.",
+    ),
 };
 
 export function registerAuditBrowserScript(server: McpServer): void {
@@ -46,7 +53,7 @@ export function registerAuditBrowserScript(server: McpServer): void {
     "audit_browser_script",
     "Returns a JS function expression to paste into your browser MCP's evaluate tool (e.g. mcp__chrome-devtools__evaluate_script). The script audits the live page using @accesslint/core; pass the result back to audit_browser_collect.",
     auditBrowserScriptSchema,
-    async ({ inject, name, include_aaa, disabled_rules, rules, wcag, component_mode, locale }) => {
+    async ({ inject, name, include_aaa, disabled_rules, rules, wcag, component_mode, locale, source_map }) => {
       const sessionToken = newSessionToken();
       if (name) {
         registerExpectedToken(name, sessionToken);
@@ -64,6 +71,7 @@ export function registerAuditBrowserScript(server: McpServer): void {
         script = buildBrowserScript({
           inject,
           sessionToken,
+          sourceMap: source_map,
           coreOptions: {
             includeAAA: include_aaa,
             disabledRules: mergedDisabled,
