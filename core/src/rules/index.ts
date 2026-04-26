@@ -113,6 +113,7 @@ import { htmlXmlLangMismatch } from "./readable/html-xml-lang-mismatch";
 // Labels and Names
 import { frameTitle } from "./labels-and-names/frame-title";
 import { frameTitleUnique } from "./labels-and-names/frame-title-unique";
+import { frameFocusableContent } from "./labels-and-names/frame-focusable-content";
 import { formLabel } from "./labels-and-names/form-label";
 import { multipleLabels } from "./labels-and-names/multiple-labels";
 import { inputButtonName } from "./labels-and-names/input-button-name";
@@ -232,6 +233,7 @@ export const rules: Rule[] = [
   // Labels and Names
   frameTitle,
   frameTitleUnique,
+  frameFocusableContent,
   formLabel,
   multipleLabels,
   inputButtonName,

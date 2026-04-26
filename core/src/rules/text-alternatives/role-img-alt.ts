@@ -14,6 +14,7 @@ export const roleImgAlt: Rule = {
   description: "Elements with role='img' must have an accessible name.",
   guidance:
     "When you assign role='img' to an element (like a div containing icon fonts or CSS backgrounds), you must provide an accessible name via aria-label or aria-labelledby. Without this, screen reader users have no way to understand what the image represents. If the image is decorative, use role='presentation' or role='none' instead.",
+  applicable: (doc) => doc.querySelector('[role="img"]') !== null,
   run(doc) {
     const violations = [];
 

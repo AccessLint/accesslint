@@ -38,6 +38,15 @@ export const es: LocaleMap = {
         "Al marco le falta un nombre accesible. Agregue un atributo title.",
     },
   },
+  "labels-and-names/frame-focusable-content": {
+    description: "Los iframes con contenido interactivo no deben excluirse del orden de tabulación.",
+    guidance:
+      'Un <iframe> con tabindex="-1" elimina el marco del orden de tabulación, pero los elementos enfocables dentro permanecen accesibles con teclas de flecha en algunos navegadores y son inaccesibles en otros. Elimine tabindex="-1" del iframe, o agregue tabindex="-1" a cada elemento enfocable dentro de él. Si el marco es decorativo, agregue aria-hidden="true" en su lugar.',
+    messages: {
+      'iframe has tabindex="-1" but contains focusable content, making it unreachable by keyboard.':
+        'El iframe tiene tabindex="-1" pero contiene contenido enfocable, haciéndolo inaccesible por teclado.',
+    },
+  },
   "labels-and-names/frame-title-unique": {
     description: "Los títulos de los marcos deben ser únicos.",
     guidance:

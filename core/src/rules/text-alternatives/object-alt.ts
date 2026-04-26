@@ -14,6 +14,10 @@ export const objectAlt: Rule = {
   description: "<object> elements must have alternative text.",
   guidance:
     "Object elements embed external content that may not be accessible to all users. Provide alternative text via aria-label, aria-labelledby, or a title attribute. The fallback content inside <object> is only shown when the object fails to load and does not serve as an accessible name.",
+  applicable: (doc) =>
+    doc.querySelector(
+      'object:not([aria-hidden="true"]):not([role="presentation"]):not([role="none"])',
+    ) !== null,
   run(doc) {
     const violations = [];
 

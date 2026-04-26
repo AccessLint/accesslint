@@ -14,6 +14,7 @@ export const metaViewport: Rule = {
   description: "Viewport meta tag must not disable user scaling.",
   guidance:
     "Users with low vision need to zoom content up to 200% or more. Setting user-scalable=no or maximum-scale=1 prevents zooming and fails WCAG. Remove these restrictions. If your layout breaks at high zoom, fix the responsive design rather than preventing zoom.",
+  applicable: (doc) => doc.querySelector('meta[name="viewport"]') !== null,
   run(doc) {
     const violations = [];
 

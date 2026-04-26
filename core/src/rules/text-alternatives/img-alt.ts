@@ -44,6 +44,7 @@ export const imgAlt: Rule = {
     "Images must have alternate text. Add an alt attribute to <img> elements. Decorative images may use an empty alt attribute (alt=\"\"), role='none', or role='presentation'.",
   guidance:
     "Every image needs an alt attribute. For informative images, describe the content or function concisely. For decorative images (backgrounds, spacers, purely visual flourishes), use alt='' to hide them from screen readers. Never omit alt entirely—screen readers may read the filename instead. When an image is inside a link or button that already has text, use alt='' if the image is decorative in that context, or write alt text that complements (not duplicates) the existing text.",
+  applicable: (doc) => doc.querySelector("img") !== null,
   run(doc) {
     const violations = [];
 

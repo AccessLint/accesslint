@@ -31,6 +31,7 @@ export const presentationalChildrenFocusable: Rule = {
   id: "aria/presentational-children-focusable",
   category: "aria",
   actRuleIds: ["307n5z"],
+  applicable: (doc) => doc.querySelector('[role="presentation"], [role="none"]') !== null,
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",

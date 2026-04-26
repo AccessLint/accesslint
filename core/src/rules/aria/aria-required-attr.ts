@@ -21,6 +21,7 @@ export const ariaRequiredAttr: Rule = {
   id: "aria/aria-required-attr",
   category: "aria",
   actRuleIds: ["4e8ab6"],
+  applicable: (doc) => doc.querySelector("[role]") !== null,
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",

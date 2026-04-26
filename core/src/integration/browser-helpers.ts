@@ -23,6 +23,7 @@ export type SerializedViolation = Omit<Violation, "element">;
 interface AccessLintBrowserRule {
   id: string;
   actRuleIds?: string[];
+  applicable?(doc: Document): boolean;
   run(doc: Document): SerializedViolation[];
 }
 
@@ -52,11 +53,16 @@ const HOST_HTML = "<!doctype html><html><head></head><body></body></html>";
  * Meta-refresh with delay=0 is queued as an async task, so the inline rule
  * execution completes synchronously before any iframe navigation fires.
  */
+export type RuleActResult = {
+  violations: SerializedViolation[];
+  inapplicable: boolean;
+};
+
 export async function runRuleByActId(
   page: Page,
   actRuleId: string,
   html: string,
-): Promise<SerializedViolation[]> {
+): Promise<RuleActResult> {
   await page.setContent(HOST_HTML, { waitUntil: "domcontentloaded" });
   return page.evaluate(
     ({ actId, html, iifeText }) => {
@@ -86,8 +92,17 @@ export async function runRuleByActId(
       if (!iwin?.AccessLint) throw new Error("AccessLint missing in iframe realm");
       iwin.AccessLint.clearAllCaches();
       const matching = iwin.AccessLint.rules.filter((r) => r.actRuleIds?.includes(actId));
-      if (matching.length === 0) return [];
-      return matching.flatMap((r) => r.run(cdoc));
+      if (matching.length === 0) return { violations: [], inapplicable: false };
+      const violations = matching.flatMap((r) => r.run(cdoc));
+      // Inapplicable: no violations AND every rule with an applicable() guard
+      // reports the document is out of scope. Rules without applicable() are
+      // treated as always applicable (conservative).
+      const withGuard = matching.filter((r) => typeof r.applicable === "function");
+      const inapplicable =
+        violations.length === 0 &&
+        withGuard.length > 0 &&
+        withGuard.every((r) => !r.applicable!(cdoc));
+      return { violations, inapplicable };
     },
     { actId: actRuleId, html, iifeText: IIFE_TEXT },
   );

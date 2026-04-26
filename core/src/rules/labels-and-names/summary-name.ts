@@ -12,6 +12,7 @@ export const summaryName: Rule = {
   description: "<summary> elements must have an accessible name.",
   guidance:
     "The <summary> element provides the visible label for a <details> disclosure widget. It must have descriptive text content so screen reader users understand what will be revealed when expanded. Add clear, concise text that indicates what content is contained in the details section.",
+  applicable: (doc) => doc.querySelector("details > summary") !== null,
   run(doc) {
     const violations = [];
 

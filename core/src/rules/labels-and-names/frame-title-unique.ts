@@ -6,6 +6,7 @@ import { isHiddenFrame } from "../landmarks/constants";
 export const frameTitleUnique: Rule = {
   id: "labels-and-names/frame-title-unique",
   category: "labels-and-names",
+  actRuleIds: ["4b1c6c"],
   wcag: ["4.1.2"],
   level: "A",
   tags: ["best-practice"],

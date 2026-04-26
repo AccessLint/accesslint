@@ -6,6 +6,7 @@ export const ariaRoles: Rule = {
   id: "aria/aria-roles",
   category: "aria",
   actRuleIds: ["674b10"],
+  applicable: (doc) => doc.querySelector("[role]") !== null,
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",

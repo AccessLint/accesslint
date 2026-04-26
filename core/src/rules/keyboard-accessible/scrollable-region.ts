@@ -14,6 +14,10 @@ export const scrollableRegion: Rule = {
   description: "Scrollable regions must be keyboard accessible.",
   guidance:
     "Content that scrolls must be accessible to keyboard users. If a region has overflow:scroll or overflow:auto and contains scrollable content, it needs either tabindex='0' to be focusable, or it must contain focusable elements. Without this, keyboard users cannot scroll the content.",
+  applicable: (doc) =>
+    doc.querySelector(
+      '[style*="overflow: auto"], [style*="overflow: scroll"], [style*="overflow-y: auto"], [style*="overflow-y: scroll"], [style*="overflow:auto"], [style*="overflow:scroll"]',
+    ) !== null,
   run(doc) {
     const violations = [];
 

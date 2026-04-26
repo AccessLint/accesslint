@@ -11,6 +11,10 @@ export const wordSpacing: Rule = {
   description: "Word spacing set with !important in style attributes must be at least 0.16em.",
   guidance:
     "WCAG 1.4.12 requires users to be able to override text spacing. Using !important on word-spacing with a value below 0.16em prevents this. Either increase the value to at least 0.16em or remove !important.",
+  applicable: (doc) =>
+    Array.from(
+      doc.querySelectorAll('[style*="word-spacing"][style*="!important"]'),
+    ).some((el) => (el.textContent?.trim().length ?? 0) > 0),
   run(doc) {
     return checkTextSpacing(doc, "distinguishable/word-spacing", "word-spacing", 0.16);
   },

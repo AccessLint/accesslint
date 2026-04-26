@@ -11,6 +11,10 @@ export const letterSpacing: Rule = {
   description: "Letter spacing set with !important in style attributes must be at least 0.12em.",
   guidance:
     "WCAG 1.4.12 requires users to be able to override text spacing. Using !important on letter-spacing with a value below 0.12em prevents this. Either increase the value to at least 0.12em or remove !important.",
+  applicable: (doc) =>
+    Array.from(
+      doc.querySelectorAll('[style*="letter-spacing"][style*="!important"]'),
+    ).some((el) => (el.textContent?.trim().length ?? 0) > 0),
   run(doc) {
     return checkTextSpacing(doc, "distinguishable/letter-spacing", "letter-spacing", 0.12);
   },

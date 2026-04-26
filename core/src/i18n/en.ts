@@ -37,6 +37,15 @@ export const en: LocaleMap = {
         "Frame is missing an accessible name. Add a title attribute.",
     },
   },
+  "labels-and-names/frame-focusable-content": {
+    description: "Iframes with interactive content must not be excluded from the tab order.",
+    guidance:
+      'An <iframe> with tabindex="-1" removes the frame itself from the tab order, but focusable elements inside remain reachable with arrow keys on some browsers and are unreachable on others. Remove tabindex="-1" from the iframe, or add tabindex="-1" to every focusable element inside it. If the frame is decorative, add aria-hidden="true" instead.',
+    messages: {
+      'iframe has tabindex="-1" but contains focusable content, making it unreachable by keyboard.':
+        'iframe has tabindex="-1" but contains focusable content, making it unreachable by keyboard.',
+    },
+  },
   "labels-and-names/frame-title-unique": {
     description: "Frame titles should be unique.",
     guidance:

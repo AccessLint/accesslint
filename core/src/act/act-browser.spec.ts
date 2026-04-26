@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { FixtureEntry } from "./earl-report";
-import { iifeExists, runRuleByActId } from "../integration/browser-helpers";
+import { iifeExists, runRuleByActId, type RuleActResult } from "../integration/browser-helpers";
 
 const FIXTURE_PATH = resolve(import.meta.dirname, "../../act-fixtures/act-testcases.json");
 
@@ -72,8 +72,12 @@ for (const [coreRuleId, entries] of byRule) {
       }
 
       test(testName, { annotation: annotations }, async ({ page }) => {
-        const violations = await runRuleByActId(page, entry.actRuleId, entry.html);
-        const hasViolations = violations.length > 0;
+        const result: RuleActResult = await runRuleByActId(page, entry.actRuleId, entry.html);
+        const hasViolations = result.violations.length > 0;
+
+        if (result.inapplicable) {
+          test.info().annotations.push({ type: "inapplicable", description: "true" });
+        }
 
         if (entry.expected === "failed") {
           expect(
@@ -83,7 +87,7 @@ for (const [coreRuleId, entries] of byRule) {
         } else {
           expect(
             hasViolations,
-            `Expected no violations for "${entry.testcaseTitle}" but got ${violations.length}`,
+            `Expected no violations for "${entry.testcaseTitle}" but got ${result.violations.length}`,
           ).toBe(false);
         }
       });

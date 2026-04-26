@@ -20,6 +20,13 @@ export interface Rule {
   description: string;
   /** Generic remediation guidance for the AI to contextualize */
   guidance?: string;
+  /**
+   * Optional applicability guard for ACT conformance testing.
+   * Return false when the document has no test targets for this rule —
+   * the ACT runner will emit `earl:inapplicable` instead of `earl:passed`.
+   * Never called during regular audits; only invoked by `runRuleByActId`.
+   */
+  applicable?: (doc: Document) => boolean;
   run(doc: Document): Violation[];
 }
 

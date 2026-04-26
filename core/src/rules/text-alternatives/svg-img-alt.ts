@@ -30,6 +30,11 @@ export const svgImgAlt: Rule = {
     "SVG elements with an img, graphics-document, or graphics-symbol role must have an accessible name via a <title> element, aria-label, or aria-labelledby.",
   guidance:
     "Inline SVGs with role='img' need accessible names. Add a <title> element as the first child of the SVG (screen readers will announce it), or use aria-label on the SVG element. For complex SVGs, use aria-labelledby referencing both a <title> and <desc> element. Decorative SVGs should use aria-hidden='true' instead.",
+  applicable: (doc) =>
+    Array.from(doc.querySelectorAll("svg")).some((el) => {
+      const r = el.getAttribute("role");
+      return r === "img" || r === "image";
+    }),
   run(doc) {
     const violations = [];
 

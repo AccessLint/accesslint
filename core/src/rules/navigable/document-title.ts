@@ -12,6 +12,7 @@ export const documentTitle: Rule = {
     "Documents must have a <title> element to provide users with an overview of content.",
   guidance:
     "Screen reader users rely on page titles to identify and navigate between tabs/windows. Add a descriptive <title> element in <head> that summarizes the page purpose. Keep titles unique across the site, placing specific content before the site name (e.g., 'Contact Us - Acme Corp').",
+  applicable: (doc) => doc.documentElement.tagName.toLowerCase() === "html",
   run(doc) {
     const title = doc.querySelector("title");
     if (!title || !title.textContent?.trim()) {

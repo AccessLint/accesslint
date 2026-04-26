@@ -21,6 +21,10 @@ export const lineHeight: Rule = {
   description: "Line height set with !important in style attributes must be at least 1.5.",
   guidance:
     "WCAG 1.4.12 requires users to be able to override text spacing. Using !important on line-height with a value below 1.5 prevents this. Either increase the value to at least 1.5 or remove !important.",
+  applicable: (doc) =>
+    Array.from(
+      doc.querySelectorAll('[style*="line-height"][style*="!important"]'),
+    ).some((el) => (el.textContent?.trim().length ?? 0) > 0),
   run(doc) {
     const violations: {
       ruleId: string;

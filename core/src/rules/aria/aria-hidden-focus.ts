@@ -64,6 +64,7 @@ export const ariaHiddenFocus: Rule = {
   id: "aria/aria-hidden-focus",
   category: "aria",
   actRuleIds: ["6cfa84"],
+  applicable: (doc) => doc.querySelector('[aria-hidden="true"]') !== null,
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",

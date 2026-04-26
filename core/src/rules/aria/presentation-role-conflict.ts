@@ -60,6 +60,7 @@ export const presentationRoleConflict: Rule = {
   id: "aria/presentation-role-conflict",
   category: "aria",
   actRuleIds: ["46ca7f"],
+  applicable: (doc) => doc.querySelector('[role="presentation"], [role="none"]') !== null,
   wcag: ["4.1.2"],
   level: "A",
   fixability: "contextual",

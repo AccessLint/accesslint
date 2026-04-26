@@ -62,14 +62,19 @@ export default class BrowserEarlReporter implements Reporter {
       return;
     }
 
-    // The tool only produces two real outcomes: violations (failed) or
-    // no violations (passed). It cannot distinguish "inapplicable" from
-    // "passed" — report what the tool actually determined.
-    let actual: "passed" | "failed" | "cantTell";
+    // The tool distinguishes "inapplicable" via the applicable() guard on each
+    // rule. When the test runner detects inapplicability it pushes an annotation.
+    const isInapplicable = result.annotations?.some(
+      (a) => a.type === "inapplicable" && a.description === "true",
+    );
+    let actual: "passed" | "failed" | "cantTell" | "inapplicable";
     if (status === "passed") {
-      // Test passed: the rule produced the expected behavior.
-      // violations found → failed, no violations → passed.
-      actual = expected === "failed" ? "failed" : "passed";
+      if (isInapplicable) {
+        actual = "inapplicable";
+      } else {
+        // violations found → failed, no violations → passed.
+        actual = expected === "failed" ? "failed" : "passed";
+      }
     } else {
       // Test failed — but was it an assertion mismatch or a runtime error?
       // Playwright sets status="failed" for both; check for an error that

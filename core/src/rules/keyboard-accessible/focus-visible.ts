@@ -14,6 +14,10 @@ export const focusVisible: Rule = {
   description: "Elements in sequential focus order must have a visible focus indicator.",
   guidance:
     "Keyboard users need to see which element has focus. Do not remove the default focus outline (outline: none) without providing an alternative visible indicator. Use :focus-visible or :focus styles to ensure focus is always perceivable.",
+  applicable: (doc) =>
+    doc.querySelector(
+      'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ) !== null,
   run(doc) {
     const violations = [];
 

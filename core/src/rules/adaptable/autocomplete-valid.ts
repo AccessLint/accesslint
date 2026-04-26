@@ -127,6 +127,10 @@ export const autocompleteValid: Rule = {
   description: "Autocomplete attribute must use valid values from the HTML specification.",
   guidance:
     "The autocomplete attribute helps users fill forms by identifying input purposes. Use standard values like 'name', 'email', 'tel', 'street-address', 'postal-code', 'cc-number'. This benefits users with cognitive disabilities, motor impairments, and anyone using password managers or autofill. Check the HTML specification for the complete list of valid tokens.",
+  applicable: (doc) =>
+    doc.querySelector(
+      'input[autocomplete]:not([autocomplete=""]), select[autocomplete]:not([autocomplete=""]), textarea[autocomplete]:not([autocomplete=""])',
+    ) !== null,
   run(doc) {
     const violations = [];
     for (const el of doc.querySelectorAll("[autocomplete]")) {
