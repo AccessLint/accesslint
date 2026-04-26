@@ -26,8 +26,9 @@ jobs:
 
       - run: bun install
 
-      - run: bun run test
-        working-directory: core
+      # Drive through turbo so the build dep runs first; bundle.test.ts
+      # requires dist/ to exist before the test phase.
+      - run: npx turbo run test --filter=@accesslint/core
 
       - run: npx turbo run build --filter=@accesslint/core
 
