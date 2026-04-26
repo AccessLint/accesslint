@@ -50,6 +50,32 @@ export interface Violation {
   /** Structured fix suggestion for agents and automated tooling */
   fix?: FixSuggestion;
   element?: Element;
+  /**
+   * Candidate source locations for the violating element, ordered highest-confidence first.
+   * Populated by an opt-in post-processor (e.g. attachReactFiberSource); absent on static audits.
+   */
+  source?: SourceLocation[];
+}
+
+/** A candidate source-code location for a violating DOM element. */
+export interface SourceLocation {
+  /** File path or URL as reported by the source provider (typically absolute, normalize at presentation time). */
+  file: string;
+  /** 1-based line number. */
+  line: number;
+  /** 1-based column, when known. */
+  column?: number;
+  /** Component or function name, when known (e.g. "ProductCard"). */
+  symbol?: string;
+  /** Which provider produced this location. */
+  strategy: "react-fiber" | "react-owner" | "sourcemap";
+  /**
+   * Provider's confidence in the mapping:
+   * - high: direct JSX literal location (e.g. fiber `_debugSource`)
+   * - medium: enclosing component owner
+   * - low: heuristic / transitive frame
+   */
+  confidence: "high" | "medium" | "low";
 }
 
 export interface AuditResult {

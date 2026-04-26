@@ -23,7 +23,11 @@ export type {
   FixSuggestion,
   DeclarativeRule,
   CheckType,
+  SourceLocation,
 } from "./rules/types";
+
+// Source mapping (opt-in post-processors)
+export { attachReactFiberSource } from "./sourcemap/react-fiber";
 
 // Utilities (useful for custom rule authors)
 export {

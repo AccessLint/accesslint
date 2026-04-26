@@ -9,7 +9,17 @@ export { createChunkedAudit } from "./rules/index";
 export { compileDeclarativeRule, validateDeclarativeRule } from "./rules/engine";
 
 // Types
-export type { Rule, Violation, AuditResult, DeclarativeRule, CheckType } from "./rules/types";
+export type {
+  Rule,
+  Violation,
+  AuditResult,
+  DeclarativeRule,
+  CheckType,
+  SourceLocation,
+} from "./rules/types";
+
+// Source mapping (opt-in post-processors)
+export { attachReactFiberSource } from "./sourcemap/react-fiber";
 
 // Utilities (useful for custom rule authors)
 export {
