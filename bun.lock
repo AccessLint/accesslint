@@ -69,8 +69,12 @@
     },
     "core": {
       "name": "@accesslint/core",
-      "version": "0.9.0",
+      "version": "0.10.0",
+      "dependencies": {
+        "@jridgewell/trace-mapping": "^0.3.31",
+      },
       "devDependencies": {
+        "@jridgewell/sourcemap-codec": "^1.4.14",
         "@playwright/test": "^1.58.2",
         "@types/node": "^24.5.0",
         "@vitest/browser": "4.1.4",
@@ -129,7 +133,7 @@
     },
     "mcp": {
       "name": "@accesslint/mcp",
-      "version": "0.2.6",
+      "version": "0.5.0",
       "bin": {
         "accesslint-mcp": "./bin/accesslint-mcp.js",
       },
@@ -170,7 +174,7 @@
     },
     "report": {
       "name": "@accesslint/report",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "accesslint-report": "./dist/cli.js",
       },

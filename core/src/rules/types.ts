@@ -59,7 +59,7 @@ export interface Violation {
 
 /** A candidate source-code location for a violating DOM element. */
 export interface SourceLocation {
-  /** File path or URL as reported by the source provider (typically absolute, normalize at presentation time). */
+  /** Source file path or URL — always opened-able; chunk URLs are resolved via sourcemap before reaching this field. */
   file: string;
   /** 1-based line number. */
   line: number;
@@ -67,20 +67,8 @@ export interface SourceLocation {
   column?: number;
   /** Component or function name, when known (e.g. "ProductCard"). */
   symbol?: string;
-  /** Which provider produced this location. */
-  strategy:
-    | "react-fiber"
-    | "react-owner"
-    | "react-fiber-stack"
-    | "react-owner-stack"
-    | "sourcemap";
-  /**
-   * Provider's confidence in the mapping:
-   * - high: direct JSX literal location (e.g. fiber `_debugSource`)
-   * - medium: enclosing component owner
-   * - low: heuristic / transitive frame
-   */
-  confidence: "high" | "medium" | "low";
+  /** 0 = JSX literal that produced the element; 1+ = enclosing component(s). */
+  ownerDepth: number;
 }
 
 export interface AuditResult {
