@@ -9,6 +9,26 @@ import { clearColorCaches } from "./utils/color";
 import { clearSelectorCache } from "./utils/selector";
 import { applyLocale, translateViolations } from "../i18n/registry";
 
+/**
+ * Many imperative rules construct violations without setting `element`.
+ * Post-processors (e.g. attachReactFiberSource) need the element reference,
+ * so backfill any missing element by re-resolving the violation's selector
+ * against the audited document. Shadow-DOM selectors (containing ` >>> `)
+ * are skipped — they require global-document context and are rare.
+ */
+function backfillElements(violations: Violation[], doc: Document): void {
+  for (const v of violations) {
+    if (v.element) continue;
+    if (!v.selector || v.selector.includes(" >>> ")) continue;
+    try {
+      const el = doc.querySelector(v.selector);
+      if (el) v.element = el;
+    } catch {
+      // Invalid selector — leave element unset.
+    }
+  }
+}
+
 // Text Alternatives
 import { imgAlt } from "./text-alternatives/img-alt";
 import { svgImgAlt } from "./text-alternatives/svg-img-alt";
@@ -325,6 +345,7 @@ export function createChunkedAudit(doc: Document, options?: AuditOptions): Chunk
       return index < activeRules.length;
     },
     getViolations() {
+      backfillElements(violations, doc);
       return locale ? translateViolations(violations, locale) : violations;
     },
     getSkippedRules() {
@@ -357,6 +378,7 @@ export function runAudit(doc: Document, options?: AuditOptions): AuditResult {
       skippedRules.push({ ruleId: rule.id, error: e instanceof Error ? e.message : String(e) });
     }
   }
+  backfillElements(violations, doc);
   return {
     url: doc.location?.href ?? "",
     timestamp: Date.now(),

@@ -43,6 +43,40 @@ describe("runAudit integration", () => {
     expect(a.violations.length).toBe(b.violations.length);
     expect(a.violations.map((v) => v.ruleId)).toEqual(b.violations.map((v) => v.ruleId));
   }, 30_000);
+
+  it("backfills element from selector when an imperative rule omits it", () => {
+    // color-contrast is one of many imperative rules that build violation
+    // objects without `element: el`. After runAudit the element should be
+    // resolved from the selector so post-processors (e.g.
+    // attachReactFiberSource) can read fiber data off it.
+    const doc = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main>' +
+        '<p style="color:#ccc;background:#fff">Low contrast</p>' +
+        "</main></body></html>",
+    );
+    const result = runAudit(doc);
+    const violation = result.violations.find((v) => v.ruleId === "distinguishable/color-contrast");
+    expect(violation).toBeDefined();
+    expect(violation!.element).toBeDefined();
+    expect(violation!.element!.tagName).toBe("P");
+  });
+
+  it("createChunkedAudit also backfills element on getViolations()", () => {
+    const doc = makeDoc(
+      '<html lang="en"><head><title>T</title></head><body><main>' +
+        '<p style="color:#ccc;background:#fff">Low contrast</p>' +
+        "</main></body></html>",
+    );
+    const chunked = createChunkedAudit(doc);
+    while (chunked.processChunk(50)) {
+      // drain
+    }
+    const violations = chunked.getViolations();
+    const violation = violations.find((v) => v.ruleId === "distinguishable/color-contrast");
+    expect(violation).toBeDefined();
+    expect(violation!.element).toBeDefined();
+    expect(violation!.element!.tagName).toBe("P");
+  });
 });
 
 describe("componentMode", () => {
