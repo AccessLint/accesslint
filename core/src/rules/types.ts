@@ -68,7 +68,12 @@ export interface SourceLocation {
   /** Component or function name, when known (e.g. "ProductCard"). */
   symbol?: string;
   /** Which provider produced this location. */
-  strategy: "react-fiber" | "react-owner" | "sourcemap";
+  strategy:
+    | "react-fiber"
+    | "react-owner"
+    | "react-fiber-stack"
+    | "react-owner-stack"
+    | "sourcemap";
   /**
    * Provider's confidence in the mapping:
    * - high: direct JSX literal location (e.g. fiber `_debugSource`)
