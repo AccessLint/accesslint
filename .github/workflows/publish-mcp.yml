@@ -31,8 +31,12 @@ jobs:
       - run: bun run test
         working-directory: mcp
 
-      - name: Replace workspace:* with published versions
+      - name: Replace workspace:* with caret ranges of published versions
         working-directory: mcp
+        # Caret range (^X.Y.Z) means future patch releases of @accesslint/core
+        # flow through to fresh `npm install @accesslint/mcp` runs without
+        # needing an MCP republish. The runtime CDN URL is built from
+        # whatever core version npm resolved at install time.
         run: |
           node -e "
           const fs = require('fs'), path = require('path');
@@ -42,7 +46,7 @@ jobs:
               if (ver === 'workspace:*') {
                 const dir = name.split('/')[1];
                 const dep = JSON.parse(fs.readFileSync(path.join('..', dir, 'package.json'), 'utf8'));
-                pkg[sec][name] = dep.version;
+                pkg[sec][name] = '^' + dep.version;
               }
             }
           }
