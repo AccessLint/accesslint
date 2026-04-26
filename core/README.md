@@ -5,6 +5,8 @@
 
 Pure accessibility rule engine with zero browser dependencies. Covers WCAG 2.2 Level A and AA with best-practice rules included.
 
+> Building with AI coding agents? [`@accesslint/mcp`](https://github.com/AccessLint/accesslint/tree/main/mcp) wraps this engine as a Model Context Protocol server. The [Claude Code plugin](https://github.com/AccessLint/claude-marketplace) installs it in one step.
+
 > Looking for CI? [AccessLint](https://www.accesslint.com?ref=readme_core) runs accessibility checks on every pull request and posts review comments directly on your GitHub PRs.
 
 ## Contents
