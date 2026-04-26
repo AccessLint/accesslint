@@ -54,8 +54,7 @@ describe("formatViolations", () => {
             line: 42,
             column: 7,
             symbol: "Card",
-            strategy: "react-fiber",
-            confidence: "high",
+            ownerDepth: 0,
           },
         ],
       }),
@@ -67,8 +66,8 @@ describe("formatViolations", () => {
     const output = formatViolations([
       makeViolation({
         source: [
-          { file: "/src/Self.tsx", line: 1, strategy: "react-fiber", confidence: "high" },
-          { file: "/src/Owner.tsx", line: 5, strategy: "react-owner", confidence: "medium" },
+          { file: "/src/Self.tsx", line: 1, ownerDepth: 0 },
+          { file: "/src/Owner.tsx", line: 5, ownerDepth: 1 },
         ],
       }),
     ]);
@@ -79,9 +78,7 @@ describe("formatViolations", () => {
     const output = formatViolations(
       [
         makeViolation({
-          source: [
-            { file: "/src/X.tsx", line: 3, column: 1, strategy: "react-fiber", confidence: "high" },
-          ],
+          source: [{ file: "/src/X.tsx", line: 3, column: 1, ownerDepth: 0 }],
         }),
       ],
       { format: "compact" },

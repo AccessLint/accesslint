@@ -95,7 +95,7 @@ export function buildBrowserScript(opts: BuildScriptOptions): string {
     sourceMap === "fiber"
       ? `
     if (typeof window.AccessLint.attachReactFiberSource === "function") {
-      try { window.AccessLint.attachReactFiberSource(raw.violations); } catch (e) { /* best-effort */ }
+      try { await window.AccessLint.attachReactFiberSource(raw.violations); } catch (e) { /* best-effort */ }
     }`
       : "";
 
