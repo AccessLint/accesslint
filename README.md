@@ -2,6 +2,8 @@
 
 Accessibility testing tools for modern web development.
 
+> Building with AI coding agents? [`@accesslint/mcp`](./mcp) wraps the audit engine as a Model Context Protocol server. The [Claude Code plugin](https://github.com/AccessLint/claude-marketplace) installs it in one step.
+
 ## Packages
 
 | Package                                            | Description                                       | npm                                                                                                                           |
