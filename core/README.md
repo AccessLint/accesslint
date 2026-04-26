@@ -13,6 +13,7 @@ Pure accessibility rule engine with zero browser dependencies. Covers WCAG 2.2 L
 - [Install](#install)
 - [Quick start](#quick-start)
 - [API](#api)
+- [Source mapping (React)](#attachreactfibersourceviolations-promisevoid)
 - [Rules](#rules)
 - [Compatibility](#compatibility)
 - [Development](#development)
@@ -21,8 +22,9 @@ Pure accessibility rule engine with zero browser dependencies. Covers WCAG 2.2 L
 
 - **Synchronous API** — `runAudit()` returns results immediately, no async/await needed
 - **Works with happy-dom** — full support for happy-dom, jsdom, and real browsers with no polyfills or workarounds, including color contrast checks in virtual DOMs
-- **Lightweight** — 43 KB gzipped (IIFE), zero runtime dependencies
+- **Lightweight** — 46 KB gzipped (IIFE), zero runtime dependencies
 - **Chunked audits** — time-budgeted processing via [`createChunkedAudit`](#createchunkedauditdoc-document-chunkedaudit) to avoid long tasks on the main thread
+- **Source mapping (React)** — opt-in [`attachReactFiberSource`](#attachreactfibersourceviolations-promisevoid) walks React DevTools fibers and resolves bundled-chunk URLs through their sourcemaps so violations point at real source files (`src/Card.tsx:42:7`) instead of opaque selectors
 - **ESM, CJS, and IIFE** — tree-shakable ES modules, CommonJS for Node, and a single-file IIFE for script injection into any page
 
 ## Install
@@ -137,6 +139,18 @@ interface Violation {
   message: string;
   context?: string;
   element?: Element;
+  /** Source-code locations for the violating element, when populated by `attachReactFiberSource`. */
+  source?: SourceLocation[];
+}
+
+interface SourceLocation {
+  file: string;
+  line: number;
+  column?: number;
+  /** Component or function name, when known (e.g. "ProductCard"). */
+  symbol?: string;
+  /** 0 = JSX literal that produced the element; 1+ = enclosing component(s). */
+  ownerDepth: number;
 }
 ```
 
@@ -167,6 +181,46 @@ Returns bundled rules filtered by the given options: excludes AAA-level rules un
 ### `getRuleById(id, options?: { locale?: string; additionalRules?: Rule[] }): Rule | undefined`
 
 Look up a rule by its ID. Pass `locale` to get the translated rule, or `additionalRules` to also search custom rules.
+
+### `attachReactFiberSource(violations): Promise<void>`
+
+Opt-in post-processor that mutates each violation in place, attaching
+`source` candidates by reading React DevTools fiber metadata for the
+violating element. Must run in-page (the `runAudit` IIFE flow); a no-op
+when no fiber is found, on production builds, or on non-React pages.
+Never throws — failures are swallowed silently.
+
+Two paths into a source location:
+
+- **React 18 dev** — fibers carry `_debugSource` directly. No fetch.
+- **React 19 dev** — fibers carry `_debugStack` (a captured `Error`). The
+  user frame is parsed from the stack and resolved through the chunk's
+  `.js.map` (external file or inline data URL). Concurrent violations on
+  the same chunk share an in-flight fetch via a per-call cache.
+
+If sourcemap resolution fails (no map, network error, no original
+position), the entry is dropped — `source[]` only contains real
+source-file locations the consumer can open. Requires the JSX `__source`
+transform (default in CRA, Next dev, Vite + React) and a dev server
+serving sourcemaps.
+
+```ts
+// In a Playwright test, after the audit:
+const violations = await page.evaluate(async () => {
+  const { runAudit, attachReactFiberSource } = (window as any).AccessLint;
+  const result = runAudit(document);
+  await attachReactFiberSource(result.violations);
+  return result.violations;
+});
+
+console.log(violations[0].source);
+// [
+//   { file: "src/components/ProductCard.tsx", line: 42, column: 7,
+//     symbol: "ProductCard", ownerDepth: 0 },
+//   { file: "src/pages/Catalog.tsx", line: 18, column: 4,
+//     symbol: "Catalog", ownerDepth: 1 },
+// ]
+```
 
 ### Utilities
 
