@@ -1,4 +1,4 @@
-import { TraceMap, originalPositionFor } from "@jridgewell/trace-mapping";
+import { parseSourceMap, originalPositionFor, type ParsedMap } from "./source-map";
 import type { SourceLocation, Violation } from "../rules/types";
 
 /**
@@ -111,7 +111,7 @@ const DATA_URL_PREFIX = /^data:application\/json[^,]*,/;
 
 // Cache *promises*, not values, so concurrent violations on the same chunk
 // share a single in-flight fetch instead of racing.
-type ResolverCache = Map<string, Promise<TraceMap | null>>;
+type ResolverCache = Map<string, Promise<ParsedMap | null>>;
 
 async function fetchText(url: string): Promise<string | null> {
   try {
@@ -138,7 +138,7 @@ function decodeDataUrl(url: string): string | null {
   }
 }
 
-async function fetchAndParseMap(chunkUrl: string): Promise<TraceMap | null> {
+async function fetchAndParseMap(chunkUrl: string): Promise<ParsedMap | null> {
   const code = await fetchText(chunkUrl);
   if (!code) return null;
 
@@ -160,14 +160,10 @@ async function fetchAndParseMap(chunkUrl: string): Promise<TraceMap | null> {
   }
   if (!mapText) return null;
 
-  try {
-    return new TraceMap(mapText);
-  } catch {
-    return null;
-  }
+  return parseSourceMap(mapText);
 }
 
-function loadTraceMap(chunkUrl: string, cache: ResolverCache): Promise<TraceMap | null> {
+function loadMap(chunkUrl: string, cache: ResolverCache): Promise<ParsedMap | null> {
   const existing = cache.get(chunkUrl);
   if (existing) return existing;
   const promise = fetchAndParseMap(chunkUrl);
@@ -179,16 +175,17 @@ async function resolveFrame(
   frame: ParsedFrame,
   cache: ResolverCache,
 ): Promise<{ file: string; line: number; column?: number; symbol?: string } | null> {
-  const tm = await loadTraceMap(frame.file, cache);
-  if (!tm) return null;
+  const map = await loadMap(frame.file, cache);
+  if (!map) return null;
 
-  // trace-mapping uses 1-based lines, 0-based columns; stack frames give us
-  // 1-based columns, so subtract one.
-  const orig = originalPositionFor(tm, {
-    line: frame.line,
-    column: typeof frame.column === "number" ? Math.max(0, frame.column - 1) : 0,
-  });
-  if (!orig.source || typeof orig.line !== "number") return null;
+  // 1-based lines, 0-based columns — stack frames give us 1-based columns,
+  // so subtract one when querying.
+  const orig = originalPositionFor(
+    map,
+    frame.line,
+    typeof frame.column === "number" ? Math.max(0, frame.column - 1) : 0,
+  );
+  if (!orig) return null;
 
   const out: { file: string; line: number; column?: number; symbol?: string } = {
     file: orig.source,

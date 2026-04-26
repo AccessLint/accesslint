@@ -69,12 +69,8 @@
     },
     "core": {
       "name": "@accesslint/core",
-      "version": "0.10.0",
-      "dependencies": {
-        "@jridgewell/trace-mapping": "^0.3.31",
-      },
+      "version": "0.11.0",
       "devDependencies": {
-        "@jridgewell/sourcemap-codec": "^1.4.14",
         "@playwright/test": "^1.58.2",
         "@types/node": "^24.5.0",
         "@vitest/browser": "4.1.4",
@@ -133,7 +129,7 @@
     },
     "mcp": {
       "name": "@accesslint/mcp",
-      "version": "0.5.0",
+      "version": "0.6.0",
       "bin": {
         "accesslint-mcp": "./bin/accesslint-mcp.js",
       },

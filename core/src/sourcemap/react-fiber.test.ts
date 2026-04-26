@@ -1,11 +1,61 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import {
-  encode as encodeMappings,
-  type SourceMapMappings,
-} from "@jridgewell/sourcemap-codec";
 import { makeDoc } from "../test-helpers";
 import type { Violation } from "../rules/types";
 import { attachReactFiberSource } from "./react-fiber";
+
+/**
+ * Test-fixture-only V3 mappings encoder. Inverse of the decoder in
+ * source-map.ts. Takes per-line absolute segments and emits the
+ * delta-encoded base64-VLQ string. Kept inline so tests don't need a
+ * third-party encoder.
+ */
+type SourceMapMappings = number[][][];
+
+const VLQ_B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+function encodeVlq(value: number): string {
+  let v = value < 0 ? (-value << 1) | 1 : value << 1;
+  let out = "";
+  do {
+    let digit = v & 31;
+    v >>>= 5;
+    if (v > 0) digit |= 32;
+    out += VLQ_B64[digit];
+  } while (v > 0);
+  return out;
+}
+
+function encodeMappings(decoded: SourceMapMappings): string {
+  // genCol resets per line; src/origLine/origCol/name accumulate across mappings.
+  let prevSrcIdx = 0;
+  let prevOrigLine = 0;
+  let prevOrigCol = 0;
+  let prevNameIdx = 0;
+  return decoded
+    .map((line) => {
+      let prevGenCol = 0;
+      return line
+        .map((seg) => {
+          const parts: number[] = [seg[0] - prevGenCol];
+          prevGenCol = seg[0];
+          if (seg.length >= 4) {
+            parts.push(seg[1] - prevSrcIdx);
+            prevSrcIdx = seg[1];
+            parts.push(seg[2] - prevOrigLine);
+            prevOrigLine = seg[2];
+            parts.push(seg[3] - prevOrigCol);
+            prevOrigCol = seg[3];
+          }
+          if (seg.length === 5) {
+            parts.push(seg[4] - prevNameIdx);
+            prevNameIdx = seg[4];
+          }
+          return parts.map(encodeVlq).join("");
+        })
+        .join(",");
+    })
+    .join(";");
+}
 
 function makeViolation(element?: Element): Violation {
   return {
