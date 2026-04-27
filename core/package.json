@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/core",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Pure accessibility rule engine — WCAG audit with zero browser dependencies",
   "type": "module",
   "main": "./dist/index.cjs",

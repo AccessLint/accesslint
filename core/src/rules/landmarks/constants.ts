@@ -4,6 +4,8 @@ import { getSelector, getHtmlSnippet } from "../utils/selector";
 /** True when an iframe/frame is hidden and not exposed to assistive technology. */
 export function isHiddenFrame(frame: Element): boolean {
   if (!(frame instanceof HTMLElement)) return false;
+  // HTML hidden attribute (sets display:none via UA stylesheet, not inline style)
+  if (frame.hidden) return true;
   // Inline style checks
   if (frame.style.display === "none") return true;
   if (frame.style.visibility === "hidden") return true;
