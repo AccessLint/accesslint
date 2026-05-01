@@ -10,7 +10,7 @@ export const auditBrowserScriptSchema = {
     .optional()
     .default(true)
     .describe(
-      "Bootstrap window.AccessLint by fetching the @accesslint/core IIFE from cdn.jsdelivr.net and evaluating it in-page. The bootstrap is ~1 KB; the IIFE is no longer inlined. Set false for repeat audits on the same page where the IIFE is already loaded. Note: pages with strict CSP may block the CDN fetch; fall back to static audit_html / audit_file in that case.",
+      "Bootstrap window.AccessLint by fetching the @accesslint/core IIFE from cdn.jsdelivr.net and evaluating it in-page. The bootstrap is ~1 KB; the IIFE is no longer inlined. Set false for repeat audits on the same page where the IIFE is already loaded. Note: pages with strict CSP may block the CDN fetch; in that case use audit_live (direct CDP) instead — its eval is privileged and bypasses page CSP.",
     ),
   name: z
     .string()
@@ -93,7 +93,12 @@ export function registerAuditBrowserScript(server: McpServer): void {
       const instruction =
         `Pass the script below to your browser MCP's evaluate tool ` +
         `(chrome-devtools-mcp: evaluate_script, playwright-mcp: browser_evaluate, etc.) ` +
-        `as the function argument. Then pass the raw JSON result to ${collectHint}.`;
+        `as the function argument. Then pass the raw JSON result to ${collectHint}.\n\n` +
+        `If you don't have a browser MCP connected, prefer audit_live (direct CDP) — ` +
+        `it requires Chrome started with --remote-debugging-port=9222 (or ACCESSLINT_CDP_ENDPOINT set) ` +
+        `but skips the paste-and-evaluate dance. If neither is set up, ask the user to install ` +
+        `chrome-devtools-mcp (\`claude mcp add chrome-devtools npx -- -y chrome-devtools-mcp@latest\`) ` +
+        `or start Chrome with the debug flag — don't paste a script that has nowhere to run.`;
 
       return {
         content: [

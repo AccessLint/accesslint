@@ -13,7 +13,8 @@ const require = createRequire(import.meta.url);
  *
  * Trade-off: pages with a strict Content-Security-Policy that disallows
  * connecting to `cdn.jsdelivr.net` will see the bootstrap fetch fail. In
- * that case the agent should fall back to static `audit_html` / `audit_file`.
+ * that case the agent should switch to the `audit_live` tool (direct CDP),
+ * whose eval runs in the inspector's privileged context and bypasses page CSP.
  */
 const CDN_HOST = "https://cdn.jsdelivr.net";
 

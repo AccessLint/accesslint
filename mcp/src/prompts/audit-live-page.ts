@@ -26,7 +26,6 @@ export function registerAuditLivePagePrompt(server: McpServer): void {
     argsSchema,
     ({ url, name, wait_for, mode }) => {
       const effectiveMode = mode ?? "plan";
-      const nameArg = name ? `, name: "${name}"` : "";
       const waitStep = wait_for
         ? `\n2. **Wait for content.** Call your browser MCP's wait tool (chrome-devtools-mcp: \`wait_for\`, playwright-mcp: \`browser_wait_for\`) for: \`${wait_for}\`.\n`
         : "\n";
@@ -64,9 +63,11 @@ Do not edit files yet. The developer will review the plan and ask you to apply i
 
 The developer has pointed you at \`${url}\` and wants accessibility issues identified, mapped back to the source code, and ${effectiveMode === "fix" ? "fixed in place" : "turned into a plan"}.
 
-**Requires a browser MCP** that exposes navigate + evaluate tools. Recommended: \`chrome-devtools-mcp\`. Also works: \`playwright-mcp\`, \`puppeteer-mcp\`.
+**Prefer \`audit_live\`** when Chrome is reachable directly over CDP (started with \`--remote-debugging-port=9222\`, or \`ACCESSLINT_CDP_ENDPOINT\` set) — it does navigate + inject + collect in one call and skips this prompt's orchestration.
 
-If you do not have any browser MCP available, fall back to \`audit_url({ url: "${url}"${nameArg} })\` and warn the developer that SPA-rendered content, web-font contrast, and post-mount ARIA state will not be captured. Continue with steps ${stepNum(4)}+ using whatever the static audit returned.
+This prompt is for the **browser-MCP fallback**, when CDP isn't reachable directly but a browser MCP that exposes navigate + evaluate tools is connected. Recommended: \`chrome-devtools-mcp\`. Also works: \`playwright-mcp\`, \`puppeteer-mcp\`.
+
+If neither path is available, ask the developer to start Chrome with \`--remote-debugging-port=9222\` (then use \`audit_live\`) or to install a browser MCP. There is no static fallback — live-DOM rendering is required for SPA content, web-font contrast, and post-mount ARIA state.
 
 ### 1. Navigate
 

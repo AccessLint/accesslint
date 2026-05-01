@@ -199,7 +199,7 @@ describe("audit_diff", () => {
 
     const res = await handlers.audit_diff({
       html: "<p>x</p>",
-      url: "http://example.com",
+      audit_name: "anything",
     });
     expect(res.isError).toBe(true);
     expect(res.content[0].text).toMatch(/exactly one of/);

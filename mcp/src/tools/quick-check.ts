@@ -4,14 +4,13 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { audit, getStoredAudit } from "../lib/state.js";
 import { checkHtmlSize } from "../lib/limits.js";
 import { computeDisabledRules, filterViolationsByWcag } from "../lib/filters.js";
-import { auditFileResolved } from "./audit-file.js";
-import { auditUrlFetch } from "./audit-url.js";
 
 export const quickCheckSchema = {
-  path: z.string().optional(),
-  html: z.string().optional(),
-  url: z.string().url().optional(),
-  audit_name: z.string().optional().describe("Name of an already-stored audit to summarize"),
+  html: z.string().optional().describe("HTML string to summarize"),
+  audit_name: z
+    .string()
+    .optional()
+    .describe("Name of an already-stored audit to summarize (e.g. from audit_live)"),
   rules: z.array(z.string()).optional(),
   wcag: z
     .array(z.string())
@@ -39,14 +38,14 @@ export function registerQuickCheck(server: McpServer): void {
     "quick_check",
     "Pass/fail accessibility summary in one line. Use as a fast probe during a fix loop ('am I clean yet?'). Does not store anything.",
     quickCheckSchema,
-    async ({ path, html, url, audit_name, rules, wcag, include_aaa, component_mode }) => {
-      const sources = [path, html, url, audit_name].filter((v) => v !== undefined);
+    async ({ html, audit_name, rules, wcag, include_aaa, component_mode }) => {
+      const sources = [html, audit_name].filter((v) => v !== undefined);
       if (sources.length !== 1) {
         return {
           content: [
             {
               type: "text",
-              text: "Error: provide exactly one of path / html / url / audit_name.",
+              text: "Error: provide exactly one of html / audit_name.",
             },
           ],
           isError: true,
@@ -69,32 +68,6 @@ export function registerQuickCheck(server: McpServer): void {
           };
         }
         result = existing;
-      } else if (path !== undefined) {
-        const outcome = await auditFileResolved(path, {
-          includeAAA: include_aaa,
-          componentMode: component_mode,
-          disabledRules,
-        });
-        if (!outcome.ok) {
-          return {
-            content: [{ type: "text", text: `Error reading file: ${outcome.error}` }],
-            isError: true,
-          };
-        }
-        result = outcome.result;
-      } else if (url !== undefined) {
-        const outcome = await auditUrlFetch(url, {
-          includeAAA: include_aaa,
-          componentMode: component_mode,
-          disabledRules,
-        });
-        if (!outcome.ok) {
-          return {
-            content: [{ type: "text", text: `Error fetching URL: ${outcome.error}` }],
-            isError: true,
-          };
-        }
-        result = outcome.result;
       } else {
         const check = checkHtmlSize(html!);
         if (!check.ok) {
