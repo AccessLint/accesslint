@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { registerAuditHtml } from "./tools/audit-html.js";
 import { registerAuditBrowserScript } from "./tools/audit-browser-script.js";
 import { registerAuditBrowserCollect } from "./tools/audit-browser-collect.js";
@@ -19,7 +20,7 @@ const server = new McpServer(
   },
   {
     instructions:
-      "REQUIREMENT: live-page accessibility audits need Chrome reachable in one of two ways — (1) Chrome started with --remote-debugging-port=9222 (or ACCESSLINT_CDP_ENDPOINT set), which enables the audit_live tool, or (2) a browser MCP installed alongside this one (chrome-devtools-mcp recommended; playwright-mcp / puppeteer-mcp also work), which enables the audit_browser_script + audit_browser_collect pair. Without either, only audit_html (raw HTML strings) is available — live-DOM coverage (SPA content, real contrast, post-mount ARIA) is lost. If the user gives a URL and you can't reach a live-DOM path, tell them what to install before falling back. When a violation includes a 'Browser hint', use your browser tools (screenshot, inspect) to follow the hint. To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt.",
+      "For live-URL audits prefer audit_live — it auto-launches Chrome minimized if no debug session is reachable, so no manual setup is needed. Fall back to audit_browser_script + audit_browser_collect only when a browser MCP is available and the user needs their existing browser session. When a violation includes a 'Browser hint', use your browser tools (screenshot, inspect) to follow the hint. To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt.",
   },
 );
 

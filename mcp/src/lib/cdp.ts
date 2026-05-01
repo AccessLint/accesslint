@@ -1,4 +1,5 @@
 import CDP from "chrome-remote-interface";
+import * as chromeLauncher from "chrome-launcher";
 import type { AuditResult, Violation } from "@accesslint/core";
 import { loadCoreIIFE } from "./iife-source.js";
 
@@ -194,6 +195,32 @@ async function waitForExpression(client: CDP.Client, waitFor: string, timeoutMs:
   throw new Error(`Timed out after ${timeoutMs}ms waiting for "${waitFor}"`);
 }
 
+// Reuse a single auto-launched Chrome instance for the lifetime of the MCP process.
+let managedChrome: chromeLauncher.LaunchedChrome | null = null;
+
+async function autoLaunchChrome(): Promise<Endpoint | { error: string }> {
+  if (managedChrome) {
+    try {
+      await CDP.List({ host: "127.0.0.1", port: managedChrome.port });
+      return { host: "127.0.0.1", port: managedChrome.port };
+    } catch {
+      managedChrome = null;
+    }
+  }
+  try {
+    managedChrome = await chromeLauncher.launch({
+      startingUrl: "about:blank",
+      chromeFlags: ["--start-minimized"],
+    });
+    process.once("exit", () => {
+      try { managedChrome?.kill(); } catch { /* best-effort */ }
+    });
+    return { host: "127.0.0.1", port: managedChrome.port };
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAuditOutcome> {
   let endpoint: Endpoint;
   try {
@@ -207,15 +234,26 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
   let targets: TargetInfo[];
   try {
     targets = await listTargets(endpoint);
-  } catch (err) {
-    const detail = err instanceof Error ? err.message : String(err);
-    return {
-      ok: false,
-      error:
-        `Could not connect to Chrome at ${endpoint.host}:${endpoint.port} (${detail}). ` +
-        `Start Chrome with --remote-debugging-port=${endpoint.port}, or set ` +
-        `ACCESSLINT_CDP_ENDPOINT / ACCESSLINT_CDP_PORT, or pass cdp_endpoint to this tool.`,
-    };
+  } catch {
+    // CDP not reachable — auto-launch Chrome minimized and retry.
+    const launched = await autoLaunchChrome();
+    if ("error" in launched) {
+      return {
+        ok: false,
+        error:
+          `Could not connect to Chrome at ${endpoint.host}:${endpoint.port} and auto-launch failed: ${launched.error}. ` +
+          `Install chrome-devtools-mcp as a fallback (claude mcp add chrome-devtools npx -- -y chrome-devtools-mcp@latest).`,
+      };
+    }
+    endpoint = launched;
+    try {
+      targets = await listTargets(endpoint);
+    } catch (err2) {
+      return {
+        ok: false,
+        error: `Chrome launched but CDP still unreachable: ${err2 instanceof Error ? err2.message : String(err2)}`,
+      };
+    }
   }
 
   let target = findPageTarget(targets, opts.url);

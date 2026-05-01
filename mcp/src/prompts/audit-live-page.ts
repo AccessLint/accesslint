@@ -63,11 +63,11 @@ Do not edit files yet. The developer will review the plan and ask you to apply i
 
 The developer has pointed you at \`${url}\` and wants accessibility issues identified, mapped back to the source code, and ${effectiveMode === "fix" ? "fixed in place" : "turned into a plan"}.
 
-**Prefer \`audit_live\`** when Chrome is reachable directly over CDP (started with \`--remote-debugging-port=9222\`, or \`ACCESSLINT_CDP_ENDPOINT\` set) — it does navigate + inject + collect in one call and skips this prompt's orchestration.
+**Prefer \`audit_live\`** — it navigates, injects, and collects in one call, and auto-launches Chrome minimized if no debug session is reachable. Use this prompt only when the user needs their **existing browser session** audited (e.g. authenticated app state) and a browser MCP is connected.
 
-This prompt is for the **browser-MCP fallback**, when CDP isn't reachable directly but a browser MCP that exposes navigate + evaluate tools is connected. Recommended: \`chrome-devtools-mcp\`. Also works: \`playwright-mcp\`, \`puppeteer-mcp\`.
+This prompt is for the **existing-session path** via a browser MCP that exposes navigate + evaluate tools. Recommended: \`chrome-devtools-mcp\`. Also works: \`playwright-mcp\`, \`puppeteer-mcp\`.
 
-If neither path is available, ask the developer to start Chrome with \`--remote-debugging-port=9222\` (then use \`audit_live\`) or to install a browser MCP. There is no static fallback — live-DOM rendering is required for SPA content, web-font contrast, and post-mount ARIA state.
+If no browser MCP is connected and the user needs their existing session, ask them to install chrome-devtools-mcp: \`claude mcp add chrome-devtools npx -- -y chrome-devtools-mcp@latest\`. For any other case, use \`audit_live\` directly.
 
 ### 1. Navigate
 

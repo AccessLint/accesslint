@@ -6,34 +6,17 @@ import { formatViolations } from "../lib/format.js";
 import { computeDisabledRules } from "../lib/filters.js";
 
 export const auditLiveSchema = {
-  url: z
-    .string()
-    .url()
-    .describe("URL to audit. If a tab matching this URL is already open, it'll be reused; otherwise a new tab is created."),
-  cdp_endpoint: z
-    .string()
-    .optional()
-    .describe(
-      'Override the CDP endpoint. Accepts "host:port" or "http://host:port". Defaults to 127.0.0.1:9222 (or ACCESSLINT_CDP_ENDPOINT / ACCESSLINT_CDP_PORT env vars).',
-    ),
+  url: z.string().url().describe("URL to audit. Reuses an existing tab matching this URL; opens a new one otherwise."),
+  cdp_endpoint: z.string().optional().describe('Override CDP endpoint ("host:port"). Defaults to 127.0.0.1:9222 or ACCESSLINT_CDP_ENDPOINT. Omit for auto-detection.'),
   attach_existing: z
     .boolean()
     .optional()
-    .describe(
-      "Require a pre-existing tab matching the URL — fail rather than open a new one. Use when an upstream browser MCP has set up the page state.",
-    ),
+    .describe("Require a pre-existing tab — fail rather than open a new one. Use when an upstream browser MCP has set up page state."),
   wait_for: z
     .string()
     .optional()
-    .describe(
-      "Selector or visible text to wait for after navigation (e.g. '#main', 'Welcome'). Polls until present or wait_timeout_ms elapses.",
-    ),
-  wait_timeout_ms: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe("Max wait for wait_for to appear, in milliseconds. Default 10000."),
+    .describe("Selector or visible text to wait for after navigation (e.g. '#main', 'Welcome'). Polls until present or wait_timeout_ms elapses."),
+  wait_timeout_ms: z.number().int().positive().optional().describe("Max ms to wait for wait_for. Default 10000."),
   name: z.string().optional().describe('Store result for later diffing (e.g. "before")'),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])
@@ -57,15 +40,13 @@ export const auditLiveSchema = {
   source_map: z
     .enum(["off", "fiber"])
     .optional()
-    .describe(
-      "Attach React DevTools fiber source locations to violations. 'fiber' (default) is a no-op on non-React or production builds. 'off' skips it.",
-    ),
+    .describe("Attach React DevTools fiber source locations to violations. 'fiber' (default) is a no-op on non-React or production builds."),
 };
 
 export function registerAuditLive(server: McpServer): void {
   server.tool(
     "audit_live",
-    "Audit a live URL by attaching directly to Chrome via CDP. Loads @accesslint/core into the page through Runtime.evaluate (CSP-bypassing, no CDN fetch from the page) and runs the audit. Requires Chrome running with --remote-debugging-port=9222 (or set ACCESSLINT_CDP_ENDPOINT). Use this instead of audit_browser_script + audit_browser_collect when a CDP endpoint is reachable; the IIFE bytes don't pass through the agent.",
+    "Audit a live URL via CDP. Connects to a running Chrome debug session, or auto-launches Chrome minimized if none is reachable — no manual setup needed. CSP-bypassing. Prefer this over audit_browser_script + audit_browser_collect; use those only when the user needs their existing browser session audited.",
     auditLiveSchema,
     async ({
       url,

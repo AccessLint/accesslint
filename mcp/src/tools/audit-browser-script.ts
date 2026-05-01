@@ -10,7 +10,7 @@ export const auditBrowserScriptSchema = {
     .optional()
     .default(true)
     .describe(
-      "Bootstrap window.AccessLint by fetching the @accesslint/core IIFE from cdn.jsdelivr.net and evaluating it in-page. The bootstrap is ~1 KB; the IIFE is no longer inlined. Set false for repeat audits on the same page where the IIFE is already loaded. Note: pages with strict CSP may block the CDN fetch; in that case use audit_live (direct CDP) instead — its eval is privileged and bypasses page CSP.",
+      "Inject @accesslint/core into the page via CDN. Set false on repeat audits where the IIFE is already loaded. Pages with strict CSP should use audit_live instead.",
     ),
   name: z
     .string()
@@ -44,14 +44,14 @@ export const auditBrowserScriptSchema = {
     .optional()
     .default("fiber")
     .describe(
-      "Attach source-code locations to violations. 'fiber' walks React DevTools fibers (`_debugSource`) on the violating element and a few enclosing components — works in dev builds with the JSX `__source` transform (CRA, Next dev, Vite + React) and is a silent no-op otherwise. 'off' skips it.",
+      "Attach React DevTools fiber source locations to violations. 'fiber' (default) works in dev builds; no-op otherwise. 'off' skips it.",
     ),
 };
 
 export function registerAuditBrowserScript(server: McpServer): void {
   server.tool(
     "audit_browser_script",
-    "Returns a JS function expression to paste into your browser MCP's evaluate tool (e.g. mcp__chrome-devtools__evaluate_script). The script audits the live page using @accesslint/core; pass the result back to audit_browser_collect.",
+    "Returns a JS snippet for your browser MCP's evaluate tool (e.g. mcp__chrome-devtools__evaluate_script). Use when auditing the user's existing browser session; otherwise prefer audit_live which auto-launches Chrome. Pass the result to audit_browser_collect.",
     auditBrowserScriptSchema,
     async ({ inject, name, include_aaa, disabled_rules, rules, wcag, component_mode, locale, source_map }) => {
       const sessionToken = newSessionToken();
