@@ -17,10 +17,12 @@ Add to your MCP client configuration:
 }
 ```
 
+For live-page audits, a Chrome (or Chromium) install must be discoverable on the system — the MCP auto-launches it minimized in the background. No manual `--remote-debugging-port` flag is needed. To audit an existing authenticated browser session instead, install [`chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp) (or `playwright-mcp` / `puppeteer-mcp`) alongside.
+
 ## Tools
 
-- **audit_live** — Attach directly to Chrome via CDP and audit the live, JS-rendered page. Loads `@accesslint/core` into the page through `Runtime.evaluate` (CSP-bypassing, no CDN fetch from the page). Requires Chrome started with `--remote-debugging-port=9222` (or `ACCESSLINT_CDP_ENDPOINT` set). Preferred over the `audit_browser_script` + `audit_browser_collect` pair when CDP is reachable — the IIFE bytes never enter the agent's conversation context.
-- **audit_browser_script** — Returns a small (~1 KB) JS snippet to paste into a browser MCP's evaluate tool. The bootstrap fetches `@accesslint/core` from `cdn.jsdelivr.net` and audits the live page. Pair with **audit_browser_collect**. Use when CDP isn't reachable directly (e.g. behind a browser MCP that owns the Chrome process).
+- **audit_live** — Audit a live URL via CDP. Connects to a running Chrome debug session, or auto-launches Chrome minimized via [chrome-launcher](https://github.com/GoogleChrome/chrome-launcher) if none is reachable — no manual setup needed. Pushes `@accesslint/core` into the page through `Runtime.evaluate` (CSP-bypassing, no CDN fetch from the page). The IIFE bytes never enter the agent's conversation context. Override the endpoint with `cdp_endpoint` / `ACCESSLINT_CDP_ENDPOINT` / `ACCESSLINT_CDP_PORT` if you need to attach somewhere specific.
+- **audit_browser_script** — Returns a small (~1 KB) JS snippet to paste into a browser MCP's evaluate tool. The bootstrap fetches `@accesslint/core` from `cdn.jsdelivr.net` and audits the live page. Pair with **audit_browser_collect**. Use when the user needs their **existing authenticated browser session** audited; otherwise prefer `audit_live`.
 - **audit_browser_collect** — Parse the JSON the evaluate tool returned and store/format it like any other audit.
 - **audit_html** — Audit an HTML string for WCAG violations. Auto-detects fragments vs full documents. Used by the `audit-react-component` prompt to audit JSX after the agent renders it to a string.
 - **audit_diff** — Audit a target and compare against an automatically-managed baseline. First call returns the audit and stores it; subsequent calls return only the diff. Accepts `html` or `audit_name` (e.g. from `audit_live`).
@@ -30,7 +32,8 @@ Add to your MCP client configuration:
 - **explain_rule** — Detailed metadata for a single rule (description, WCAG criteria, fixability, browser hint, guidance).
 
 For URL-based audits and live diffing, use `audit_live({ url, name })` to capture, then `audit_diff({ audit_name: name })` or `quick_check({ audit_name: name })` to summarize. File-on-disk audits go through `Read` + `audit_html`; for static-site CI workflows, use the [`@accesslint/cli`](https://www.npmjs.com/package/@accesslint/cli) package directly.
-  All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
+
+All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
 
 Each violation in the audit output includes the rule ID, CSS selector, failing HTML, impact level, and — where available — a concrete fix suggestion, fixability rating, and guidance. When multiple elements break the same rule, shared metadata is printed once to keep output compact.
 
@@ -50,11 +53,11 @@ No extra runtime dependencies are required — the agent renders the component i
 
 For SPAs and any page whose accessibility issues only appear after JS runs, two paths are available:
 
-**Direct CDP (preferred): `audit_live` tool.** Start Chrome with `--remote-debugging-port=9222` (or any port — set via `ACCESSLINT_CDP_ENDPOINT`/`ACCESSLINT_CDP_PORT`). The MCP attaches over the DevTools Protocol, finds or opens a tab for the URL, injects `@accesslint/core` through `Runtime.evaluate` (CSP-bypassing, no CDN fetch from the page), runs the audit, and returns a small JSON result. The 176 KB IIFE never passes through the agent's conversation context.
+**Direct CDP (preferred): `audit_live` tool.** No setup needed — the MCP attaches to a running Chrome debug session, or auto-launches Chrome minimized in the background via `chrome-launcher` if none is reachable. It then finds or opens a tab for the URL, injects `@accesslint/core` through `Runtime.evaluate` (CSP-bypassing, no CDN fetch from the page), runs the audit, and returns a small JSON result. The IIFE bytes never pass through the agent's conversation context.
 
-**Companion browser MCP (fallback): `audit-live-page` prompt.** When you can't reach Chrome over CDP — for instance, when a browser MCP owns the Chrome process and doesn't expose its debug port — use the prompt. It composes with [`chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp), `playwright-mcp`, `puppeteer-mcp`, or any MCP that exposes a navigate + evaluate-script surface. The prompt walks the agent through navigate → inject (via the small `audit_browser_script` bootstrap that fetches the IIFE from jsDelivr) → collect → map violations to source. If no browser MCP is available either, the prompt falls back to `audit_url` with a warning that SPA / computed-style coverage is lost.
+**Existing-session path: `audit-live-page` prompt.** When the user needs their **existing authenticated browser session** audited (logged-in app, specific page state) and a browser MCP is connected, use the prompt. It composes with [`chrome-devtools-mcp`](https://github.com/ChromeDevTools/chrome-devtools-mcp), `playwright-mcp`, `puppeteer-mcp`, or any MCP that exposes a navigate + evaluate-script surface. The prompt walks the agent through navigate → inject (via the small `audit_browser_script` bootstrap that fetches the IIFE from jsDelivr) → collect → map violations to source.
 
-`@accesslint/mcp` itself ships zero browser dependencies — the audit logic is shipped into whichever Chrome instance is reachable.
+The `audit-react-component` prompt covers JSX/TSX components without a running app — see below.
 
 ## Why use this instead of prompting alone?
 
