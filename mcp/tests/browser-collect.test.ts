@@ -121,7 +121,7 @@ describe("collectAuditResult", () => {
     expect(outcome.text).not.toContain("some/minor-rule");
   });
 
-  it("interoperates with diff_html via the shared audit store", () => {
+  it("interoperates with audit_diff via the shared audit store", () => {
     const browserBefore = fakeRaw({
       violations: [
         {

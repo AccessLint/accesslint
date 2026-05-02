@@ -26,8 +26,8 @@ describe("input size caps", () => {
     expect(res.content[0].text).toMatch(/exceeds/);
   });
 
-  it("diff_html rejects oversized input", async () => {
-    const { registerDiffHtml } = await import("../src/tools/diff-html.js");
+  it("audit_diff rejects oversized html input", async () => {
+    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
     const handlers: Record<
       string,
       (args: unknown) => Promise<{ isError?: boolean; content: { text: string }[] }>
@@ -43,10 +43,10 @@ describe("input size caps", () => {
       },
     };
     // @ts-expect-error — minimal stub of McpServer
-    registerDiffHtml(fakeServer);
+    registerAuditDiff(fakeServer);
 
     const huge = "x".repeat(11 * 1024 * 1024);
-    const res = await handlers.diff_html({ html: huge, before: "anything" });
+    const res = await handlers.audit_diff({ html: huge });
     expect(res.isError).toBe(true);
     expect(res.content[0].text).toMatch(/exceeds/);
   });

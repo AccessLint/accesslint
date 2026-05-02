@@ -14,7 +14,15 @@ export const auditDiffSchema = {
     .string()
     .optional()
     .describe(
-      "Name of an already-stored audit (e.g. from audit_live or audit_browser_collect). Diffs against the prior baseline for that name.",
+      "Name of an already-stored audit (e.g. from audit_live or audit_browser_collect).",
+    ),
+
+  // Optional explicit baseline:
+  before: z
+    .string()
+    .optional()
+    .describe(
+      "Name of a stored audit to diff against. When provided, skips the auto-managed baseline and compares the source directly against this audit. Use after running an audit with `name` to capture the 'before' state.",
     ),
 
   // Filters / output:
@@ -29,29 +37,36 @@ export const auditDiffSchema = {
   component_mode: z.boolean().optional(),
 };
 
-function baselineKey(args: { html?: string; audit_name?: string }): string {
+function autoBaselineKey(args: { html?: string; audit_name?: string }): string {
   if (args.audit_name) return `__baseline:name:${args.audit_name}`;
   if (args.html != null) {
     const hash = createHash("sha1").update(args.html).digest("hex").slice(0, 16);
     return `__baseline:html:${hash}`;
   }
-  throw new Error("baselineKey: no source provided");
+  throw new Error("autoBaselineKey: no source provided");
 }
 
 export function registerAuditDiff(server: McpServer): void {
   server.tool(
     "audit_diff",
-    "Audit a target and compare against an automatically-managed baseline. First call returns the audit and stores it as the baseline; subsequent calls return only the diff. Use to verify fixes during an edit loop. For live URLs, run audit_live with a name first, then call audit_diff with that audit_name.",
+    "Audit a target and compare against a baseline. With just html/audit_name: auto-managed baseline — first call stores, subsequent calls diff. With `before` set: explicit baseline — diffs against the named stored audit, no auto-storage. For live URLs, run audit_live with a name first.",
     auditDiffSchema,
-    async ({ html, audit_name, format, rules, wcag, min_impact, include_aaa, component_mode }) => {
+    async ({
+      html,
+      audit_name,
+      before,
+      format,
+      rules,
+      wcag,
+      min_impact,
+      include_aaa,
+      component_mode,
+    }) => {
       const sources = [html, audit_name].filter((v) => v !== undefined);
       if (sources.length !== 1) {
         return {
           content: [
-            {
-              type: "text",
-              text: "Error: provide exactly one of html / audit_name.",
-            },
+            { type: "text", text: "Error: provide exactly one of html / audit_name." },
           ],
           isError: true,
         };
@@ -64,7 +79,6 @@ export function registerAuditDiff(server: McpServer): void {
       });
 
       let newResult: AuditResult;
-      let key: string;
 
       if (audit_name) {
         const existing = getStoredAudit(audit_name);
@@ -80,7 +94,6 @@ export function registerAuditDiff(server: McpServer): void {
           };
         }
         newResult = existing;
-        key = baselineKey({ audit_name });
       } else {
         const check = checkHtmlSize(html!);
         if (!check.ok) {
@@ -94,9 +107,37 @@ export function registerAuditDiff(server: McpServer): void {
           componentMode: component_mode,
           disabledRules,
         });
-        key = baselineKey({ html: html! });
       }
 
+      // Explicit-baseline path: diff against a named stored audit.
+      if (before !== undefined) {
+        const beforeResult = getStoredAudit(before);
+        if (!beforeResult) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `No stored audit named "${before}". Run an audit with name="${before}" first to capture the baseline.`,
+              },
+            ],
+            isError: true,
+          };
+        }
+        let diff: DiffResult = diffAudit(beforeResult, newResult);
+        if (wcag && wcag.length > 0) {
+          diff = {
+            added: filterViolationsByWcag(diff.added, wcag),
+            fixed: filterViolationsByWcag(diff.fixed, wcag),
+            unchanged: filterViolationsByWcag(diff.unchanged, wcag),
+          };
+        }
+        return {
+          content: [{ type: "text", text: formatDiff(diff, { minImpact: min_impact, format }) }],
+        };
+      }
+
+      // Auto-managed baseline path.
+      const key = autoBaselineKey({ html, audit_name });
       const prior = getStoredAudit(key);
       storeAudit(key, newResult);
 

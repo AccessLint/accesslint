@@ -14,7 +14,7 @@ export const auditBrowserCollectSchema = {
     .string()
     .optional()
     .describe(
-      "Store under this name for later diff_html. Must match the name passed to audit_browser_script.",
+      "Store under this name for later audit_diff (e.g. `audit_diff({ audit_name, before: 'baseline' })`). Must match the name passed to audit_browser_script.",
     ),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])

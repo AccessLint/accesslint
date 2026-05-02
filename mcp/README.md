@@ -25,13 +25,11 @@ For live-page audits, a Chrome (or Chromium) install must be discoverable on the
 - **audit_browser_script** — Returns a small (~1 KB) JS snippet to paste into a browser MCP's evaluate tool. The bootstrap fetches `@accesslint/core` from `cdn.jsdelivr.net` and audits the live page. Pair with **audit_browser_collect**. Use when the user needs their **existing authenticated browser session** audited; otherwise prefer `audit_live`.
 - **audit_browser_collect** — Parse the JSON the evaluate tool returned and store/format it like any other audit.
 - **audit_html** — Audit an HTML string for WCAG violations. Auto-detects fragments vs full documents. Used by the `audit-react-component` prompt to audit JSX after the agent renders it to a string.
-- **audit_diff** — Audit a target and compare against an automatically-managed baseline. First call returns the audit and stores it; subsequent calls return only the diff. Accepts `html` or `audit_name` (e.g. from `audit_live`).
-- **diff_html** — Lower-level: audit new HTML and diff against a previously named audit.
-- **quick_check** — Pass/fail accessibility summary in one line. Accepts `html` or `audit_name`.
+- **audit_diff** — Audit a target and diff against a baseline. With `html` / `audit_name` alone: auto-managed baseline (first call stores, subsequent calls diff). With `before: "<name>"` set: explicit baseline — diffs against the named stored audit, no auto-storage. For URL-based fix loops, run `audit_live` with a `name` to capture the "before" state, then `audit_diff({ html, before: <name> })` or `audit_diff({ audit_name, before: <name> })` to verify fixes.
 - **list_rules** — List available WCAG rules with optional filters by category, level, fixability, or criterion.
 - **explain_rule** — Detailed metadata for a single rule (description, WCAG criteria, fixability, browser hint, guidance).
 
-For URL-based audits and live diffing, use `audit_live({ url, name })` to capture, then `audit_diff({ audit_name: name })` or `quick_check({ audit_name: name })` to summarize. File-on-disk audits go through `Read` + `audit_html`; for static-site CI workflows, use the [`@accesslint/cli`](https://www.npmjs.com/package/@accesslint/cli) package directly.
+File-on-disk audits go through `Read` + `audit_html`; for static-site CI workflows, use the [`@accesslint/cli`](https://www.npmjs.com/package/@accesslint/cli) package directly.
 
 All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
 

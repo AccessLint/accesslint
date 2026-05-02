@@ -6,7 +6,7 @@ const argsSchema = {
   name: z
     .string()
     .optional()
-    .describe("Store result under this name for later diff_html"),
+    .describe("Store result under this name for later audit_diff (e.g. as the `before` baseline)"),
   wait_for: z
     .string()
     .optional()

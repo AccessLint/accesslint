@@ -38,7 +38,7 @@ export function computeDisabledRules(options: FilterOptions): string[] | undefin
 
 /**
  * Post-filter a violation list by WCAG criteria. Use when violations are
- * already collected (e.g. from diff_html or audit_browser_collect) and we
+ * already collected (e.g. from audit_diff or audit_browser_collect) and we
  * want to keep only those whose rule maps to the requested criteria.
  */
 export function filterViolationsByWcag<T extends { ruleId: string }>(

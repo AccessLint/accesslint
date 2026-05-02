@@ -102,16 +102,20 @@ describe("audit_browser_script — wcag/rules filters", () => {
   });
 });
 
-describe("diff_html — wcag filter", () => {
+describe("audit_diff — explicit `before` baseline", () => {
+  beforeEach(() => {
+    clearStoredAudits();
+  });
+
   it("post-filters all three diff buckets by wcag criterion", async () => {
-    const { registerDiffHtml } = await import("../src/tools/diff-html.js");
+    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
     const { audit } = await import("../src/lib/state.js");
     const { server, handlers } = makeFakeServer();
     // @ts-expect-error fake server stub
-    registerDiffHtml(server);
+    registerAuditDiff(server);
 
     audit('<img src="photo.jpg"><a href="/x">click here</a>', { name: "before" });
-    const res = await handlers.diff_html({
+    const res = await handlers.audit_diff({
       html: '<img src="photo.jpg" alt="ok"><a href="/x">click here</a>',
       before: "before",
       wcag: ["1.1.1"],
@@ -121,6 +125,20 @@ describe("diff_html — wcag filter", () => {
     // Only 1.1.1 violations should remain — the link-name (2.4.4) should not appear
     expect(text).not.toContain("navigable/link-name");
     expect(text).toContain("diff:");
+  });
+
+  it("errors when `before` names a missing audit", async () => {
+    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
+    const { server, handlers } = makeFakeServer();
+    // @ts-expect-error fake server stub
+    registerAuditDiff(server);
+
+    const res = await handlers.audit_diff({
+      html: '<img src="x.jpg" alt="x">',
+      before: "nope",
+    });
+    expect(res.isError).toBe(true);
+    expect(res.content[0].text).toMatch(/No stored audit named "nope"/);
   });
 });
 
@@ -230,73 +248,6 @@ describe("audit_diff", () => {
     const res = await handlers.audit_diff({ audit_name: "missing" });
     expect(res.isError).toBe(true);
     expect(res.content[0].text).toMatch(/No stored audit/);
-  });
-});
-
-describe("quick_check", () => {
-  beforeEach(() => {
-    clearStoredAudits();
-  });
-
-  it("returns PASS for clean HTML", async () => {
-    const { registerQuickCheck } = await import("../src/tools/quick-check.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerQuickCheck(server);
-
-    const res = await handlers.quick_check({
-      html: '<img src="photo.jpg" alt="A photo">',
-    });
-    expect(res.isError).toBeUndefined();
-    expect(res.content[0].text).toBe("PASS — 0 violations");
-  });
-
-  it("returns FAIL with counts for violating HTML", async () => {
-    const { registerQuickCheck } = await import("../src/tools/quick-check.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerQuickCheck(server);
-
-    const res = await handlers.quick_check({ html: '<img src="photo.jpg">' });
-    const text = res.content[0].text;
-    expect(text).toMatch(/^FAIL — \d+ violation/);
-    expect(text).toContain("critical");
-  });
-
-  it("rejects when zero sources provided", async () => {
-    const { registerQuickCheck } = await import("../src/tools/quick-check.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerQuickCheck(server);
-
-    const res = await handlers.quick_check({});
-    expect(res.isError).toBe(true);
-  });
-
-  it("audit_name reuses a stored audit", async () => {
-    const { registerQuickCheck } = await import("../src/tools/quick-check.js");
-    const { audit } = await import("../src/lib/state.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerQuickCheck(server);
-
-    audit('<img src="photo.jpg">', { name: "snap" });
-    const res = await handlers.quick_check({ audit_name: "snap" });
-    expect(res.content[0].text).toMatch(/^FAIL/);
-  });
-
-  it("respects wcag filter", async () => {
-    const { registerQuickCheck } = await import("../src/tools/quick-check.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerQuickCheck(server);
-
-    // 1.1.1 should match img-alt; 2.4.4 should not be triggered by an isolated img
-    const res = await handlers.quick_check({
-      html: '<img src="photo.jpg">',
-      wcag: ["2.4.4"],
-    });
-    expect(res.content[0].text).toBe("PASS — 0 violations");
   });
 });
 

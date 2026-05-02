@@ -52,7 +52,7 @@ describe("audit_html pipeline", () => {
   });
 });
 
-describe("diff_html pipeline", () => {
+describe("audit + diff pipeline", () => {
   beforeEach(() => {
     clearStoredAudits();
   });
