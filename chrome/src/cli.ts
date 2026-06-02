@@ -13,10 +13,15 @@ const ensureCmd = defineCommand({
   args: {
     port,
     headed: { type: "boolean", description: "Launch a visible Chrome instead of headless", default: false },
+    download: {
+      type: "boolean",
+      description: "If no system Chrome is found, download a managed Chrome for Testing",
+      default: false,
+    },
   },
   async run({ args }) {
     try {
-      print(await ensure({ port: args.port ? Number(args.port) : undefined, headed: args.headed }));
+      print(await ensure({ port: args.port ? Number(args.port) : undefined, headed: args.headed, download: args.download }));
     } catch (err) {
       print({ ok: false, error: err instanceof Error ? err.message : String(err) });
       process.exit(1);

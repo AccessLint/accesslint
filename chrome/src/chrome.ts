@@ -1,7 +1,7 @@
 import { spawn } from "node:child_process";
 import { mkdtempSync, rmSync } from "node:fs";
 import net from "node:net";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import { join } from "node:path";
 import { Launcher } from "chrome-launcher";
 import { listStates, readState, removeState, writeState, type ChromeState } from "./state.js";
@@ -31,6 +31,8 @@ const LAUNCH_READY_TIMEOUT_MS = 12_000;
 export interface EnsureOptions {
   port?: number;
   headed?: boolean;
+  /** When no system Chrome is found, download a managed Chrome for Testing instead of failing. */
+  download?: boolean;
 }
 
 export interface EnsureResult {
@@ -60,6 +62,12 @@ export function resolvePort(opts: EnsureOptions = {}): number {
   if (opts.port !== undefined) return opts.port;
   if (process.env.ACCESSLINT_CDP_PORT) return Number(process.env.ACCESSLINT_CDP_PORT);
   return DEFAULT_PORT;
+}
+
+export function resolveDownload(opts: EnsureOptions = {}): boolean {
+  if (opts.download !== undefined) return opts.download;
+  const env = process.env.ACCESSLINT_CHROME_DOWNLOAD;
+  return env === "1" || env === "true";
 }
 
 /** The only signal that means "the CLI can drive this Chrome." */
@@ -116,6 +124,7 @@ async function managedAlive(): Promise<{ state: ChromeState; info: DiscoveryInfo
 export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
   const port = resolvePort(opts);
   const pinned = opts.port !== undefined || process.env.ACCESSLINT_CDP_PORT !== undefined;
+  const download = resolveDownload(opts);
 
   const existing = await discovery(port);
   if (existing) return { ok: true, mode: "attached", host: HOST, port, browser: existing.Browser, managed: false };
@@ -128,7 +137,7 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
           `Free it, or pick another port with --port.`,
       );
     }
-    return launchOn(port, opts.headed);
+    return launchOn(port, opts.headed, download);
   }
 
   const reuse = await managedAlive();
@@ -137,10 +146,11 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
     return { ok: true, mode: "attached", host: HOST, port: state.port, browser: info.Browser, pid: state.pid, managed: true };
   }
 
-  return launchOn(await freePort(port), opts.headed);
+  return launchOn(await freePort(port), opts.headed, download);
 }
 
-async function launchOn(port: number, headed?: boolean): Promise<EnsureResult> {
+async function launchOn(port: number, headed = false, download = false): Promise<EnsureResult> {
+  const chromePath = await resolveChromePath(download);
   const userDataDir = mkdtempSync(join(tmpdir(), "accesslint-chrome-profile-"));
   const flags = [
     `--remote-debugging-port=${port}`,
@@ -151,7 +161,7 @@ async function launchOn(port: number, headed?: boolean): Promise<EnsureResult> {
   ];
   if (!headed) flags.unshift("--headless=new");
 
-  const child = spawn(locateChrome(), flags, { detached: true, stdio: "ignore" });
+  const child = spawn(chromePath, flags, { detached: true, stdio: "ignore" });
   child.unref();
   const pid = child.pid;
   if (pid === undefined) {
@@ -187,11 +197,38 @@ export async function stop(opts: { port?: number; all?: boolean } = {}): Promise
   return stopped;
 }
 
-function locateChrome(): string {
+async function resolveChromePath(download: boolean): Promise<string> {
   // chrome-launcher honors CHROME_PATH and searches platform-specific locations.
   const found = Launcher.getFirstInstallation();
-  if (!found) throw new Error("No Chrome/Chromium found. Set CHROME_PATH or install Chrome.");
-  return found;
+  if (found) return found;
+  if (!download) {
+    throw new Error(
+      "No Chrome/Chromium found. Install Chrome, set CHROME_PATH, or re-run with --download " +
+        "(or ACCESSLINT_CHROME_DOWNLOAD=1) to fetch a managed Chrome for Testing build.",
+    );
+  }
+  return downloadChrome();
+}
+
+function chromeCacheDir(): string {
+  return process.env.ACCESSLINT_CHROME_CACHE_DIR ?? join(homedir(), ".cache", "accesslint-chrome");
+}
+
+/** Locate or download a Chrome for Testing build, reusing the cache before any network call. */
+async function downloadChrome(): Promise<string> {
+  const browsers = await import("@puppeteer/browsers");
+  const platform = browsers.detectBrowserPlatform();
+  if (!platform) throw new Error("Could not detect a platform to download Chrome for. Set CHROME_PATH instead.");
+  const cacheDir = chromeCacheDir();
+
+  const cached = (await browsers.getInstalledBrowsers({ cacheDir })).find((b) => b.browser === browsers.Browser.CHROME);
+  if (cached) return cached.executablePath;
+
+  const buildId = await browsers.resolveBuildId(browsers.Browser.CHROME, platform, "stable");
+  process.stderr.write(`@accesslint/chrome: downloading Chrome for Testing ${buildId} to ${cacheDir} (one time, ~170MB)...\n`);
+  const installed = await browsers.install({ browser: browsers.Browser.CHROME, platform, buildId, cacheDir });
+  process.stderr.write(`@accesslint/chrome: Chrome ready at ${installed.executablePath}\n`);
+  return installed.executablePath;
 }
 
 async function waitForDiscovery(port: number): Promise<DiscoveryInfo | null> {

@@ -25,6 +25,7 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@puppeteer/browsers": "^3.0.4",
     "chrome-launcher": "^1.2.1"
   },
   "devDependencies": {

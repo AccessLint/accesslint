@@ -1,7 +1,7 @@
 import http from "node:http";
 import type { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ensure, resolvePort } from "./chrome.js";
+import { ensure, resolveDownload, resolvePort } from "./chrome.js";
 import { listStates, readState, removeState, writeState } from "./state.js";
 
 describe("resolvePort", () => {
@@ -24,6 +24,29 @@ describe("resolvePort", () => {
   it("falls back to env", () => {
     process.env.ACCESSLINT_CDP_PORT = "9001";
     expect(resolvePort()).toBe(9001);
+  });
+});
+
+describe("resolveDownload", () => {
+  const saved = process.env.ACCESSLINT_CHROME_DOWNLOAD;
+  afterEach(() => {
+    if (saved === undefined) delete process.env.ACCESSLINT_CHROME_DOWNLOAD;
+    else process.env.ACCESSLINT_CHROME_DOWNLOAD = saved;
+  });
+
+  it("defaults to false", () => {
+    delete process.env.ACCESSLINT_CHROME_DOWNLOAD;
+    expect(resolveDownload()).toBe(false);
+  });
+
+  it("honors the env flag", () => {
+    process.env.ACCESSLINT_CHROME_DOWNLOAD = "1";
+    expect(resolveDownload()).toBe(true);
+  });
+
+  it("prefers explicit opt over env", () => {
+    process.env.ACCESSLINT_CHROME_DOWNLOAD = "1";
+    expect(resolveDownload({ download: false })).toBe(false);
   });
 });
 

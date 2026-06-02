@@ -49,6 +49,7 @@ npx @accesslint/chrome stop --all
 ```
 -p, --port <n>   CDP port to attach to / launch on (default 9222)
     --headed     Launch a visible Chrome instead of headless (ensure)
+    --download   Download a managed Chrome for Testing if none is installed (ensure)
     --all        Stop every managed instance (stop)
 ```
 
@@ -57,11 +58,20 @@ an unpinned `ensure` steps to a free port and reports the actual one — read
 `port` from its JSON output. If you pinned that port with `--port`, `ensure`
 fails instead; free the port or pass a different one.
 
+By default `ensure` uses the system Chrome (`CHROME_PATH` or a platform search)
+and fails if none is found. Pass `--download` (or set `ACCESSLINT_CHROME_DOWNLOAD=1`)
+to fall back to a pinned **Chrome for Testing** build fetched via
+`@puppeteer/browsers` into a cache dir. The download (~170MB) happens once on
+first use; later runs reuse the cached binary. A system Chrome, when present,
+always wins — the download is only a fallback.
+
 ### Environment
 
 ```
-ACCESSLINT_CDP_PORT   default port
-CHROME_PATH           override Chrome binary discovery
+ACCESSLINT_CDP_PORT         default port
+CHROME_PATH                 override Chrome binary discovery
+ACCESSLINT_CHROME_DOWNLOAD   1/true to enable the Chrome for Testing fallback
+ACCESSLINT_CHROME_CACHE_DIR  where downloaded Chrome is cached (default ~/.cache/accesslint-chrome)
 ```
 
 ## Library API

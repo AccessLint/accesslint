@@ -10,12 +10,12 @@ const nodeDefaults = {
 export default defineConfig([
   {
     entry: ["./src/cli.ts"],
-    deps: { neverBundle: ["chrome-launcher"] },
+    deps: { neverBundle: ["chrome-launcher", "@puppeteer/browsers"] },
     ...nodeDefaults,
   },
   {
     entry: ["./src/chrome.ts"],
-    deps: { neverBundle: ["chrome-launcher"] },
+    deps: { neverBundle: ["chrome-launcher", "@puppeteer/browsers"] },
     dts: true,
     publint: true,
     attw: true,
