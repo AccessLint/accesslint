@@ -1,0 +1,67 @@
+name: CI Chrome Probe
+
+# Smoke test: does `accesslint-chrome ensure` launch a driveable Chrome on a
+# headless CI runner, and can `accesslint` audit a live URL through it? Runs the
+# in-repo chrome + cli packages. Sample PR validates headless CI behavior.
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  probe:
+    name: probe (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - name: Build chrome + cli
+        run: npx turbo run build --filter=@accesslint/chrome --filter=@accesslint/cli
+
+      - name: Probe chrome + accesslint
+        run: |
+          set +e
+          CHROME="node $PWD/chrome/dist/cli.js"
+          CLI="node $PWD/cli/dist/cli.js"
+
+          echo "=== which chrome ==="
+          which google-chrome google-chrome-stable chromium chromium-browser
+          google-chrome --version 2>&1
+
+          echo "=== ensure (system chrome) ==="
+          $CHROME ensure >e1.json 2>e1.err; echo "exit: $?"
+          echo "--stdout--"; cat e1.json; echo "--stderr--"; cat e1.err
+
+          echo "=== ensure --download ==="
+          $CHROME ensure --download >e2.json 2>e2.err; echo "exit: $?"
+          echo "--stdout--"; cat e2.json; echo "--stderr--"; cat e2.err
+
+          PORT="$(node -e 'try{process.stdout.write(""+JSON.parse(require("fs").readFileSync("e1.json","utf8")).port)}catch(e){}')"
+          [ -z "$PORT" ] && PORT="$(node -e 'try{process.stdout.write(""+JSON.parse(require("fs").readFileSync("e2.json","utf8")).port)}catch(e){}')"
+          echo "=== resolved PORT=$PORT ==="
+
+          if [ -n "$PORT" ]; then
+            node -e 'require("http").createServer((q,r)=>{r.writeHead(200,{"Content-Type":"text/html"});r.end("<!doctype html><html lang=\"en\"><head><title>t</title></head><body><button></button></body></html>")}).listen(8799,()=>console.log("serving on 8799"))' &
+            sleep 1
+            echo "=== accesslint URL audit (expect 1 button-name violation) ==="
+            $CLI "http://localhost:8799/" --port "$PORT" --format json --pretty
+            echo "audit exit: $?"
+          else
+            echo "No CDP port obtained from either ensure mode — cannot audit."
+          fi
+
+          $CHROME stop --all || true
+          echo "probe done"
