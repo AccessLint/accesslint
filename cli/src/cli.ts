@@ -27,6 +27,11 @@ const main = defineCommand({
       description: "Output format: text, json",
       default: "text",
     },
+    pretty: {
+      type: "boolean",
+      description: "Pretty-print json output (default: single line)",
+      default: false,
+    },
     "include-aaa": {
       type: "boolean",
       description: "Include AAA-level rules",
@@ -85,7 +90,7 @@ const main = defineCommand({
           process.exit(2);
         }
 
-        console.log(format(outcome.result, args.format));
+        console.log(format(outcome.result, args.format, args.pretty));
         process.exit(outcome.result.violations.length > 0 ? 1 : 0);
       }
 
@@ -95,7 +100,7 @@ const main = defineCommand({
         disabledRules,
       });
 
-      console.log(format(result, args.format));
+      console.log(format(result, args.format, args.pretty));
       process.exit(result.violations.length > 0 ? 1 : 0);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);

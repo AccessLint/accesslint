@@ -38,14 +38,14 @@ export function formatText(result: AuditResult): string {
   return header + "\n" + body;
 }
 
-export function formatJSON(result: AuditResult): string {
-  return JSON.stringify(result, null, 2);
+export function formatJSON(result: AuditResult, pretty = false): string {
+  return pretty ? JSON.stringify(result, null, 2) : JSON.stringify(result);
 }
 
-export function format(result: AuditResult, fmt: string): string {
+export function format(result: AuditResult, fmt: string, pretty = false): string {
   switch (fmt) {
     case "json":
-      return formatJSON(result);
+      return formatJSON(result, pretty);
     case "text":
     default:
       return formatText(result);
