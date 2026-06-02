@@ -128,7 +128,14 @@ const main = defineCommand({
             update: args["update-snapshot"] || isUpdateMode(),
             name: args.snapshot,
           });
-          console.log(formatSnapshotResult(snap, args.snapshot));
+          if (args.format === "json") {
+            const newKeys = new Set(snap.newViolations.map(v => v.ruleId + "\0" + v.selector));
+            const violations = outcome.result.violations.filter(v => newKeys.has(v.ruleId + "\0" + v.selector));
+            const preExisting = outcome.snapshotViolations.length - snap.newViolations.length;
+            console.log(format({ ...outcome.result, violations, fixed: snap.fixedViolations, preExisting } as never, args.format, args.pretty));
+          } else {
+            console.log(formatSnapshotResult(snap, args.snapshot));
+          }
           process.exit(snap.pass ? 0 : 1);
         }
 
