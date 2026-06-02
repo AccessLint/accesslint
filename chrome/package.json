@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/chrome",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Ensure a debuggable Chrome that serves the CDP HTTP discovery API, and manage its lifecycle. Launches detached so it outlives the launcher process; exposes ensure/stop/status.",
   "repository": {
     "type": "git",
