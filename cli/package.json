@@ -29,6 +29,8 @@
   },
   "dependencies": {
     "@accesslint/core": "workspace:*",
+    "@accesslint/heal-diff": "workspace:*",
+    "@accesslint/matchers-internal": "workspace:*",
     "chrome-remote-interface": "^0.34.0",
     "jsdom": "^26.0.0"
   },

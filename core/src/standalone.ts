@@ -38,6 +38,7 @@ export {
   getHtmlSnippet,
   querySelectorShadowAware,
   extractAnchor,
+  buildRelativeLocation,
 } from "./rules/utils/selector";
 
 // Cache clearing (useful for test helpers and extension integration)

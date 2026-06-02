@@ -5,6 +5,13 @@ import { resolveInput } from "./input.js";
 import { audit } from "./audit.js";
 import { format } from "./format.js";
 import { runLiveAudit } from "./cdp.js";
+import {
+  evaluateSnapshot,
+  isUpdateMode,
+  resolveSnapshotPath,
+  validateSnapshotName,
+} from "@accesslint/matchers-internal/snapshot";
+import type { SnapshotResult } from "@accesslint/matchers-internal/snapshot";
 
 const { version } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
@@ -74,6 +81,19 @@ const main = defineCommand({
       description: "Only attach to an existing tab matching the URL; fail if not found",
       default: false,
     },
+    snapshot: {
+      type: "string",
+      description: "Snapshot name — capture a baseline and fail only on new violations (URL only)",
+    },
+    "snapshot-dir": {
+      type: "string",
+      description: "Directory for snapshot files (default: ./accessibility-snapshots)",
+    },
+    "update-snapshot": {
+      type: "boolean",
+      description: "Force-overwrite the snapshot baseline (also triggered by ACCESSLINT_UPDATE=1)",
+      default: false,
+    },
   },
   async run({ args }) {
     try {
@@ -101,6 +121,17 @@ const main = defineCommand({
           process.exit(2);
         }
 
+        if (args.snapshot) {
+          validateSnapshotName(args.snapshot);
+          const snapshotPath = resolveSnapshotPath(args.snapshot, args["snapshot-dir"]);
+          const snap = evaluateSnapshot(outcome.snapshotViolations, snapshotPath, {
+            update: args["update-snapshot"] || isUpdateMode(),
+            name: args.snapshot,
+          });
+          console.log(formatSnapshotResult(snap, args.snapshot));
+          process.exit(snap.pass ? 0 : 1);
+        }
+
         console.log(format(outcome.result, args.format, args.pretty));
         process.exit(outcome.result.violations.length > 0 ? 1 : 0);
       }
@@ -120,5 +151,43 @@ const main = defineCommand({
     }
   },
 });
+
+function formatSnapshotResult(snap: SnapshotResult, name: string): string {
+  if (!snap.pass) {
+    const lines = [
+      `Expected no new violations beyond snapshot "${name}", but found ${snap.newViolations.length} new:`,
+    ];
+    for (const v of snap.newViolations) {
+      lines.push(`  ${v.ruleId}: ${v.selector}`);
+      const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
+      if (hint) {
+        lines.push(`    likely moved from: ${hint.candidate.selector}`);
+        lines.push(`    matched on: ${hint.sharedSignals.join(", ")}`);
+        lines.push(`    if same: re-run with --update-snapshot or ACCESSLINT_UPDATE=1`);
+        lines.push(`    if new: add a data-testid to disambiguate`);
+      }
+    }
+    return lines.join("\n");
+  }
+
+  if (snap.created) {
+    return `Snapshot "${name}" created. Future runs fail only on new violations.`;
+  }
+
+  if (snap.updated) {
+    const reasons: string[] = [];
+    if (snap.fixedViolations.length > 0) reasons.push(`${snap.fixedViolations.length} fixed`);
+    if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
+    if (snap.refreshed.length > 0) reasons.push(`${snap.refreshed.length} refreshed`);
+    const verb = snap.fixedViolations.length > 0 ? "ratcheted" : snap.healed.length > 0 ? "updated" : "refreshed";
+    const lines = [`Snapshot "${name}" ${verb} (${reasons.join(", ")}).`];
+    for (const h of snap.healed) {
+      lines.push(`  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`);
+    }
+    return lines.join("\n");
+  }
+
+  return `Matches snapshot "${name}".`;
+}
 
 runMain(main);
