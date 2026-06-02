@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
@@ -11,10 +12,14 @@ import { registerExplainRule } from "./tools/explain-rule.js";
 import { registerAuditReactComponentPrompt } from "./prompts/audit-react-component.js";
 import { registerAuditLivePagePrompt } from "./prompts/audit-live-page.js";
 
+const { version } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
+
 const server = new McpServer(
   {
     name: "accesslint",
-    version: "0.1.0",
+    version,
   },
   {
     instructions:

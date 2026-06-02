@@ -1,9 +1,14 @@
 #!/usr/bin/env node
+import { readFileSync } from "node:fs";
 import { defineCommand, runMain } from "citty";
 import { resolveInput } from "./input.js";
 import { audit } from "./audit.js";
 import { format } from "./format.js";
 import { runLiveAudit } from "./cdp.js";
+
+const { version } = JSON.parse(
+  readFileSync(new URL("../package.json", import.meta.url), "utf8"),
+) as { version: string };
 
 function isURL(source: string): boolean {
   return /^https?:\/\//i.test(source);
@@ -12,7 +17,7 @@ function isURL(source: string): boolean {
 const main = defineCommand({
   meta: {
     name: "accesslint",
-    version: "0.1.0",
+    version,
     description: "Audit HTML for accessibility violations",
   },
   args: {
@@ -45,7 +50,7 @@ const main = defineCommand({
     port: {
       type: "string",
       alias: "p",
-      description: "CDP port to connect to (URL audits only, default: 9222)",
+      description: "CDP port to connect to, e.g. from `npx @accesslint/chrome ensure` (URL audits only, default: 9222)",
     },
     host: {
       type: "string",

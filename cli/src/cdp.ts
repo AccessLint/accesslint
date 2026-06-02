@@ -124,10 +124,8 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     return {
       ok: false,
       error:
-        `No Chrome debug session found at ${host}:${port}.\n\n` +
-        `Quit Chrome if it's running, then relaunch with remote debugging enabled:\n` +
-        `  open -a "Google Chrome" --args --remote-debugging-port=${port}\n\n` +
-        `Then navigate to the page you want to audit and re-run this command.`,
+        `No Chrome debug session found at ${host}:${port}.\n` +
+        `  npx @accesslint/chrome ensure --port ${port}`,
     };
   }
 
