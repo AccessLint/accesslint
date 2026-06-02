@@ -201,7 +201,7 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       };
     }
     try {
-      const created = (await CDP.New({ host, port, url: opts.url })) as TargetInfo;
+      const created = (await CDP.New({ host, port })) as TargetInfo;
       target = created;
       createdTargetId = created.id;
     } catch (err) {
@@ -219,10 +219,8 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     await client.Runtime.enable();
 
     if (createdTargetId) {
-      const ready = await client.Runtime.evaluate({ expression: `document.readyState === "complete"`, returnByValue: true });
-      if (ready.result.value !== true) {
-        await waitForLoadEvent(client, NAVIGATION_TIMEOUT_MS);
-      }
+      await client.Page.navigate({ url: opts.url });
+      await waitForLoadEvent(client, NAVIGATION_TIMEOUT_MS);
     }
 
     if (opts.waitFor) {
