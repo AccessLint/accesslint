@@ -1,5 +1,7 @@
 import CDP from "chrome-remote-interface";
 import type { AuditResult, Violation } from "@accesslint/core";
+import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
+import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 import { loadCoreIIFE } from "./iife-source.js";
 
 const DEFAULT_HOST = "127.0.0.1";
@@ -24,7 +26,7 @@ export interface RunLiveAuditOptions {
 }
 
 export type RunLiveAuditOutcome =
-  | { ok: true; result: AuditResult }
+  | { ok: true; result: AuditResult; snapshotViolations: SnapshotViolation[] }
   | { ok: false; error: string };
 
 interface TargetInfo {
@@ -63,6 +65,11 @@ function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOption
         return el && __roots.some(function (root) { return root === el || root.contains(el); });
       });
     }
+    const AL = window.AccessLint;
+    const _extractAnchor = typeof AL.extractAnchor === "function" ? AL.extractAnchor : null;
+    const _getComputedRole = typeof AL.getComputedRole === "function" ? AL.getComputedRole : null;
+    const _getAccessibleName = typeof AL.getAccessibleName === "function" ? AL.getAccessibleName : null;
+    const _buildRelativeLocation = typeof AL.buildRelativeLocation === "function" ? AL.buildRelativeLocation : null;
     return JSON.stringify({
       ok: true,
       url: __r.url,
@@ -70,7 +77,21 @@ function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOption
       ruleCount: __r.ruleCount,
       skippedRules: __r.skippedRules || [],
       violations: __violations.map(function (v) {
-        return { ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact, message: v.message, source: v.source };
+        const el = v.element || null;
+        const anchor = el && _extractAnchor ? _extractAnchor(el) : undefined;
+        const roleBase = el && _getComputedRole ? _getComputedRole(el) : undefined;
+        const roleName = el && _getAccessibleName ? _getAccessibleName(el).trim() : undefined;
+        const role = roleBase ? (roleName ? roleBase + "[name=\"" + roleName + "\"]" : roleBase) : undefined;
+        const relativeLocation = el && _buildRelativeLocation ? _buildRelativeLocation(el) : undefined;
+        const tag = el ? el.tagName.toLowerCase() : undefined;
+        return {
+          ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact,
+          message: v.message, source: v.source,
+          anchor: anchor || undefined,
+          role: role || undefined,
+          relativeLocation: relativeLocation || undefined,
+          tag: tag || undefined,
+        };
       }),
     });
   } catch (err) {
@@ -79,13 +100,26 @@ function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOption
 })()`;
 }
 
+interface InPageViolation {
+  ruleId: string;
+  selector: string;
+  html?: string;
+  impact: Violation["impact"];
+  message: string;
+  source?: Violation["source"];
+  anchor?: string;
+  role?: string;
+  relativeLocation?: string;
+  tag?: string;
+}
+
 interface InPageOk {
   ok: true;
   url: string;
   timestamp: number;
   ruleCount: number;
   skippedRules: { ruleId: string; error: string }[];
-  violations: Violation[];
+  violations: InPageViolation[];
 }
 interface InPageErr {
   ok: false;
@@ -229,6 +263,16 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       return { ok: false, error: `In-page audit threw: ${parsed.error}` };
     }
 
+    const snapshotViolations: SnapshotViolation[] = parsed.violations.map((v) => {
+      const sv: SnapshotViolation = { ruleId: v.ruleId, selector: v.selector };
+      if (v.anchor) sv.anchor = v.anchor;
+      if (v.role) sv.role = v.role;
+      if (v.relativeLocation) sv.relativeLocation = v.relativeLocation;
+      if (v.tag) sv.tag = v.tag;
+      if (v.html) sv.htmlFingerprint = sha1Short(normalizeHtml(v.html));
+      return sv;
+    });
+
     return {
       ok: true,
       result: {
@@ -236,8 +280,9 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
         timestamp: parsed.timestamp,
         ruleCount: parsed.ruleCount,
         skippedRules: parsed.skippedRules,
-        violations: parsed.violations,
+        violations: parsed.violations as unknown as Violation[],
       },
+      snapshotViolations,
     };
   } catch (err) {
     return { ok: false, error: `CDP error: ${err instanceof Error ? err.message : String(err)}` };

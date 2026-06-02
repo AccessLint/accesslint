@@ -31,7 +31,7 @@
     },
     "chrome": {
       "name": "@accesslint/chrome",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "bin": {
         "accesslint-chrome": "./dist/cli.js",
       },
@@ -49,12 +49,14 @@
     },
     "cli": {
       "name": "@accesslint/cli",
-      "version": "0.5.2",
+      "version": "0.6.0",
       "bin": {
         "accesslint": "./dist/cli.js",
       },
       "dependencies": {
         "@accesslint/core": "workspace:*",
+        "@accesslint/heal-diff": "workspace:*",
+        "@accesslint/matchers-internal": "workspace:*",
         "chrome-remote-interface": "^0.34.0",
         "jsdom": "^26.0.0",
       },

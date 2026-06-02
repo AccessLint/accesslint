@@ -206,3 +206,82 @@ export function getHtmlSnippet(el: Element): string {
   const html = el.outerHTML;
   return html.length > 200 ? html.slice(0, 200) + "..." : html;
 }
+
+const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form"]);
+const LANDMARK_ROLES = new Set([
+  "banner",
+  "complementary",
+  "contentinfo",
+  "form",
+  "main",
+  "navigation",
+  "region",
+  "search",
+]);
+
+function isLandmark(el: Element): boolean {
+  if (LANDMARK_TAGS.has(el.tagName.toLowerCase())) return true;
+  const explicit = el.getAttribute("role");
+  return explicit != null && LANDMARK_ROLES.has(explicit);
+}
+
+function segmentFor(el: Element): string {
+  const tag = el.tagName.toLowerCase();
+  if (el.id) return `${tag}#${el.id}`;
+  const role = el.getAttribute("role");
+  return role ? `${tag}[role=${role}]` : tag;
+}
+
+const LANDMARK_WALK_LIMIT = 6;
+
+/**
+ * Produce a short, wrapper-invariant trail describing where an element lives
+ * on the page. Combines the nearest landmark ancestor, an intermediate
+ * id/role-bearing ancestor, and the nearest short sibling text.
+ *
+ * Example: `main > form#login > near "Email"`.
+ *
+ * Returns null when no landmark is found within LANDMARK_WALK_LIMIT ancestors
+ * so callers can degrade gracefully on poorly-structured pages.
+ */
+export function buildRelativeLocation(el: Element): string | null {
+  const between: Element[] = [];
+  let current: Element | null = el.parentElement;
+  let landmark: Element | null = null;
+  for (let depth = 0; current && depth < LANDMARK_WALK_LIMIT; depth++) {
+    if (isLandmark(current)) {
+      landmark = current;
+      break;
+    }
+    between.push(current);
+    current = current.parentElement;
+  }
+  if (!landmark) return null;
+
+  const trail: string[] = [segmentFor(landmark)];
+
+  for (const ancestor of between) {
+    if (ancestor.id || ancestor.getAttribute("role")) {
+      trail.push(segmentFor(ancestor));
+      break;
+    }
+  }
+
+  const nearText = findNearestShortText(el);
+  if (nearText) trail.push(`near "${nearText}"`);
+
+  return trail.join(" > ");
+}
+
+function findNearestShortText(el: Element): string | null {
+  let current: Element | null = el;
+  for (let depth = 0; current && depth < 4; depth++, current = current.parentElement) {
+    for (let i = 0; i < current.children.length; i++) {
+      const sibling = current.children[i];
+      if (sibling === el) continue;
+      const text = (sibling.textContent ?? "").trim().replace(/\s+/g, " ");
+      if (text.length > 0 && text.length <= 40) return text;
+    }
+  }
+  return null;
+}

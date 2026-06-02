@@ -14,6 +14,7 @@ import {
   getComputedRole,
   getHtmlSnippet,
   getSelector,
+  buildRelativeLocation,
 } from "@accesslint/core";
 import type { Violation } from "@accesslint/core";
 import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
@@ -58,98 +59,7 @@ export function accesslintTiers(): Tier<AccesslintSignal>[] {
   ];
 }
 
-// Section-level anchors for relativeLocation. Not a strict ARIA landmark set
-// (fieldset/section don't map to landmark roles); chosen as stable semantic
-// grouping tags that teams actually write and that survive refactors.
-const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form"]);
-const LANDMARK_ROLES = new Set([
-  "banner",
-  "complementary",
-  "contentinfo",
-  "form",
-  "main",
-  "navigation",
-  "region",
-  "search",
-]);
-
-function isLandmark(el: Element): boolean {
-  if (LANDMARK_TAGS.has(el.tagName.toLowerCase())) return true;
-  const explicit = el.getAttribute("role");
-  return explicit != null && LANDMARK_ROLES.has(explicit);
-}
-
-function segmentFor(el: Element): string {
-  const tag = el.tagName.toLowerCase();
-  if (el.id) return `${tag}#${el.id}`;
-  const role = el.getAttribute("role");
-  if (role) return `${tag}[role=${role}]`;
-  return tag;
-}
-
-const LANDMARK_WALK_LIMIT = 6;
-
-/**
- * Produce a short, wrapper-invariant trail describing where an element
- * lives on the page. Combines:
- *
- * 1. The nearest landmark ancestor within {@link LANDMARK_WALK_LIMIT}
- *    ancestors. Pages with no nearby landmark return `null` so tier 6
- *    of the matcher is skipped (degrade gracefully; don't anchor to
- *    `<body>` on poorly-structured pages).
- * 2. An intermediate id- or role-bearing ancestor sitting between the
- *    element and that landmark, nearest to the element. This is what
- *    keeps the signal discriminating when the landmark itself is broad
- *    (e.g. a single `<main>` wrapping everything).
- * 3. The nearest sibling or ancestor sibling with short visible text,
- *    quoted. Anchors copy-stable location like `near "Email"` when no
- *    intermediate id/role exists.
- *
- * Example: `main > form#login > near "Email"`.
- */
-export function buildRelativeLocation(el: Element): string | null {
-  const between: Element[] = [];
-  let current: Element | null = el.parentElement;
-  let landmark: Element | null = null;
-  for (let depth = 0; current && depth < LANDMARK_WALK_LIMIT; depth++) {
-    if (isLandmark(current)) {
-      landmark = current;
-      break;
-    }
-    between.push(current);
-    current = current.parentElement;
-  }
-  if (!landmark) return null;
-
-  const trail: string[] = [segmentFor(landmark)];
-
-  // Nearest-to-el id/role crumb inside the landmark. `between` is ordered
-  // el-parent first, so the first hit is closest to the element.
-  for (const ancestor of between) {
-    if (ancestor.id || ancestor.getAttribute("role")) {
-      trail.push(segmentFor(ancestor));
-      break;
-    }
-  }
-
-  const nearText = findNearestShortText(el);
-  if (nearText) trail.push(`near "${nearText}"`);
-
-  return trail.join(" > ");
-}
-
-function findNearestShortText(el: Element): string | null {
-  let current: Element | null = el;
-  for (let depth = 0; current && depth < 4; depth++, current = current.parentElement) {
-    for (let i = 0; i < current.children.length; i++) {
-      const sibling = current.children[i];
-      if (sibling === el) continue;
-      const text = (sibling.textContent ?? "").trim().replace(/\s+/g, " ");
-      if (text.length > 0 && text.length <= 40) return text;
-    }
-  }
-  return null;
-}
+export { buildRelativeLocation };
 
 function roleSignal(el: Element): string | null {
   const role = getComputedRole(el);

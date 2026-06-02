@@ -297,74 +297,7 @@ async function captureMainFrameSignals(
         const getComputedRole = (AL?.getComputedRole as ((el: Element) => string | null) | undefined);
         const getAccessibleName = (AL?.getAccessibleName as ((el: Element) => string) | undefined);
         const getHtmlSnippet = (AL?.getHtmlSnippet as ((el: Element) => string) | undefined);
-
-        const LANDMARK_TAGS = new Set(["main", "nav", "header", "footer", "aside", "form"]);
-        const LANDMARK_ROLES = new Set([
-          "banner",
-          "complementary",
-          "contentinfo",
-          "form",
-          "main",
-          "navigation",
-          "region",
-          "search",
-        ]);
-
-        function isLandmark(el: Element): boolean {
-          if (LANDMARK_TAGS.has(el.tagName.toLowerCase())) return true;
-          const explicit = el.getAttribute("role");
-          return explicit != null && LANDMARK_ROLES.has(explicit);
-        }
-
-        function segmentFor(el: Element): string {
-          const tag = el.tagName.toLowerCase();
-          if (el.id) return `${tag}#${el.id}`;
-          const role = el.getAttribute("role");
-          return role ? `${tag}[role=${role}]` : tag;
-        }
-
-        const LANDMARK_WALK_LIMIT = 6;
-
-        function buildRelativeLocation(el: Element): string | null {
-          const between: Element[] = [];
-          let current: Element | null = el.parentElement;
-          let landmark: Element | null = null;
-          for (let depth = 0; current && depth < LANDMARK_WALK_LIMIT; depth++) {
-            if (isLandmark(current)) {
-              landmark = current;
-              break;
-            }
-            between.push(current);
-            current = current.parentElement;
-          }
-          if (!landmark) return null;
-
-          const trail: string[] = [segmentFor(landmark)];
-
-          for (const ancestor of between) {
-            if (ancestor.id || ancestor.getAttribute("role")) {
-              trail.push(segmentFor(ancestor));
-              break;
-            }
-          }
-
-          let near: string | null = null;
-          let scan: Element | null = el;
-          for (let depth = 0; scan && depth < 4 && !near; depth++, scan = scan.parentElement) {
-            for (let i = 0; i < scan.children.length; i++) {
-              const sib = scan.children[i];
-              if (sib === el) continue;
-              const text = (sib.textContent ?? "").trim().replace(/\s+/g, " ");
-              if (text.length > 0 && text.length <= 40) {
-                near = text;
-                break;
-              }
-            }
-          }
-          if (near) trail.push(`near "${near}"`);
-
-          return trail.join(" > ");
-        }
+        const buildRelativeLocation = (AL?.buildRelativeLocation as ((el: Element) => string | null) | undefined);
 
         return args.selectors.map((sel): RawSignals => {
           try {
@@ -380,7 +313,7 @@ async function captureMainFrameSignals(
             }
             const html = getHtmlSnippet?.(el);
             if (html) out.html = html;
-            const rel = buildRelativeLocation(el);
+            const rel = buildRelativeLocation?.(el);
             if (rel) out.relativeLocation = rel;
             return out;
           } catch {
