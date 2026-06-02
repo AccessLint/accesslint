@@ -8,12 +8,21 @@ import type { SourceLocation, Violation } from "../rules/types";
  * is a real source-file location — bundled chunk URLs are resolved through
  * the matching `.js.map` before reaching the consumer.
  *
- * Two paths into the call site:
- * - React 18 dev: fibers carry `_debugSource` ({ fileName, lineNumber, columnNumber })
- *   directly. No resolution needed.
- * - React 19 dev: fibers carry `_debugStack` (a captured Error). We pick the
- *   user frame from the stack — it points at a bundled chunk URL — then walk
- *   the chunk's sourcemap to recover the source-file location.
+ * Two paths into the call site, chosen by the metadata the fiber carries
+ * (a function of the toolchain, not the React version):
+ * - `_debugSource` ({ fileName, lineNumber, columnNumber }), from the JSX
+ *   `__source` transform: trusted as-is. Emitted by @vitejs/plugin-react for
+ *   BOTH React 18 and 19, and by CRA; preferred over `_debugStack` when both
+ *   are present. Caveat: a dev server that injects a per-module preamble before
+ *   transforming JSX (notably Vite) makes `lineNumber`/`columnNumber` count
+ *   from the preamble, so they sit further down than the true source line (the
+ *   fileName stays correct). Not fixable here: `_debugSource` exposes no
+ *   served-module position to map through the sourcemap, and the offset is
+ *   per-module, so there's no fixed adjustment.
+ * - `_debugStack` (a captured Error; React 19 without the `__source` transform,
+ *   e.g. Next.js dev): we pick the user frame from the stack — it points at a
+ *   bundled chunk URL — then walk the chunk's sourcemap to recover the
+ *   source-file location. Unaffected by the preamble offset above.
  *
  * Requirements: page is running React with the JSX `__source` transform
  * (default in CRA, Next dev, Vite + React) and serves sourcemaps for its
@@ -205,7 +214,7 @@ async function locationFor(
 ): Promise<SourceLocation | null> {
   const symbol = getSymbol(fiber);
 
-  // React 18 dev: _debugSource is already a source-file location.
+  // _debugSource path: trusted as-is (can be preamble-offset under Vite; see module doc).
   if (fiber._debugSource) {
     const loc: SourceLocation = {
       file: fiber._debugSource.fileName,
@@ -219,7 +228,7 @@ async function locationFor(
     return loc;
   }
 
-  // React 19 dev: parse stack, then walk sourcemap.
+  // _debugStack path: parse the stack, then walk the sourcemap.
   if (fiber._debugStack) {
     const frame = findUserFrame(fiber._debugStack.stack);
     if (!frame) return null;

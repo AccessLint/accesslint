@@ -186,25 +186,19 @@ Look up a rule by its ID. Pass `locale` to get the translated rule, or `addition
 
 ### `attachReactFiberSource(violations): Promise<void>`
 
-Opt-in post-processor that mutates each violation in place, attaching
-`source` candidates by reading React DevTools fiber metadata for the
-violating element. Must run in-page (the `runAudit` IIFE flow); a no-op
-when no fiber is found, on production builds, or on non-React pages.
-Never throws — failures are swallowed silently.
+Opt-in, in-page post-processor that attaches `source` locations to each
+violation by walking React fibers. No-op on non-React pages, production builds,
+or when no fiber is found; never throws. Requires the JSX `__source` transform
+and dev sourcemaps (default in CRA, Next dev, Vite + React).
 
-Two paths into a source location:
+When the fiber carries `_debugSource` (Vite, CRA) it is trusted as-is;
+otherwise `_debugStack` (e.g. Next.js dev) is parsed and resolved through the
+chunk's `.js.map`.
 
-- **React 18 dev** — fibers carry `_debugSource` directly. No fetch.
-- **React 19 dev** — fibers carry `_debugStack` (a captured `Error`). The
-  user frame is parsed from the stack and resolved through the chunk's
-  `.js.map` (external file or inline data URL). Concurrent violations on
-  the same chunk share an in-flight fetch via a per-call cache.
-
-If sourcemap resolution fails (no map, network error, no original
-position), the entry is dropped — `source[]` only contains real
-source-file locations the consumer can open. Requires the JSX `__source`
-transform (default in CRA, Next dev, Vite + React) and a dev server
-serving sourcemaps.
+> **Limitation:** on the `_debugSource` path, dev servers that inject a
+> per-module preamble (notably Vite, both React 18 and 19) offset the reported
+> line/column — the file and component stay correct, but the line can point
+> further down than the true source. The `_debugStack` path is unaffected.
 
 ```ts
 // In a Playwright test, after the audit:
@@ -216,12 +210,7 @@ const violations = await page.evaluate(async () => {
 });
 
 console.log(violations[0].source);
-// [
-//   { file: "src/components/ProductCard.tsx", line: 42, column: 7,
-//     symbol: "ProductCard", ownerDepth: 0 },
-//   { file: "src/pages/Catalog.tsx", line: 18, column: 4,
-//     symbol: "Catalog", ownerDepth: 1 },
-// ]
+// [{ file: "src/components/ProductCard.tsx", line: 42, column: 7, symbol: "ProductCard", ownerDepth: 0 }, ...]
 ```
 
 ### Utilities
