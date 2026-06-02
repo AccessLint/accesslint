@@ -15,6 +15,7 @@ export interface RunLiveAuditOptions {
   attachExisting?: boolean;
   waitFor?: string;
   waitTimeoutMs?: number;
+  selector?: string;
   coreOptions: {
     disabledRules?: string[];
     includeAAA?: boolean;
@@ -42,8 +43,9 @@ function findPageTarget(targets: TargetInfo[], url: string): TargetInfo | undefi
   return targets.find((t) => t.type === "page" && t.url.startsWith(url));
 }
 
-function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOptions["coreOptions"]): string {
+function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOptions["coreOptions"], selector?: string): string {
   const optsJson = JSON.stringify(coreOptions);
+  const selectorJson = selector ? JSON.stringify(selector) : "null";
   return `${iifeBytes}
 ;(async () => {
   try {
@@ -51,13 +53,23 @@ function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOption
     if (typeof window.AccessLint.attachReactFiberSource === "function") {
       try { await window.AccessLint.attachReactFiberSource(__r.violations); } catch (_e) {}
     }
+    const __selector = ${selectorJson};
+    let __violations = __r.violations || [];
+    if (__selector) {
+      const __roots = Array.from(document.querySelectorAll(__selector));
+      if (!__roots.length) throw new Error("Selector not found after wait: " + __selector);
+      __violations = __violations.filter(function (v) {
+        const el = document.querySelector(v.selector);
+        return el && __roots.some(function (root) { return root === el || root.contains(el); });
+      });
+    }
     return JSON.stringify({
       ok: true,
       url: __r.url,
       timestamp: __r.timestamp,
       ruleCount: __r.ruleCount,
       skippedRules: __r.skippedRules || [],
-      violations: (__r.violations || []).map(function (v) {
+      violations: __violations.map(function (v) {
         return { ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact, message: v.message, source: v.source };
       }),
     });
@@ -95,6 +107,18 @@ async function waitForLoadEvent(client: CDP.Client, timeoutMs: number): Promise<
   } finally {
     if (timer) clearTimeout(timer);
   }
+}
+
+async function waitForSelector(client: CDP.Client, selector: string, timeoutMs: number): Promise<void> {
+  const probe = `Boolean(document.querySelector(${JSON.stringify(selector)}))`;
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const res = await client.Runtime.evaluate({ expression: probe, returnByValue: true });
+    if (res.exceptionDetails) throw new Error(`selector probe failed: ${summarizeException(res.exceptionDetails)}`);
+    if (res.result.value === true) return;
+    await new Promise((r) => setTimeout(r, WAIT_POLL_INTERVAL_MS));
+  }
+  throw new Error(`Timed out after ${timeoutMs}ms waiting for selector "${selector}"`);
 }
 
 async function waitForExpression(client: CDP.Client, waitFor: string, timeoutMs: number): Promise<void> {
@@ -171,8 +195,12 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       await waitForExpression(client, opts.waitFor, opts.waitTimeoutMs ?? WAIT_FOR_DEFAULT_MS);
     }
 
+    if (opts.selector) {
+      await waitForSelector(client, opts.selector, opts.waitTimeoutMs ?? WAIT_FOR_DEFAULT_MS);
+    }
+
     const { bytes } = loadCoreIIFE();
-    const expression = buildAuditExpression(bytes, opts.coreOptions);
+    const expression = buildAuditExpression(bytes, opts.coreOptions, opts.selector);
 
     const evalResult = await client.Runtime.evaluate({
       expression,

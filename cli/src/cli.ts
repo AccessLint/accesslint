@@ -62,7 +62,12 @@ const main = defineCommand({
     },
     "wait-timeout": {
       type: "string",
-      description: "Max ms to wait for --wait-for (default: 10000)",
+      description: "Max ms to wait for --wait-for / --selector (default: 10000)",
+    },
+    selector: {
+      type: "string",
+      alias: "s",
+      description: "CSS selector to scope the audit to; auto-waits for the element (URL only)",
     },
     attach: {
       type: "boolean",
@@ -84,6 +89,7 @@ const main = defineCommand({
           attachExisting: args.attach,
           waitFor: args["wait-for"],
           waitTimeoutMs: args["wait-timeout"] ? Number(args["wait-timeout"]) : undefined,
+          selector: args.selector,
           coreOptions: {
             includeAAA: args["include-aaa"],
             disabledRules,
