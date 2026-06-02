@@ -18,7 +18,7 @@ export default defineConfig([
     deps: { neverBundle: ["jsdom", "@accesslint/core"] },
     dts: true,
     publint: true,
-    attw: true,
+    attw: { profile: "esm-only" },
     ...nodeDefaults,
   },
 ]);

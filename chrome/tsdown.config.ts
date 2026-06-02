@@ -18,7 +18,7 @@ export default defineConfig([
     deps: { neverBundle: ["chrome-launcher", "@puppeteer/browsers"] },
     dts: true,
     publint: true,
-    attw: true,
+    attw: { profile: "esm-only" },
     ...nodeDefaults,
   },
 ]);
