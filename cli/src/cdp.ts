@@ -81,7 +81,7 @@ function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOption
         const anchor = el && _extractAnchor ? _extractAnchor(el) : undefined;
         const roleBase = el && _getComputedRole ? _getComputedRole(el) : undefined;
         const roleName = el && _getAccessibleName ? _getAccessibleName(el).trim() : undefined;
-        const role = roleBase ? (roleName ? roleBase + "[name=\"" + roleName + "\"]" : roleBase) : undefined;
+        const role = roleBase ? (roleName ? roleBase + '[name="' + roleName + '"]' : roleBase) : undefined;
         const relativeLocation = el && _buildRelativeLocation ? _buildRelativeLocation(el) : undefined;
         const tag = el ? el.tagName.toLowerCase() : undefined;
         return {
