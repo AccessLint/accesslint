@@ -69,7 +69,7 @@ configs.push({
   dts: true,
   deps: { neverBundle: external },
   publint: true,
-  attw: true,
+  attw: { excludeEntrypoints: ["./manager"] },
   ...browserDefaults,
 });
 

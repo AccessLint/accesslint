@@ -8,5 +8,5 @@ export default defineConfig({
   dts: true,
   treeshake: true,
   publint: true,
-  attw: true,
+  attw: { profile: "esm-only" },
 });
