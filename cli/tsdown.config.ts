@@ -10,7 +10,7 @@ const nodeDefaults = {
 export default defineConfig([
   {
     entry: ["./src/cli.ts"],
-    deps: { neverBundle: ["jsdom"], onlyBundle: false },
+    deps: { neverBundle: ["jsdom", "chrome-remote-interface"], onlyBundle: false },
     ...nodeDefaults,
   },
   {

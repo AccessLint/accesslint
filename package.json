@@ -5,6 +5,7 @@
   "workspaces": [
     "core",
     "cli",
+    "chrome",
     "bench",
     "codemod",
     "heal-diff",

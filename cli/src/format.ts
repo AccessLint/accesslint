@@ -1,4 +1,4 @@
-import type { AuditResult, Violation } from "@accesslint/core";
+import type { AuditResult, Violation, SourceLocation } from "@accesslint/core";
 
 const IMPACT_COLORS: Record<string, string> = {
   critical: "\x1b[31m", // red
@@ -10,11 +10,20 @@ const RESET = "\x1b[0m";
 const BOLD = "\x1b[1m";
 const DIM = "\x1b[2m";
 
+function formatSourceLocation(loc: SourceLocation): string {
+  const pos = loc.column != null ? `${loc.line}:${loc.column}` : `${loc.line}`;
+  const symbol = loc.symbol ? ` (${loc.symbol})` : "";
+  return `${loc.file}:${pos}${symbol}`;
+}
+
 function formatViolation(v: Violation, i: number): string {
   const color = IMPACT_COLORS[v.impact] ?? "";
   const lines = [`${BOLD}${color}${v.impact}${RESET} ${DIM}${v.ruleId}${RESET}`, `  ${v.message}`];
   if (v.selector) lines.push(`  ${DIM}${v.selector}${RESET}`);
   if (v.html) lines.push(`  ${DIM}${v.html}${RESET}`);
+  if (v.source && v.source.length > 0) {
+    lines.push(`  ${DIM}${v.source.map(formatSourceLocation).join(" ← ")}${RESET}`);
+  }
   return lines.join("\n");
 }
 
