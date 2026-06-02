@@ -18,8 +18,10 @@ its pid + throwaway profile to a state file, and exposes explicit `stop`.
 It also encodes the **HTTP-discovery trap**: a Chrome opened via the DevTools
 checkbox (or `chrome-devtools-mcp`) holds the debug port open but serves only a
 WebSocket — `chrome-remote-interface` can't drive it. This package treats a
-Chrome as usable only when `/json/version` answers, never on a bare TCP probe,
-and steps to a free port when one is squatted.
+Chrome as usable only when `/json/version` answers, never on a bare TCP probe.
+When you pin a port (`--port` or `ACCESSLINT_CDP_PORT`) it fails if that port is
+squatted, so callers stay pointed at the port they asked for; an unpinned
+`ensure` steps to the next free port instead.
 
 ## Usage
 
@@ -50,9 +52,10 @@ npx @accesslint/chrome stop --all
     --all        Stop every managed instance (stop)
 ```
 
-If the preferred port is occupied by an **undriveable** Chrome (checkbox mode),
-`ensure` steps to a free port and reports the actual one — read `port` from its
-JSON output.
+If the default port is occupied by an **undriveable** Chrome (checkbox mode),
+an unpinned `ensure` steps to a free port and reports the actual one — read
+`port` from its JSON output. If you pinned that port with `--port`, `ensure`
+fails instead; free the port or pass a different one.
 
 ### Environment
 

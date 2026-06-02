@@ -106,6 +106,12 @@ async function managedAlive(): Promise<{ state: ChromeState; info: DiscoveryInfo
  * Get-or-launch a driveable Chrome. Idempotent: attaches to one already serving
  * discovery on the requested port, or — when no port was pinned — to one we
  * already manage, rather than launching a second.
+ *
+ * When a port is pinned (explicit `port` or ACCESSLINT_CDP_PORT) and held by a
+ * process that doesn't answer discovery, ensure fails rather than stepping to
+ * another port: the caller asked for that exact port, so silently moving would
+ * leave them pointed at the wrong one. Only an unpinned request steps past a
+ * squatter to the next free port.
  */
 export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
   const port = resolvePort(opts);
@@ -114,24 +120,36 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
   const existing = await discovery(port);
   if (existing) return { ok: true, mode: "attached", host: HOST, port, browser: existing.Browser, managed: false };
 
-  if (!pinned) {
-    const reuse = await managedAlive();
-    if (reuse) {
-      const { state, info } = reuse;
-      return { ok: true, mode: "attached", host: HOST, port: state.port, browser: info.Browser, pid: state.pid, managed: true };
+  if (pinned) {
+    if (await tcpOpen(port)) {
+      throw new Error(
+        `Port ${port} is held by a process that doesn't serve CDP discovery ` +
+          `(likely a DevTools-checkbox or chrome-devtools-mcp Chrome). ` +
+          `Free it, or pick another port with --port.`,
+      );
     }
+    return launchOn(port, opts.headed);
   }
 
-  const launchPort = await freePort(port);
+  const reuse = await managedAlive();
+  if (reuse) {
+    const { state, info } = reuse;
+    return { ok: true, mode: "attached", host: HOST, port: state.port, browser: info.Browser, pid: state.pid, managed: true };
+  }
+
+  return launchOn(await freePort(port), opts.headed);
+}
+
+async function launchOn(port: number, headed?: boolean): Promise<EnsureResult> {
   const userDataDir = mkdtempSync(join(tmpdir(), "accesslint-chrome-profile-"));
   const flags = [
-    `--remote-debugging-port=${launchPort}`,
+    `--remote-debugging-port=${port}`,
     `--user-data-dir=${userDataDir}`, // required: Chrome won't expose port debugging on the default profile
     "--no-first-run",
     "--no-default-browser-check",
     "about:blank",
   ];
-  if (!opts.headed) flags.unshift("--headless=new");
+  if (!headed) flags.unshift("--headless=new");
 
   const child = spawn(locateChrome(), flags, { detached: true, stdio: "ignore" });
   child.unref();
@@ -141,15 +159,15 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
     throw new Error("Failed to spawn Chrome (no pid).");
   }
 
-  const info = await waitForDiscovery(launchPort);
+  const info = await waitForDiscovery(port);
   if (!info) {
     killTree(pid);
     rmSync(userDataDir, { recursive: true, force: true });
-    throw new Error(`Launched Chrome (pid ${pid}) but discovery never answered on ${HOST}:${launchPort}.`);
+    throw new Error(`Launched Chrome (pid ${pid}) but discovery never answered on ${HOST}:${port}.`);
   }
 
-  writeState({ pid, port: launchPort, userDataDir, startedAt: new Date().toISOString() });
-  return { ok: true, mode: "launched", host: HOST, port: launchPort, browser: info.Browser, pid, managed: true };
+  writeState({ pid, port, userDataDir, startedAt: new Date().toISOString() });
+  return { ok: true, mode: "launched", host: HOST, port, browser: info.Browser, pid, managed: true };
 }
 
 /** Tear down instances we launched (one port, or `all`), cleaning up profiles. */

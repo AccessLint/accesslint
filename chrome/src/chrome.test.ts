@@ -1,5 +1,7 @@
+import http from "node:http";
+import type { AddressInfo } from "node:net";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { resolvePort } from "./chrome.js";
+import { ensure, resolvePort } from "./chrome.js";
 import { listStates, readState, removeState, writeState } from "./state.js";
 
 describe("resolvePort", () => {
@@ -37,5 +39,22 @@ describe("state file roundtrip", () => {
     expect(listStates().some((s) => s.port === port)).toBe(true);
     removeState(port);
     expect(readState(port)).toBeNull();
+  });
+});
+
+describe("ensure", () => {
+  it("fails on a pinned port held by a non-CDP process instead of stepping", async () => {
+    const server = http.createServer((_req, res) => {
+      res.writeHead(404);
+      res.end();
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const port = (server.address() as AddressInfo).port;
+    try {
+      await expect(ensure({ port })).rejects.toThrow(/doesn't serve CDP discovery/);
+      expect(listStates().some((s) => s.port === port)).toBe(false);
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
   });
 });
