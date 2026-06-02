@@ -1,0 +1,38 @@
+{
+  "name": "@accesslint/chrome",
+  "version": "0.1.0",
+  "description": "Ensure a debuggable Chrome that serves the CDP HTTP discovery API, and manage its lifecycle. Launches detached so it outlives the launcher process; exposes ensure/stop/status.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "chrome"
+  },
+  "type": "module",
+  "bin": {
+    "accesslint-chrome": "./dist/cli.js"
+  },
+  "exports": {
+    ".": "./dist/chrome.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "dev": "bun src/cli.ts",
+    "test": "vitest run",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "chrome-launcher": "^1.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^25.3.0",
+    "citty": "^0.1.6",
+    "tsdown": "^0.21.9",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.4"
+  },
+  "license": "MIT"
+}
