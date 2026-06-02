@@ -1,22 +1,18 @@
 {
-  "name": "@accesslint/cli",
-  "version": "0.7.5",
+  "name": "@accesslint/diff",
+  "version": "0.0.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/AccessLint/accesslint.git",
-    "directory": "cli"
+    "directory": "diff"
   },
-  "description": "CLI tool for auditing HTML accessibility using @accesslint/core",
+  "description": "Diff accessibility violations of a set of routes between two builds (baseline vs candidate) over CDP",
   "type": "module",
   "bin": {
-    "accesslint": "./dist/cli.js"
+    "accesslint-diff": "./dist/cli.js"
   },
   "exports": {
-    ".": "./dist/audit.js",
-    "./cdp-audit": "./dist/cdp-audit.js",
-    "./inline-css": "./dist/inline-css.js",
-    "./ssrf-guard": "./dist/ssrf-guard.js",
-    "./safe-fetch": "./dist/safe-fetch.js"
+    ".": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -29,15 +25,13 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
+    "@accesslint/cli": "workspace:*",
     "@accesslint/core": "workspace:*",
-    "chrome-remote-interface": "^0.34.0",
-    "jsdom": "^26.0.0"
+    "@accesslint/matchers-internal": "workspace:*",
+    "chrome-remote-interface": "^0.34.0"
   },
   "devDependencies": {
-    "@accesslint/heal-diff": "workspace:*",
-    "@accesslint/matchers-internal": "workspace:*",
     "@types/chrome-remote-interface": "^0.33.0",
-    "@types/jsdom": "^28.0.0",
     "@types/node": "^25.3.0",
     "citty": "^0.1.6",
     "tsdown": "^0.21.9",

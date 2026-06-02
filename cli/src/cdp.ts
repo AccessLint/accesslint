@@ -1,8 +1,13 @@
 import CDP from "chrome-remote-interface";
 import type { AuditResult, Violation } from "@accesslint/core";
-import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 import { loadCoreIIFE } from "./iife-source.js";
+import {
+  buildAuditExpression,
+  mapInPageToSnapshot,
+  type InPageOk,
+  type InPageErr,
+} from "./cdp-audit.js";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 9222;
@@ -43,87 +48,6 @@ function findPageTarget(targets: TargetInfo[], url: string): TargetInfo | undefi
   const exact = targets.find((t) => t.type === "page" && t.url === url);
   if (exact) return exact;
   return targets.find((t) => t.type === "page" && t.url.startsWith(url));
-}
-
-function buildAuditExpression(iifeBytes: string, coreOptions: RunLiveAuditOptions["coreOptions"], selector?: string): string {
-  const optsJson = JSON.stringify(coreOptions);
-  const selectorJson = selector ? JSON.stringify(selector) : "null";
-  return `${iifeBytes}
-;(async () => {
-  try {
-    const __r = window.AccessLint.runAudit(document, ${optsJson});
-    if (typeof window.AccessLint.attachReactFiberSource === "function") {
-      try { await window.AccessLint.attachReactFiberSource(__r.violations); } catch (_e) {}
-    }
-    const __selector = ${selectorJson};
-    let __violations = __r.violations || [];
-    if (__selector) {
-      const __roots = Array.from(document.querySelectorAll(__selector));
-      if (!__roots.length) throw new Error("Selector not found after wait: " + __selector);
-      __violations = __violations.filter(function (v) {
-        const el = document.querySelector(v.selector);
-        return el && __roots.some(function (root) { return root === el || root.contains(el); });
-      });
-    }
-    const AL = window.AccessLint;
-    const _extractAnchor = typeof AL.extractAnchor === "function" ? AL.extractAnchor : null;
-    const _getComputedRole = typeof AL.getComputedRole === "function" ? AL.getComputedRole : null;
-    const _getAccessibleName = typeof AL.getAccessibleName === "function" ? AL.getAccessibleName : null;
-    const _buildRelativeLocation = typeof AL.buildRelativeLocation === "function" ? AL.buildRelativeLocation : null;
-    return JSON.stringify({
-      ok: true,
-      url: __r.url,
-      timestamp: __r.timestamp,
-      ruleCount: __r.ruleCount,
-      skippedRules: __r.skippedRules || [],
-      violations: __violations.map(function (v) {
-        const el = v.element || null;
-        const anchor = el && _extractAnchor ? _extractAnchor(el) : undefined;
-        const roleBase = el && _getComputedRole ? _getComputedRole(el) : undefined;
-        const roleName = el && _getAccessibleName ? _getAccessibleName(el).trim() : undefined;
-        const role = roleBase ? (roleName ? roleBase + '[name="' + roleName + '"]' : roleBase) : undefined;
-        const relativeLocation = el && _buildRelativeLocation ? _buildRelativeLocation(el) : undefined;
-        const tag = el ? el.tagName.toLowerCase() : undefined;
-        return {
-          ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact,
-          message: v.message, source: v.source,
-          anchor: anchor || undefined,
-          role: role || undefined,
-          relativeLocation: relativeLocation || undefined,
-          tag: tag || undefined,
-        };
-      }),
-    });
-  } catch (err) {
-    return JSON.stringify({ ok: false, error: String((err && err.message) || err) });
-  }
-})()`;
-}
-
-interface InPageViolation {
-  ruleId: string;
-  selector: string;
-  html?: string;
-  impact: Violation["impact"];
-  message: string;
-  source?: Violation["source"];
-  anchor?: string;
-  role?: string;
-  relativeLocation?: string;
-  tag?: string;
-}
-
-interface InPageOk {
-  ok: true;
-  url: string;
-  timestamp: number;
-  ruleCount: number;
-  skippedRules: { ruleId: string; error: string }[];
-  violations: InPageViolation[];
-}
-interface InPageErr {
-  ok: false;
-  error: string;
 }
 
 function summarizeException(detail: { text?: string; exception?: { description?: string } }): string {
@@ -261,15 +185,7 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       return { ok: false, error: `In-page audit threw: ${parsed.error}` };
     }
 
-    const snapshotViolations: SnapshotViolation[] = parsed.violations.map((v) => {
-      const sv: SnapshotViolation = { ruleId: v.ruleId, selector: v.selector };
-      if (v.anchor) sv.anchor = v.anchor;
-      if (v.role) sv.role = v.role;
-      if (v.relativeLocation) sv.relativeLocation = v.relativeLocation;
-      if (v.tag) sv.tag = v.tag;
-      if (v.html) sv.htmlFingerprint = sha1Short(normalizeHtml(v.html));
-      return sv;
-    });
+    const snapshotViolations: SnapshotViolation[] = mapInPageToSnapshot(parsed.violations);
 
     return {
       ok: true,
