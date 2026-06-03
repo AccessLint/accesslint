@@ -6,7 +6,6 @@
     "core",
     "cli",
     "chrome",
-    "diff",
     "bench",
     "codemod",
     "heal-diff",

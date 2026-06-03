@@ -105,27 +105,6 @@
         "vitest": "4.1.4",
       },
     },
-    "diff": {
-      "name": "@accesslint/diff",
-      "version": "0.0.0",
-      "bin": {
-        "accesslint-diff": "./dist/cli.js",
-      },
-      "dependencies": {
-        "@accesslint/cli": "workspace:*",
-        "@accesslint/core": "workspace:*",
-        "@accesslint/matchers-internal": "workspace:*",
-        "chrome-remote-interface": "^0.34.0",
-      },
-      "devDependencies": {
-        "@types/chrome-remote-interface": "^0.33.0",
-        "@types/node": "^25.3.0",
-        "citty": "^0.1.6",
-        "tsdown": "^0.21.9",
-        "typescript": "^5.7.0",
-        "vitest": "^4.1.4",
-      },
-    },
     "heal-diff": {
       "name": "@accesslint/heal-diff",
       "version": "0.1.0",
@@ -281,8 +260,6 @@
     "@accesslint/codemod": ["@accesslint/codemod@workspace:codemod"],
 
     "@accesslint/core": ["@accesslint/core@workspace:core"],
-
-    "@accesslint/diff": ["@accesslint/diff@workspace:diff"],
 
     "@accesslint/heal-diff": ["@accesslint/heal-diff@workspace:heal-diff"],
 

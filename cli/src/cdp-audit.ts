@@ -12,8 +12,7 @@ export interface CoreAuditExprOptions {
 
 /**
  * Build the in-page expression that injects @accesslint/core and runs an audit.
- * Shared between the CLI's single-shot live audit and @accesslint/diff's
- * persistent session so both produce byte-identical violation identities.
+ * Used by the CLI's single-shot live audit to produce stable violation identities.
  */
 export function buildAuditExpression(
   iifeBytes: string,
