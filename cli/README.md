@@ -24,7 +24,16 @@ npx -y @accesslint/cli scan https://example.com
 
 # Pipe HTML via stdin
 curl -s https://example.com | npx -y @accesslint/cli scan
+
+# Audit a named target from accesslint.config.json (see `init` below)
+npx -y @accesslint/cli scan dev
 ```
+
+A non-URL, non-file argument is resolved as a **target name** from `accesslint.config.json`
+(the local overlay takes precedence), expanding to that target's `url` and options; explicit
+flags override the target's. With **no** argument, the config's `default` target is audited. An
+unknown name lists the available targets. To pipe HTML in a project that has a config, pass
+`--stdin`.
 
 ### Options
 

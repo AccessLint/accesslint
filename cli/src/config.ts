@@ -77,3 +77,51 @@ export async function writeConfigFiles(opts: {
   }
   return { wrote, gitignoreUpdated };
 }
+
+async function readConfigFile(path: string): Promise<AccessLintConfig | null> {
+  let raw: string;
+  try {
+    raw = await readFile(path, "utf8");
+  } catch {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as AccessLintConfig;
+  } catch (err) {
+    throw new Error(`Invalid JSON in ${path}: ${(err as Error).message}`);
+  }
+}
+
+export async function loadConfig(cwd: string): Promise<AccessLintConfig | null> {
+  const base = await readConfigFile(join(cwd, CONFIG_FILENAME));
+  const local = await readConfigFile(join(cwd, LOCAL_CONFIG_FILENAME));
+  if (!base && !local) return null;
+  return {
+    default: local?.default ?? base?.default,
+    targets: { ...(base?.targets ?? {}), ...(local?.targets ?? {}) },
+  };
+}
+
+export type ResolvedTarget = Target & { name: string };
+
+export function selectTarget(
+  config: AccessLintConfig | null,
+  source: string | undefined,
+): ResolvedTarget | null {
+  if (!config) return null;
+  const names = Object.keys(config.targets);
+
+  if (source !== undefined) {
+    if (config.targets[source]) return { name: source, ...config.targets[source] };
+    if (/^[a-zA-Z0-9_-]+$/.test(source) && names.length > 0) {
+      throw new Error(`Unknown target "${source}". Available targets: ${names.join(", ")}`);
+    }
+    return null;
+  }
+
+  if (config.default) {
+    const target = config.targets[config.default];
+    if (target) return { name: config.default, ...target };
+  }
+  return null;
+}

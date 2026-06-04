@@ -13,6 +13,7 @@ import {
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotResult } from "@accesslint/matchers-internal/snapshot";
 import { initCommand } from "./init.js";
+import { loadConfig, selectTarget } from "./config.js";
 
 const { version } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
@@ -82,6 +83,11 @@ const scanCommand = defineCommand({
       description: "Only attach to an existing tab matching the URL; fail if not found",
       default: false,
     },
+    stdin: {
+      type: "boolean",
+      description: "Read HTML from stdin instead of resolving a config target",
+      default: false,
+    },
     snapshot: {
       type: "string",
       description: "Snapshot name — capture a baseline and fail only on new violations (URL only)",
@@ -98,21 +104,32 @@ const scanCommand = defineCommand({
   },
   async run({ args }) {
     try {
-      const disabledRules = args.disable
-        ? args.disable.split(",").map((s: string) => s.trim())
-        : undefined;
+      const config = await loadConfig(process.cwd());
+      const target = args.stdin ? null : selectTarget(config, args.source);
+      if (target) {
+        console.error(`accesslint: target "${target.name}" → ${target.url}`);
+      }
 
-      if (args.source && isURL(args.source)) {
+      const source = target ? target.url : args.stdin ? undefined : args.source;
+      const includeAAA = Boolean(args["include-aaa"] || target?.includeAAA);
+      const disabledRules =
+        (args.disable ? args.disable.split(",").map((s: string) => s.trim()) : undefined) ??
+        target?.disable;
+      const selector = args.selector ?? target?.selector;
+      const waitFor = args["wait-for"] ?? target?.waitFor;
+      const snapshotDir = args["snapshot-dir"] ?? target?.snapshotDir;
+
+      if (source && isURL(source)) {
         const outcome = await runLiveAudit({
-          url: args.source,
+          url: source,
           host: args.host,
           port: args.port ? Number(args.port) : undefined,
           attachExisting: args.attach,
-          waitFor: args["wait-for"],
+          waitFor,
           waitTimeoutMs: args["wait-timeout"] ? Number(args["wait-timeout"]) : undefined,
-          selector: args.selector,
+          selector,
           coreOptions: {
-            includeAAA: args["include-aaa"],
+            includeAAA,
             disabledRules,
           },
         });
@@ -124,7 +141,7 @@ const scanCommand = defineCommand({
 
         if (args.snapshot) {
           validateSnapshotName(args.snapshot);
-          const snapshotPath = resolveSnapshotPath(args.snapshot, args["snapshot-dir"]);
+          const snapshotPath = resolveSnapshotPath(args.snapshot, snapshotDir);
           const snap = evaluateSnapshot(outcome.snapshotViolations, snapshotPath, {
             update: args["update-snapshot"] || isUpdateMode(),
             name: args.snapshot,
@@ -157,9 +174,9 @@ const scanCommand = defineCommand({
         process.exit(outcome.result.violations.length > 0 ? 1 : 0);
       }
 
-      const html = await resolveInput(args.source);
+      const html = await resolveInput(source);
       const result = audit(html, {
-        includeAAA: args["include-aaa"],
+        includeAAA,
         disabledRules,
       });
 
