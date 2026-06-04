@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import type { Violation, DiffResult, Rule } from "@accesslint/core";
+import type { Violation, Rule } from "@accesslint/core";
 
 vi.mock("@accesslint/core", async (importOriginal) => {
   const original = await importOriginal<typeof import("@accesslint/core")>();
@@ -17,8 +17,7 @@ vi.mock("@accesslint/core", async (importOriginal) => {
   };
 });
 
-const { formatViolations, formatDiff, formatRuleTable, filterByImpact, IMPACT_ORDER } =
-  await import("../src/lib/format.js");
+const { formatViolations, formatRuleTable, filterByImpact } = await import("../src/lib/format.js");
 
 function makeViolation(overrides: Partial<Violation> = {}): Violation {
   return {
@@ -203,36 +202,6 @@ describe("formatViolations", () => {
   });
 });
 
-describe("formatDiff", () => {
-  it("formats a diff with fixed, new, and remaining", () => {
-    const diff: DiffResult = {
-      fixed: [makeViolation({ ruleId: "fixed-rule" })],
-      added: [makeViolation({ ruleId: "new-rule" })],
-      unchanged: [makeViolation({ ruleId: "remaining-rule" })],
-    };
-    const output = formatDiff(diff);
-    expect(output).toContain("1 fixed, 1 new, 1 remaining");
-    expect(output).toContain("FIXED:");
-    expect(output).toContain("fixed-rule");
-    expect(output).toContain("NEW:");
-    expect(output).toContain("new-rule");
-    expect(output).toContain("REMAINING:");
-    expect(output).toContain("remaining-rule");
-  });
-
-  it("omits empty sections", () => {
-    const diff: DiffResult = {
-      fixed: [makeViolation()],
-      added: [],
-      unchanged: [],
-    };
-    const output = formatDiff(diff);
-    expect(output).toContain("FIXED:");
-    expect(output).not.toContain("NEW:");
-    expect(output).not.toContain("REMAINING:");
-  });
-});
-
 describe("filterByImpact", () => {
   it("filters violations at or above the threshold", () => {
     const items = [
@@ -284,20 +253,6 @@ describe("formatViolations with min_impact", () => {
   });
 });
 
-describe("formatDiff with min_impact", () => {
-  it("filters all diff categories by impact", () => {
-    const diff: DiffResult = {
-      fixed: [makeViolation({ impact: "minor", ruleId: "fixed-minor" })],
-      added: [makeViolation({ impact: "critical", ruleId: "added-critical" })],
-      unchanged: [makeViolation({ impact: "moderate", ruleId: "remaining-moderate" })],
-    };
-    const output = formatDiff(diff, { minImpact: "serious" });
-    expect(output).not.toContain("fixed-minor");
-    expect(output).toContain("added-critical");
-    expect(output).not.toContain("remaining-moderate");
-  });
-});
-
 describe("formatRuleTable", () => {
   it("returns message for no matching rules", () => {
     expect(formatRuleTable([])).toBe("No rules match the specified filters.");
@@ -322,16 +277,6 @@ describe("formatRuleTable", () => {
 describe("browserHint visibility", () => {
   it("shows browserHint when present", () => {
     const output = formatViolations([makeViolation()]);
-    expect(output).toContain("Browser hint: Screenshot the image");
-  });
-
-  it("shows browserHint in diff NEW section", () => {
-    const diff: DiffResult = {
-      fixed: [],
-      added: [makeViolation()],
-      unchanged: [],
-    };
-    const output = formatDiff(diff);
     expect(output).toContain("Browser hint: Screenshot the image");
   });
 });
@@ -366,24 +311,6 @@ describe("compact format", () => {
 
   it("formatViolations compact handles empty result", () => {
     expect(formatViolations([], { format: "compact" })).toBe("No accessibility violations found.");
-  });
-
-  it("formatDiff compact uses +/- prefixes and counts header", () => {
-    const diff: DiffResult = {
-      fixed: [makeViolation({ ruleId: "fixed-rule", selector: "input.email" })],
-      added: [
-        makeViolation({
-          ruleId: "added-rule",
-          selector: "img.hero",
-          fix: { type: "add-attribute", attribute: "alt", value: "" },
-        }),
-      ],
-      unchanged: [makeViolation({ ruleId: "still-broken" })],
-    };
-    const output = formatDiff(diff, { format: "compact" });
-    expect(output).toContain("diff: +1 new, -1 fixed, 1 unchanged");
-    expect(output).toContain("+[CRITICAL] added-rule at img.hero");
-    expect(output).toContain("-[CRITICAL] fixed-rule at input.email");
   });
 
   it("formatRuleTable compact emits one rule per line", () => {

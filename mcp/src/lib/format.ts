@@ -1,10 +1,4 @@
-import type {
-  Violation,
-  FixSuggestion,
-  Rule,
-  DiffResult,
-  SourceLocation,
-} from "@accesslint/core";
+import type { Violation, FixSuggestion, Rule, SourceLocation } from "@accesslint/core";
 import { getRuleById } from "@accesslint/core";
 
 const MAX_VIOLATIONS = 50;
@@ -48,8 +42,7 @@ function formatSourceList(sources: SourceLocation[]): string {
 
 function formatCompactViolation(v: EnrichedViolation): string {
   const fix = v.fix ? ` [fix: ${formatFixSuggestion(v.fix)}]` : "";
-  const source =
-    v.source && v.source.length > 0 ? ` @${formatSourceLocation(v.source[0])}` : "";
+  const source = v.source && v.source.length > 0 ? ` @${formatSourceLocation(v.source[0])}` : "";
   return `[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}${source} — ${v.message}${fix}`;
 }
 
@@ -264,64 +257,6 @@ export function formatViolations(violations: Violation[], options?: FormatOption
     );
   }
   return result;
-}
-
-export function formatDiff(diff: DiffResult, options?: FormatOptions): string {
-  const fixed = options?.minImpact ? filterByImpact(diff.fixed, options.minImpact) : diff.fixed;
-  const added = options?.minImpact ? filterByImpact(diff.added, options.minImpact) : diff.added;
-  const unchanged = options?.minImpact
-    ? filterByImpact(diff.unchanged, options.minImpact)
-    : diff.unchanged;
-
-  if (options?.format === "compact") {
-    const lines: string[] = [
-      `diff: +${added.length} new, -${fixed.length} fixed, ${unchanged.length} unchanged`,
-    ];
-    for (const v of added) {
-      lines.push(`+${formatCompactViolation(enrichViolation(v))}`);
-    }
-    for (const v of fixed) {
-      lines.push(`-[${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}`);
-    }
-    return lines.join("\n");
-  }
-
-  const lines: string[] = [];
-  lines.push(`Summary: ${fixed.length} fixed, ${added.length} new, ${unchanged.length} remaining`);
-
-  if (fixed.length > 0) {
-    lines.push("");
-    lines.push("FIXED:");
-    for (const v of fixed) {
-      lines.push(`  - [${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}`);
-    }
-  }
-
-  if (added.length > 0) {
-    lines.push("");
-    lines.push("NEW:");
-    for (const v of added) {
-      const enriched = enrichViolation(v);
-      lines.push(`  - [${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}`);
-      lines.push(`    ${v.message}`);
-      if (enriched.fix) {
-        lines.push(`    Fix: ${formatFixSuggestion(enriched.fix)}`);
-      }
-      if (enriched.browserHint) {
-        lines.push(`    Browser hint: ${enriched.browserHint}`);
-      }
-    }
-  }
-
-  if (unchanged.length > 0) {
-    lines.push("");
-    lines.push("REMAINING:");
-    for (const v of unchanged) {
-      lines.push(`  - [${v.impact.toUpperCase()}] ${v.ruleId} at ${v.selector}`);
-    }
-  }
-
-  return lines.join("\n");
 }
 
 export function formatRuleTable(rules: Rule[], options?: { format?: FormatMode }): string {

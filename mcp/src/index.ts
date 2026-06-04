@@ -1,16 +1,12 @@
 import { readFileSync } from "node:fs";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import { registerAuditHtml } from "./tools/audit-html.js";
-import { registerAuditBrowserScript } from "./tools/audit-browser-script.js";
-import { registerAuditBrowserCollect } from "./tools/audit-browser-collect.js";
 import { registerAuditLive } from "./tools/audit-live.js";
 import { registerListRules } from "./tools/list-rules.js";
-import { registerAuditDiff } from "./tools/audit-diff.js";
 import { registerExplainRule } from "./tools/explain-rule.js";
 import { registerAuditReactComponentPrompt } from "./prompts/audit-react-component.js";
-import { registerAuditLivePagePrompt } from "./prompts/audit-live-page.js";
+import { stopLaunchedChrome } from "./lib/cli-runner.js";
 
 const { version } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
@@ -23,19 +19,25 @@ const server = new McpServer(
   },
   {
     instructions:
-      "For live-URL audits prefer audit_live — it auto-launches Chrome minimized if no debug session is reachable, so no manual setup is needed. Fall back to audit_browser_script + audit_browser_collect only when a browser MCP is available and the user needs their existing browser session. When a violation includes a 'Browser hint', use your browser tools (screenshot, inspect) to follow the hint. To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt.",
+      "For URL audits use audit_live — it ensures a debuggable Chrome (auto-launching one headless via @accesslint/chrome if none is reachable, no manual setup needed), then runs the @accesslint/core engine against the live DOM. For raw HTML strings or files, use audit_html (Read the file first, then pass the string). To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt. Use list_rules and explain_rule for rule metadata. To diff a page against a baseline, use the accesslint diff skill (on-disk snapshots), not this server.",
   },
 );
 
 registerAuditHtml(server);
-registerAuditBrowserScript(server);
-registerAuditBrowserCollect(server);
 registerAuditLive(server);
 registerListRules(server);
-registerAuditDiff(server);
 registerExplainRule(server);
 registerAuditReactComponentPrompt(server);
-registerAuditLivePagePrompt(server);
+
+// Best-effort teardown: stop only the Chrome we launched. Registering a signal
+// handler suppresses Node's default termination, so we must exit explicitly.
+// (Plain `process.on('exit')` runs synchronously and can't await the stop, so
+// we don't hook it — @accesslint/chrome's `ensure` reuse is the real backstop.)
+const teardown = (): void => {
+  void stopLaunchedChrome().finally(() => process.exit(0));
+};
+process.once("SIGINT", teardown);
+process.once("SIGTERM", teardown);
 
 const transport = new StdioServerTransport();
 await server.connect(transport);

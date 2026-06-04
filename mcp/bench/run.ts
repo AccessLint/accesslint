@@ -2,7 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
-import { audit } from "../src/lib/state.js";
+import { audit } from "@accesslint/cli";
 import { formatViolations } from "../src/lib/format.js";
 import { invokeClaude, invokeClaudeFix } from "./lib/claude.js";
 import { claudeToRawViolations } from "./lib/matching.js";

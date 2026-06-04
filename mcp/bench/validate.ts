@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import { audit } from "../src/lib/state.js";
+import { audit } from "@accesslint/cli";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 

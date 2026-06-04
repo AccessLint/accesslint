@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import type { ComponentType } from "react";
 import { createElement } from "react";
-import { audit } from "../../src/lib/state.js";
+import { audit } from "@accesslint/cli";
 import type { ViolationFingerprint } from "./types.js";
 
 export function renderComponent(Component: ComponentType): string {

@@ -35,20 +35,3 @@ export function computeDisabledRules(options: FilterOptions): string[] | undefin
 
   return disabled.size > 0 ? Array.from(disabled) : undefined;
 }
-
-/**
- * Post-filter a violation list by WCAG criteria. Use when violations are
- * already collected (e.g. from audit_diff or audit_browser_collect) and we
- * want to keep only those whose rule maps to the requested criteria.
- */
-export function filterViolationsByWcag<T extends { ruleId: string }>(
-  violations: T[],
-  wcag: string[],
-): T[] {
-  const active = getActiveRules();
-  const matchingIds = new Set<string>();
-  for (const r of active) {
-    if (r.wcag.some((w) => wcag.includes(w))) matchingIds.add(r.id);
-  }
-  return violations.filter((v) => matchingIds.has(v.ruleId));
-}

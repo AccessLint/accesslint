@@ -1,5 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { clearStoredAudits } from "../src/lib/state.js";
+import { describe, it, expect } from "vitest";
 
 type ToolHandler = (
   args: unknown,
@@ -20,10 +19,6 @@ function makeFakeServer(): { server: FakeServer; handlers: Record<string, ToolHa
 }
 
 describe("audit_html — new options", () => {
-  beforeEach(() => {
-    clearStoredAudits();
-  });
-
   it("compact format produces a one-line summary plus per-violation lines", async () => {
     const { registerAuditHtml } = await import("../src/tools/audit-html.js");
     const { server, handlers } = makeFakeServer();
@@ -78,179 +73,6 @@ describe("audit_html — new options", () => {
   });
 });
 
-describe("audit_browser_script — wcag/rules filters", () => {
-  it("merges wcag allow-list into the disabledRules baked into the script", async () => {
-    const { registerAuditBrowserScript } = await import(
-      "../src/tools/audit-browser-script.js"
-    );
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditBrowserScript(server);
-
-    const res = await handlers.audit_browser_script({
-      inject: false,
-      wcag: ["1.4.3"], // only contrast
-    });
-    expect(res.isError).toBeUndefined();
-    // Two text content entries: instructions + script block
-    const scriptBlock = res.content[1].text;
-    // The script body should reference disabledRules and exclude the contrast rule
-    expect(scriptBlock).toContain("disabledRules");
-    expect(scriptBlock).not.toContain("distinguishable/color-contrast");
-    // Other rules should be in the disabled list
-    expect(scriptBlock).toContain("text-alternatives/img-alt");
-  });
-});
-
-describe("audit_diff — explicit `before` baseline", () => {
-  beforeEach(() => {
-    clearStoredAudits();
-  });
-
-  it("post-filters all three diff buckets by wcag criterion", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { audit } = await import("../src/lib/state.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    audit('<img src="photo.jpg"><a href="/x">click here</a>', { name: "before" });
-    const res = await handlers.audit_diff({
-      html: '<img src="photo.jpg" alt="ok"><a href="/x">click here</a>',
-      before: "before",
-      wcag: ["1.1.1"],
-      format: "compact",
-    });
-    const text = res.content[0].text;
-    // Only 1.1.1 violations should remain — the link-name (2.4.4) should not appear
-    expect(text).not.toContain("navigable/link-name");
-    expect(text).toContain("diff:");
-  });
-
-  it("errors when `before` names a missing audit", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const res = await handlers.audit_diff({
-      html: '<img src="x.jpg" alt="x">',
-      before: "nope",
-    });
-    expect(res.isError).toBe(true);
-    expect(res.content[0].text).toMatch(/No stored audit named "nope"/);
-  });
-});
-
-describe("audit_diff", () => {
-  beforeEach(() => {
-    clearStoredAudits();
-  });
-
-  it("first call returns 'Baseline established' plus the audit", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const res = await handlers.audit_diff({
-      html: '<img src="photo.jpg">',
-      format: "compact",
-    });
-    expect(res.isError).toBeUndefined();
-    const text = res.content[0].text;
-    expect(text).toContain("Baseline established");
-    expect(text).toContain("text-alternatives/img-alt");
-  });
-
-  it("second call returns a diff against the prior baseline", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const html = '<img src="photo.jpg">';
-    await handlers.audit_diff({ html });
-    const res = await handlers.audit_diff({
-      html: '<img src="photo.jpg" alt="ok">',
-      format: "compact",
-    });
-    // Same baseline-html input still hits the same key; the *content* differs
-    // so this is actually a different key. Use the same html to test diff-against-prior.
-    // The test below covers that path.
-    expect(res.content[0].text).toContain("Baseline established");
-  });
-
-  it("baselines per-key when called repeatedly with the same html", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const html = '<img src="photo.jpg">';
-    const first = await handlers.audit_diff({ html });
-    expect(first.content[0].text).toContain("Baseline established");
-
-    const second = await handlers.audit_diff({ html, format: "compact" });
-    // Same html → same key → diff against the stored baseline (which equals new audit)
-    const text = second.content[0].text;
-    expect(text).not.toContain("Baseline established");
-    expect(text).toMatch(/diff:/);
-  });
-
-  it("rejects when zero sources are provided", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const res = await handlers.audit_diff({});
-    expect(res.isError).toBe(true);
-    expect(res.content[0].text).toMatch(/exactly one of/);
-  });
-
-  it("rejects when more than one source is provided", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const res = await handlers.audit_diff({
-      html: "<p>x</p>",
-      audit_name: "anything",
-    });
-    expect(res.isError).toBe(true);
-    expect(res.content[0].text).toMatch(/exactly one of/);
-  });
-
-  it("audit_name reuses an already-stored audit", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { audit } = await import("../src/lib/state.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    audit('<img src="photo.jpg">', { name: "live-audit" });
-    const first = await handlers.audit_diff({ audit_name: "live-audit", format: "compact" });
-    expect(first.content[0].text).toContain("Baseline established");
-
-    audit('<img src="photo.jpg" alt="ok">', { name: "live-audit" });
-    const second = await handlers.audit_diff({ audit_name: "live-audit", format: "compact" });
-    expect(second.content[0].text).toMatch(/diff:/);
-  });
-
-  it("returns error for unknown audit_name", async () => {
-    const { registerAuditDiff } = await import("../src/tools/audit-diff.js");
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditDiff(server);
-
-    const res = await handlers.audit_diff({ audit_name: "missing" });
-    expect(res.isError).toBe(true);
-    expect(res.content[0].text).toMatch(/No stored audit/);
-  });
-});
-
 describe("explain_rule", () => {
   it("returns metadata for a known rule", async () => {
     const { registerExplainRule } = await import("../src/tools/explain-rule.js");
@@ -290,46 +112,5 @@ describe("list_rules — compact format", () => {
     const text = res.content[0].text;
     expect(text).not.toContain("|");
     expect(text.split("\n")[0]).toMatch(/^\d+ rule/);
-  });
-});
-
-describe("audit_browser_collect — compact format", () => {
-  beforeEach(() => {
-    clearStoredAudits();
-  });
-
-  it("compact format produces one-line summary plus per-violation lines", async () => {
-    const { registerAuditBrowserCollect } = await import(
-      "../src/tools/audit-browser-collect.js"
-    );
-    const { server, handlers } = makeFakeServer();
-    // @ts-expect-error fake server stub
-    registerAuditBrowserCollect(server);
-
-    const raw = JSON.stringify({
-      url: "http://example.com",
-      timestamp: 1,
-      ruleCount: 1,
-      skippedRules: [],
-      violations: [
-        {
-          ruleId: "text-alternatives/img-alt",
-          selector: "img",
-          html: '<img src="photo.jpg">',
-          impact: "critical",
-          message: "Image element missing alt attribute.",
-        },
-      ],
-    });
-
-    const res = await handlers.audit_browser_collect({
-      raw_result: raw,
-      format: "compact",
-    });
-    expect(res.isError).toBeUndefined();
-    const text = res.content[0].text;
-    expect(text.split("\n")[0]).toMatch(/^1 violation/);
-    expect(text).toContain("[CRITICAL] text-alternatives/img-alt");
-    expect(text).not.toContain("HTML:");
   });
 });
