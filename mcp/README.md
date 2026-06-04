@@ -29,7 +29,7 @@ For live-page audits, a Chrome (or Chromium) install must be discoverable on the
 - **list_rules** — List available WCAG rules with optional filters by category, level, fixability, or criterion.
 - **explain_rule** — Detailed metadata for a single rule (description, WCAG criteria, fixability, browser hint, guidance).
 
-File-on-disk audits go through `Read` + `audit_html`; for static-site CI workflows, use the [`@accesslint/cli`](https://www.npmjs.com/package/@accesslint/cli) package directly.
+File-on-disk audits go through `Read` + `audit_html`; for static-site CI workflows, use the [`@accesslint/cli`](https://www.npmjs.com/package/@accesslint/cli) package directly (`accesslint scan <file-or-url>`).
 
 All audit and diff tools accept an optional `min_impact` parameter to filter results by severity. Valid values, from most to least severe: `critical`, `serious`, `moderate`, `minor`. When set, only violations at that level or above are shown.
 

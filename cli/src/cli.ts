@@ -12,6 +12,7 @@ import {
   validateSnapshotName,
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotResult } from "@accesslint/matchers-internal/snapshot";
+import { initCommand } from "./init.js";
 
 const { version } = JSON.parse(
   readFileSync(new URL("../package.json", import.meta.url), "utf8"),
@@ -21,11 +22,10 @@ function isURL(source: string): boolean {
   return /^https?:\/\//i.test(source);
 }
 
-const main = defineCommand({
+const scanCommand = defineCommand({
   meta: {
-    name: "accesslint",
-    version,
-    description: "Audit HTML for accessibility violations",
+    name: "scan",
+    description: "Audit a URL, HTML file, or stdin for accessibility violations",
   },
   args: {
     source: {
@@ -57,7 +57,8 @@ const main = defineCommand({
     port: {
       type: "string",
       alias: "p",
-      description: "CDP port to connect to, e.g. from `npx @accesslint/chrome ensure` (URL audits only, default: 9222)",
+      description:
+        "CDP port to connect to, e.g. from `npx @accesslint/chrome ensure` (URL audits only, default: 9222)",
     },
     host: {
       type: "string",
@@ -129,10 +130,23 @@ const main = defineCommand({
             name: args.snapshot,
           });
           if (args.format === "json") {
-            const newKeys = new Set(snap.newViolations.map(v => v.ruleId + "\0" + v.selector));
-            const violations = outcome.result.violations.filter(v => newKeys.has(v.ruleId + "\0" + v.selector));
+            const newKeys = new Set(snap.newViolations.map((v) => v.ruleId + "\0" + v.selector));
+            const violations = outcome.result.violations.filter((v) =>
+              newKeys.has(v.ruleId + "\0" + v.selector),
+            );
             const preExisting = outcome.snapshotViolations.length - snap.newViolations.length;
-            console.log(format({ ...outcome.result, violations, fixed: snap.fixedViolations, preExisting } as never, args.format, args.pretty));
+            console.log(
+              format(
+                {
+                  ...outcome.result,
+                  violations,
+                  fixed: snap.fixedViolations,
+                  preExisting,
+                } as never,
+                args.format,
+                args.pretty,
+              ),
+            );
           } else {
             console.log(formatSnapshotResult(snap, args.snapshot));
           }
@@ -186,7 +200,12 @@ function formatSnapshotResult(snap: SnapshotResult, name: string): string {
     if (snap.fixedViolations.length > 0) reasons.push(`${snap.fixedViolations.length} fixed`);
     if (snap.healed.length > 0) reasons.push(`${snap.healed.length} healed`);
     if (snap.refreshed.length > 0) reasons.push(`${snap.refreshed.length} refreshed`);
-    const verb = snap.fixedViolations.length > 0 ? "ratcheted" : snap.healed.length > 0 ? "updated" : "refreshed";
+    const verb =
+      snap.fixedViolations.length > 0
+        ? "ratcheted"
+        : snap.healed.length > 0
+          ? "updated"
+          : "refreshed";
     const lines = [`Snapshot "${name}" ${verb} (${reasons.join(", ")}).`];
     for (const h of snap.healed) {
       lines.push(`  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`);
@@ -196,5 +215,17 @@ function formatSnapshotResult(snap: SnapshotResult, name: string): string {
 
   return `Matches snapshot "${name}".`;
 }
+
+const main = defineCommand({
+  meta: {
+    name: "accesslint",
+    version,
+    description: "Audit HTML for accessibility violations",
+  },
+  subCommands: {
+    scan: scanCommand,
+    init: initCommand,
+  },
+});
 
 runMain(main);
