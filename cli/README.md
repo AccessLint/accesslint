@@ -38,8 +38,8 @@ unknown name lists the available targets. To pipe HTML in a project that has a c
 ### Options
 
 ```
--f, --format <fmt>    Output format: text, json (default: text)
---pretty              Pretty-print json output (default: single line)
+-f, --format <fmt>    Output format: text, json, sarif (default: text)
+--pretty              Pretty-print json/sarif output (default: single line)
 --include-aaa         Include AAA-level rules
 -d, --disable <ids>   Comma-separated rule IDs to disable
 -h, --help            Show help
@@ -77,6 +77,9 @@ echo '<img src="photo.jpg">' | npx -y @accesslint/cli scan
 
 # JSON output
 npx -y @accesslint/cli scan --format json index.html
+
+# SARIF for GitHub code scanning (upload via github/codeql-action/upload-sarif)
+npx -y @accesslint/cli scan --format sarif https://localhost:3000 > accesslint.sarif
 
 # Audit a fragment — page-level rules (document-title, html-has-lang) are skipped automatically
 echo '<button></button>' | npx -y @accesslint/cli scan

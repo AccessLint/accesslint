@@ -64,6 +64,7 @@ export function buildAuditExpression(
           message: v.message, source: v.source,
           wcag: rule && rule.wcag && rule.wcag.length ? rule.wcag : undefined,
           level: rule ? rule.level : undefined,
+          description: rule ? rule.description : undefined,
           anchor: anchor || undefined,
           role: role || undefined,
           relativeLocation: relativeLocation || undefined,
@@ -86,6 +87,7 @@ export interface InPageViolation {
   source?: Violation["source"];
   wcag?: string[];
   level?: "A" | "AA" | "AAA";
+  description?: string;
   anchor?: string;
   role?: string;
   relativeLocation?: string;

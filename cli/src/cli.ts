@@ -37,12 +37,12 @@ const scanCommand = defineCommand({
     format: {
       type: "string",
       alias: "f",
-      description: "Output format: text, json",
+      description: "Output format: text, json, sarif",
       default: "text",
     },
     pretty: {
       type: "boolean",
-      description: "Pretty-print json output (default: single line)",
+      description: "Pretty-print json/sarif output (default: single line)",
       default: false,
     },
     "include-aaa": {
@@ -162,7 +162,7 @@ const scanCommand = defineCommand({
           update: args["update-snapshot"] || isUpdateMode(),
           name: args.snapshot,
         });
-        if (args.format === "json") {
+        if (args.format === "json" || args.format === "sarif") {
           const newKeys = new Set(snap.newViolations.map((v) => v.ruleId + "\0" + v.selector));
           const violations = outcome.result.violations.filter((v) =>
             newKeys.has(v.ruleId + "\0" + v.selector),
@@ -178,6 +178,7 @@ const scanCommand = defineCommand({
               } as never,
               args.format,
               args.pretty,
+              version,
             ),
           );
         } else {
@@ -186,7 +187,7 @@ const scanCommand = defineCommand({
         process.exit(snap.pass ? 0 : 1);
       }
 
-      console.log(format(outcome.result, args.format, args.pretty));
+      console.log(format(outcome.result, args.format, args.pretty, version));
       process.exit(outcome.result.violations.length > 0 ? 1 : 0);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
