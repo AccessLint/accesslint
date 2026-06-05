@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { defineCommand, runMain } from "citty";
 import { resolveInput } from "./input.js";
-import { audit } from "./audit.js";
+import { isHTMLFragment } from "./html-util.js";
 import { format } from "./format.js";
 import { runLiveAudit } from "./cdp.js";
 import {
@@ -88,6 +88,12 @@ const scanCommand = defineCommand({
       description: "Read HTML from stdin instead of resolving a config target",
       default: false,
     },
+    "component-mode": {
+      type: "boolean",
+      description:
+        "Treat HTML input as a component fragment (skip page-level rules); auto-detected when omitted",
+      default: false,
+    },
     snapshot: {
       type: "string",
       description: "Snapshot name — capture a baseline and fail only on new violations (URL only)",
@@ -119,69 +125,69 @@ const scanCommand = defineCommand({
       const waitFor = args["wait-for"] ?? target?.waitFor;
       const snapshotDir = args["snapshot-dir"] ?? target?.snapshotDir;
 
-      if (source && isURL(source)) {
-        const outcome = await runLiveAudit({
-          url: source,
-          host: args.host,
-          port: args.port ? Number(args.port) : undefined,
-          attachExisting: args.attach,
-          waitFor,
-          waitTimeoutMs: args["wait-timeout"] ? Number(args["wait-timeout"]) : undefined,
-          selector,
-          coreOptions: {
-            includeAAA,
-            disabledRules,
-          },
-        });
+      // A URL navigates Chrome; anything else (file/stdin) is loaded into a blank tab as content.
+      const isUrl = Boolean(source && isURL(source));
+      const html = isUrl ? undefined : await resolveInput(source);
+      const componentMode = isUrl
+        ? undefined
+        : args["component-mode"]
+          ? true
+          : isHTMLFragment(html!);
 
-        if (!outcome.ok) {
-          console.error(`Error: ${outcome.error}`);
-          process.exit(2);
-        }
-
-        if (args.snapshot) {
-          validateSnapshotName(args.snapshot);
-          const snapshotPath = resolveSnapshotPath(args.snapshot, snapshotDir);
-          const snap = evaluateSnapshot(outcome.snapshotViolations, snapshotPath, {
-            update: args["update-snapshot"] || isUpdateMode(),
-            name: args.snapshot,
-          });
-          if (args.format === "json") {
-            const newKeys = new Set(snap.newViolations.map((v) => v.ruleId + "\0" + v.selector));
-            const violations = outcome.result.violations.filter((v) =>
-              newKeys.has(v.ruleId + "\0" + v.selector),
-            );
-            const preExisting = outcome.snapshotViolations.length - snap.newViolations.length;
-            console.log(
-              format(
-                {
-                  ...outcome.result,
-                  violations,
-                  fixed: snap.fixedViolations,
-                  preExisting,
-                } as never,
-                args.format,
-                args.pretty,
-              ),
-            );
-          } else {
-            console.log(formatSnapshotResult(snap, args.snapshot));
-          }
-          process.exit(snap.pass ? 0 : 1);
-        }
-
-        console.log(format(outcome.result, args.format, args.pretty));
-        process.exit(outcome.result.violations.length > 0 ? 1 : 0);
-      }
-
-      const html = await resolveInput(source);
-      const result = audit(html, {
-        includeAAA,
-        disabledRules,
+      const outcome = await runLiveAudit({
+        url: isUrl ? source : undefined,
+        html,
+        host: args.host,
+        port: args.port ? Number(args.port) : undefined,
+        attachExisting: args.attach,
+        waitFor,
+        waitTimeoutMs: args["wait-timeout"] ? Number(args["wait-timeout"]) : undefined,
+        selector,
+        coreOptions: {
+          includeAAA,
+          disabledRules,
+          componentMode,
+        },
       });
 
-      console.log(format(result, args.format, args.pretty));
-      process.exit(result.violations.length > 0 ? 1 : 0);
+      if (!outcome.ok) {
+        console.error(`Error: ${outcome.error}`);
+        process.exit(2);
+      }
+
+      if (args.snapshot) {
+        validateSnapshotName(args.snapshot);
+        const snapshotPath = resolveSnapshotPath(args.snapshot, snapshotDir);
+        const snap = evaluateSnapshot(outcome.snapshotViolations, snapshotPath, {
+          update: args["update-snapshot"] || isUpdateMode(),
+          name: args.snapshot,
+        });
+        if (args.format === "json") {
+          const newKeys = new Set(snap.newViolations.map((v) => v.ruleId + "\0" + v.selector));
+          const violations = outcome.result.violations.filter((v) =>
+            newKeys.has(v.ruleId + "\0" + v.selector),
+          );
+          const preExisting = outcome.snapshotViolations.length - snap.newViolations.length;
+          console.log(
+            format(
+              {
+                ...outcome.result,
+                violations,
+                fixed: snap.fixedViolations,
+                preExisting,
+              } as never,
+              args.format,
+              args.pretty,
+            ),
+          );
+        } else {
+          console.log(formatSnapshotResult(snap, args.snapshot));
+        }
+        process.exit(snap.pass ? 0 : 1);
+      }
+
+      console.log(format(outcome.result, args.format, args.pretty));
+      process.exit(outcome.result.violations.length > 0 ? 1 : 0);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       console.error(`Error: ${message}`);

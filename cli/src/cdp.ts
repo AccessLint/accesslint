@@ -1,4 +1,5 @@
 import CDP from "chrome-remote-interface";
+import { ensure } from "@accesslint/chrome";
 import type { AuditResult, Violation } from "@accesslint/core";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 import { loadCoreIIFE } from "./iife-source.js";
@@ -16,7 +17,10 @@ const WAIT_FOR_DEFAULT_MS = 10_000;
 const WAIT_POLL_INTERVAL_MS = 100;
 
 export interface RunLiveAuditOptions {
-  url: string;
+  /** Audit a URL by navigating Chrome to it. Provide exactly one of `url` / `html`. */
+  url?: string;
+  /** Audit an HTML string by loading it into a blank tab via Page.setDocumentContent. */
+  html?: string;
   host?: string;
   port?: number;
   attachExisting?: boolean;
@@ -50,7 +54,10 @@ function findPageTarget(targets: TargetInfo[], url: string): TargetInfo | undefi
   return targets.find((t) => t.type === "page" && t.url.startsWith(url));
 }
 
-function summarizeException(detail: { text?: string; exception?: { description?: string } }): string {
+function summarizeException(detail: {
+  text?: string;
+  exception?: { description?: string };
+}): string {
   if (detail.exception?.description) return detail.exception.description.split("\n")[0]!;
   return detail.text ?? "Unknown in-page exception";
 }
@@ -58,7 +65,10 @@ function summarizeException(detail: { text?: string; exception?: { description?:
 async function waitForLoadEvent(client: CDP.Client, timeoutMs: number): Promise<void> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   const timeout = new Promise<void>((_, reject) => {
-    timer = setTimeout(() => reject(new Error(`Timed out after ${timeoutMs}ms waiting for page load`)), timeoutMs);
+    timer = setTimeout(
+      () => reject(new Error(`Timed out after ${timeoutMs}ms waiting for page load`)),
+      timeoutMs,
+    );
   });
   try {
     await Promise.race([client.Page.loadEventFired().then(() => undefined), timeout]);
@@ -67,19 +77,28 @@ async function waitForLoadEvent(client: CDP.Client, timeoutMs: number): Promise<
   }
 }
 
-async function waitForSelector(client: CDP.Client, selector: string, timeoutMs: number): Promise<void> {
+async function waitForSelector(
+  client: CDP.Client,
+  selector: string,
+  timeoutMs: number,
+): Promise<void> {
   const probe = `Boolean(document.querySelector(${JSON.stringify(selector)}))`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const res = await client.Runtime.evaluate({ expression: probe, returnByValue: true });
-    if (res.exceptionDetails) throw new Error(`selector probe failed: ${summarizeException(res.exceptionDetails)}`);
+    if (res.exceptionDetails)
+      throw new Error(`selector probe failed: ${summarizeException(res.exceptionDetails)}`);
     if (res.result.value === true) return;
     await new Promise((r) => setTimeout(r, WAIT_POLL_INTERVAL_MS));
   }
   throw new Error(`Timed out after ${timeoutMs}ms waiting for selector "${selector}"`);
 }
 
-async function waitForExpression(client: CDP.Client, waitFor: string, timeoutMs: number): Promise<void> {
+async function waitForExpression(
+  client: CDP.Client,
+  waitFor: string,
+  timeoutMs: number,
+): Promise<void> {
   const looksLikeSelector = /^[#.\[\]:>~+*\-_a-zA-Z0-9 ]+$/.test(waitFor) && !/\s\s/.test(waitFor);
   const probe = looksLikeSelector
     ? `Boolean(document.querySelector(${JSON.stringify(waitFor)}))`
@@ -88,42 +107,54 @@ async function waitForExpression(client: CDP.Client, waitFor: string, timeoutMs:
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     const res = await client.Runtime.evaluate({ expression: probe, returnByValue: true });
-    if (res.exceptionDetails) throw new Error(`waitFor probe failed: ${summarizeException(res.exceptionDetails)}`);
+    if (res.exceptionDetails)
+      throw new Error(`waitFor probe failed: ${summarizeException(res.exceptionDetails)}`);
     if (res.result.value === true) return;
     await new Promise((r) => setTimeout(r, WAIT_POLL_INTERVAL_MS));
   }
   throw new Error(`Timed out after ${timeoutMs}ms waiting for "${waitFor}"`);
 }
 
-export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAuditOutcome> {
-  const host = opts.host ?? DEFAULT_HOST;
-  const port = opts.port ?? DEFAULT_PORT;
+type Session = { host: string; port: number; targets: TargetInfo[] } | { error: string };
 
-  let targets: TargetInfo[];
+// Attach to a reachable CDP session; if none answers, launch one via @accesslint/chrome.
+async function connectOrLaunch(explicitPort: number | undefined, host: string): Promise<Session> {
+  const port = explicitPort ?? DEFAULT_PORT;
   try {
-    targets = await listTargets(host, port);
+    return { host, port, targets: await listTargets(host, port) };
   } catch {
-    return {
-      ok: false,
-      error:
-        `No Chrome debug session found at ${host}:${port}.\n` +
-        `  npx @accesslint/chrome ensure --port ${port}`,
-    };
-  }
-
-  let target = findPageTarget(targets, opts.url);
-  let createdTargetId: string | undefined;
-
-  if (!target) {
-    if (opts.attachExisting) {
-      const pageList = targets.filter((t) => t.type === "page").map((t) => `  - ${t.url}`).join("\n");
+    let res: Awaited<ReturnType<typeof ensure>>;
+    try {
+      res = await ensure(explicitPort !== undefined ? { port: explicitPort } : {});
+    } catch (err) {
       return {
-        ok: false,
         error:
-          `--attach set but no open tab matches "${opts.url}". Open it first.\n\n` +
-          (pageList ? `Currently open pages:\n${pageList}` : "No page targets are open."),
+          `No Chrome debug session at ${host}:${port}, and auto-launch failed: ` +
+          `${err instanceof Error ? err.message : String(err)}\n` +
+          `  Try: npx @accesslint/chrome ensure`,
       };
     }
+    try {
+      return { host: res.host, port: res.port, targets: await listTargets(res.host, res.port) };
+    } catch (err) {
+      return {
+        error: `Launched Chrome but could not reach it at ${res.host}:${res.port}: ${err instanceof Error ? err.message : String(err)}`,
+      };
+    }
+  }
+}
+
+export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAuditOutcome> {
+  const contentMode = opts.html != null;
+
+  const session = await connectOrLaunch(opts.port, opts.host ?? DEFAULT_HOST);
+  if ("error" in session) return { ok: false, error: session.error };
+  const { host, port, targets } = session;
+
+  let target: TargetInfo | undefined;
+  let createdTargetId: string | undefined;
+
+  if (contentMode) {
     try {
       const created = (await CDP.New({ host, port })) as TargetInfo;
       target = created;
@@ -131,8 +162,35 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     } catch (err) {
       return {
         ok: false,
-        error: `Failed to create new tab for "${opts.url}": ${err instanceof Error ? err.message : String(err)}`,
+        error: `Failed to open a tab for the HTML audit: ${err instanceof Error ? err.message : String(err)}`,
       };
+    }
+  } else {
+    const url = opts.url!;
+    target = findPageTarget(targets, url);
+    if (!target) {
+      if (opts.attachExisting) {
+        const pageList = targets
+          .filter((t) => t.type === "page")
+          .map((t) => `  - ${t.url}`)
+          .join("\n");
+        return {
+          ok: false,
+          error:
+            `--attach set but no open tab matches "${url}". Open it first.\n\n` +
+            (pageList ? `Currently open pages:\n${pageList}` : "No page targets are open."),
+        };
+      }
+      try {
+        const created = (await CDP.New({ host, port })) as TargetInfo;
+        target = created;
+        createdTargetId = created.id;
+      } catch (err) {
+        return {
+          ok: false,
+          error: `Failed to create new tab for "${url}": ${err instanceof Error ? err.message : String(err)}`,
+        };
+      }
     }
   }
 
@@ -142,8 +200,11 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     await client.Page.enable();
     await client.Runtime.enable();
 
-    if (createdTargetId) {
-      await client.Page.navigate({ url: opts.url });
+    if (contentMode) {
+      const { frameTree } = await client.Page.getFrameTree();
+      await client.Page.setDocumentContent({ frameId: frameTree.frame.id, html: opts.html! });
+    } else if (createdTargetId) {
+      await client.Page.navigate({ url: opts.url! });
       await waitForLoadEvent(client, NAVIGATION_TIMEOUT_MS);
     }
 
@@ -166,7 +227,10 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     });
 
     if (evalResult.exceptionDetails) {
-      return { ok: false, error: `In-page audit failed: ${summarizeException(evalResult.exceptionDetails)}` };
+      return {
+        ok: false,
+        error: `In-page audit failed: ${summarizeException(evalResult.exceptionDetails)}`,
+      };
     }
 
     const raw = evalResult.result.value;
@@ -178,7 +242,10 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
     try {
       parsed = JSON.parse(raw) as InPageOk | InPageErr;
     } catch (err) {
-      return { ok: false, error: `Could not parse in-page audit result: ${err instanceof Error ? err.message : String(err)}` };
+      return {
+        ok: false,
+        error: `Could not parse in-page audit result: ${err instanceof Error ? err.message : String(err)}`,
+      };
     }
 
     if (!parsed.ok) {
@@ -201,9 +268,17 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
   } catch (err) {
     return { ok: false, error: `CDP error: ${err instanceof Error ? err.message : String(err)}` };
   } finally {
-    try { await client?.close(); } catch { /* best-effort */ }
+    try {
+      await client?.close();
+    } catch {
+      /* best-effort */
+    }
     if (createdTargetId) {
-      try { await CDP.Close({ host, port, id: createdTargetId }); } catch { /* best-effort */ }
+      try {
+        await CDP.Close({ host, port, id: createdTargetId });
+      } catch {
+        /* best-effort */
+      }
     }
   }
 }

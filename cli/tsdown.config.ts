@@ -10,12 +10,15 @@ const nodeDefaults = {
 export default defineConfig([
   {
     entry: ["./src/cli.ts"],
-    deps: { neverBundle: ["jsdom", "chrome-remote-interface"], onlyBundle: false },
+    deps: {
+      neverBundle: ["chrome-remote-interface", "@accesslint/chrome"],
+      onlyBundle: false,
+    },
     ...nodeDefaults,
   },
   {
-    entry: ["./src/audit.ts", "./src/cdp-audit.ts", "./src/inline-css.ts", "./src/ssrf-guard.ts", "./src/safe-fetch.ts"],
-    deps: { neverBundle: ["jsdom", "@accesslint/core", "@accesslint/heal-diff", "@accesslint/matchers-internal"] },
+    entry: ["./src/cdp-audit.ts", "./src/ssrf-guard.ts", "./src/safe-fetch.ts"],
+    deps: { neverBundle: ["@accesslint/core", "@accesslint/heal-diff", "@accesslint/matchers-internal"] },
     dts: true,
     publint: true,
     attw: { profile: "esm-only" },
