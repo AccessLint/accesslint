@@ -32,7 +32,8 @@ vi.mock("node:child_process", async () => {
   };
 });
 
-const { ensureChrome, scanUrl, stopLaunchedChrome } = await import("../src/lib/cli-runner.js");
+const { ensureChrome, scanUrl, scanHtml, stopLaunchedChrome } =
+  await import("../src/lib/cli-runner.js");
 
 beforeEach(() => {
   ctl.calls.length = 0;
@@ -122,6 +123,48 @@ describe("scanUrl", () => {
     await expect(scanUrl("http://localhost:3000/", { port: 9222 })).rejects.toThrow(
       /page never loaded/,
     );
+  });
+});
+
+describe("scanHtml", () => {
+  const auditResult = {
+    url: "about:blank",
+    timestamp: 1,
+    ruleCount: 50,
+    skippedRules: [],
+    violations: [
+      {
+        ruleId: "text-alternatives/img-alt",
+        selector: "img",
+        html: "<img>",
+        impact: "critical",
+        message: "missing alt",
+      },
+    ],
+  };
+
+  it("pipes HTML via --stdin and builds the right args", async () => {
+    ctl.result = { stdout: JSON.stringify(auditResult), stderr: "", code: 1 };
+    const result = await scanHtml("<img>", {
+      port: 9222,
+      includeAAA: true,
+      componentMode: true,
+      selector: "#main",
+      disabledRules: ["distinguishable/color-contrast"],
+    });
+    expect(result.violations).toHaveLength(1);
+    const { bin, args } = ctl.calls[0];
+    expect(bin).toMatch(/cli\/dist\/cli\.js$/);
+    expect(args.slice(0, 6)).toEqual(["scan", "--stdin", "--format", "json", "--port", "9222"]);
+    expect(args).toContain("--include-aaa");
+    expect(args).toContain("--component-mode");
+    expect(args).toEqual(expect.arrayContaining(["--selector", "#main"]));
+    expect(args).toEqual(expect.arrayContaining(["--disable", "distinguishable/color-contrast"]));
+  });
+
+  it("throws the CLI's error on exit 2", async () => {
+    ctl.result = { stdout: "", stderr: "Error: page never loaded", code: 2 };
+    await expect(scanHtml("<img>", { port: 9222 })).rejects.toThrow(/page never loaded/);
   });
 });
 

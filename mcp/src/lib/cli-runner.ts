@@ -58,10 +58,15 @@ interface RunOutcome {
   stderr: string;
 }
 
-function run(binPath: string, args: string[], timeoutMs: number): Promise<RunOutcome> {
+function run(
+  binPath: string,
+  args: string[],
+  timeoutMs: number,
+  input?: string,
+): Promise<RunOutcome> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, [binPath, ...args], {
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: [input !== undefined ? "pipe" : "ignore", "pipe", "pipe"],
     });
     let stdout = "";
     let stderr = "";
@@ -70,8 +75,8 @@ function run(binPath: string, args: string[], timeoutMs: number): Promise<RunOut
       reject(new Error(`Timed out after ${timeoutMs}ms running ${binPath}`));
     }, timeoutMs);
 
-    child.stdout.on("data", (d: Buffer) => (stdout += d.toString()));
-    child.stderr.on("data", (d: Buffer) => (stderr += d.toString()));
+    child.stdout!.on("data", (d: Buffer) => (stdout += d.toString()));
+    child.stderr!.on("data", (d: Buffer) => (stderr += d.toString()));
     child.on("error", (err) => {
       clearTimeout(timer);
       reject(err);
@@ -80,6 +85,13 @@ function run(binPath: string, args: string[], timeoutMs: number): Promise<RunOut
       clearTimeout(timer);
       resolvePromise({ code, stdout, stderr });
     });
+
+    if (input !== undefined && child.stdin) {
+      child.stdin.on("error", () => {
+        /* child may exit before draining stdin; the close/exit handler reports it */
+      });
+      child.stdin.end(input);
+    }
   });
 }
 
@@ -177,6 +189,48 @@ export async function scanUrl(url: string, opts: ScanUrlOptions): Promise<AuditR
   }
 
   const { code, stdout, stderr } = await run(bin, args, SCAN_TIMEOUT_MS);
+
+  if (code === 2 || code === null) {
+    const detail = stderr.replace(/^Error:\s*/, "").trim() || `exit ${code}`;
+    throw new Error(detail);
+  }
+
+  try {
+    return JSON.parse(stdout.trim()) as AuditResult;
+  } catch (err) {
+    throw new Error(
+      `Could not parse scan output (exit ${code}): ${err instanceof Error ? err.message : String(err)}`,
+    );
+  }
+}
+
+export interface ScanHtmlOptions {
+  host?: string;
+  port: number;
+  includeAAA?: boolean;
+  componentMode?: boolean;
+  disabledRules?: string[];
+  selector?: string;
+}
+
+/**
+ * Audit an HTML string via `accesslint scan --stdin --port ... --format json`,
+ * piping the HTML to the CLI's stdin. The CLI loads it into a blank Chrome tab
+ * (Page.setDocumentContent) and audits the real DOM — same exit-code contract as
+ * scanUrl (0/1 carry the result, 2 is a real error).
+ */
+export async function scanHtml(html: string, opts: ScanHtmlOptions): Promise<AuditResult> {
+  const bin = resolveBin("@accesslint/cli", "accesslint");
+  const args = ["scan", "--stdin", "--format", "json", "--port", String(opts.port)];
+  if (opts.host) args.push("--host", opts.host);
+  if (opts.selector) args.push("--selector", opts.selector);
+  if (opts.includeAAA) args.push("--include-aaa");
+  if (opts.componentMode) args.push("--component-mode");
+  if (opts.disabledRules && opts.disabledRules.length > 0) {
+    args.push("--disable", opts.disabledRules.join(","));
+  }
+
+  const { code, stdout, stderr } = await run(bin, args, SCAN_TIMEOUT_MS, html);
 
   if (code === 2 || code === null) {
     const detail = stderr.replace(/^Error:\s*/, "").trim() || `exit ${code}`;

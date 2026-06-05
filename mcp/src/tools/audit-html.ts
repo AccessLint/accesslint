@@ -1,12 +1,21 @@
 import { z } from "zod";
-import { audit } from "@accesslint/cli";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { ensureChrome, scanHtml } from "../lib/cli-runner.js";
 import { formatViolations } from "../lib/format.js";
 import { checkHtmlSize } from "../lib/limits.js";
 import { computeDisabledRules } from "../lib/filters.js";
 
 export const auditHtmlSchema = {
   html: z.string().describe("HTML to audit for accessibility violations"),
+  port: z
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "CDP port to attach to / launch on. Defaults to 9222 or ACCESSLINT_CDP_PORT. Omit for auto-detection.",
+    ),
+  host: z.string().optional().describe("CDP host. Defaults to 127.0.0.1."),
   min_impact: z
     .enum(["critical", "serious", "moderate", "minor"])
     .optional()
@@ -35,9 +44,9 @@ export const auditHtmlSchema = {
 export function registerAuditHtml(server: McpServer): void {
   server.tool(
     "audit_html",
-    "Audit an HTML string for accessibility violations. Auto-detects fragments vs full documents.",
+    "Audit an HTML string for accessibility violations. Ensures a debuggable Chrome (auto-launches one headless if none is reachable), loads the HTML into a blank tab, and runs the @accesslint/core engine against the real DOM. Auto-detects fragments vs full documents.",
     auditHtmlSchema,
-    async ({ html, min_impact, format, rules, wcag, include_aaa, component_mode }) => {
+    async ({ html, port, host, min_impact, format, rules, wcag, include_aaa, component_mode }) => {
       const check = checkHtmlSize(html);
       if (!check.ok) {
         return {
@@ -46,19 +55,32 @@ export function registerAuditHtml(server: McpServer): void {
         };
       }
       const disabledRules = computeDisabledRules({ rules, wcag, includeAAA: include_aaa });
-      const result = audit(html, {
-        includeAAA: include_aaa,
-        componentMode: component_mode,
-        disabledRules,
-      });
-      return {
-        content: [
-          {
-            type: "text",
-            text: formatViolations(result.violations, { minImpact: min_impact, format }),
-          },
-        ],
-      };
+
+      try {
+        const endpoint = await ensureChrome({ port, host });
+        const result = await scanHtml(html, {
+          host: endpoint.host,
+          port: endpoint.port,
+          includeAAA: include_aaa,
+          componentMode: component_mode,
+          disabledRules,
+        });
+        return {
+          content: [
+            {
+              type: "text",
+              text: formatViolations(result.violations, { minImpact: min_impact, format }),
+            },
+          ],
+        };
+      } catch (err) {
+        return {
+          content: [
+            { type: "text", text: `Error: ${err instanceof Error ? err.message : String(err)}` },
+          ],
+          isError: true,
+        };
+      }
     },
   );
 }
