@@ -1,5 +1,9 @@
 import type { AuditResult, Violation, SourceLocation } from "@accesslint/core";
 
+// Live-audit violations are enriched in-page (cdp-audit.ts) with rule metadata
+// that the core Violation type does not carry.
+type OutputViolation = Violation & { wcag?: string[]; level?: "A" | "AA" | "AAA" };
+
 const IMPACT_COLORS: Record<string, string> = {
   critical: "\x1b[31m", // red
   serious: "\x1b[33m", // yellow
@@ -16,9 +20,17 @@ function formatSourceLocation(loc: SourceLocation): string {
   return `${loc.file}:${pos}${symbol}`;
 }
 
-function formatViolation(v: Violation, i: number): string {
+function formatWcag(v: OutputViolation): string | undefined {
+  if (!v.wcag || v.wcag.length === 0) return "Best practice";
+  const criteria = v.wcag.map((c) => `WCAG ${c}`).join(", ");
+  return v.level ? `${criteria} (Level ${v.level})` : criteria;
+}
+
+function formatViolation(v: OutputViolation, i: number): string {
   const color = IMPACT_COLORS[v.impact] ?? "";
   const lines = [`${BOLD}${color}${v.impact}${RESET} ${DIM}${v.ruleId}${RESET}`, `  ${v.message}`];
+  const wcag = formatWcag(v);
+  if (wcag) lines.push(`  ${DIM}${wcag}${RESET}`);
   if (v.selector) lines.push(`  ${DIM}${v.selector}${RESET}`);
   if (v.html) lines.push(`  ${DIM}${v.html}${RESET}`);
   if (v.source && v.source.length > 0) {
@@ -34,7 +46,7 @@ export function formatText(result: AuditResult): string {
   }
 
   const header = `${BOLD}${violations.length} violation${violations.length === 1 ? "" : "s"} found${RESET}\n`;
-  const body = violations.map(formatViolation).join("\n\n");
+  const body = (violations as OutputViolation[]).map(formatViolation).join("\n\n");
   return header + "\n" + body;
 }
 

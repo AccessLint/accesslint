@@ -43,6 +43,7 @@ export function buildAuditExpression(
     const _getComputedRole = typeof AL.getComputedRole === "function" ? AL.getComputedRole : null;
     const _getAccessibleName = typeof AL.getAccessibleName === "function" ? AL.getAccessibleName : null;
     const _buildRelativeLocation = typeof AL.buildRelativeLocation === "function" ? AL.buildRelativeLocation : null;
+    const _getRuleById = typeof AL.getRuleById === "function" ? AL.getRuleById : null;
     return JSON.stringify({
       ok: true,
       url: __r.url,
@@ -57,9 +58,12 @@ export function buildAuditExpression(
         const role = roleBase ? (roleName ? roleBase + '[name="' + roleName + '"]' : roleBase) : undefined;
         const relativeLocation = el && _buildRelativeLocation ? _buildRelativeLocation(el) : undefined;
         const tag = el ? el.tagName.toLowerCase() : undefined;
+        const rule = _getRuleById ? _getRuleById(v.ruleId) : undefined;
         return {
           ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact,
           message: v.message, source: v.source,
+          wcag: rule && rule.wcag && rule.wcag.length ? rule.wcag : undefined,
+          level: rule ? rule.level : undefined,
           anchor: anchor || undefined,
           role: role || undefined,
           relativeLocation: relativeLocation || undefined,
@@ -80,6 +84,8 @@ export interface InPageViolation {
   impact: Violation["impact"];
   message: string;
   source?: Violation["source"];
+  wcag?: string[];
+  level?: "A" | "AA" | "AAA";
   anchor?: string;
   role?: string;
   relativeLocation?: string;
