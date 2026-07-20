@@ -10,7 +10,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import type { Page, Locator, Frame } from "@playwright/test";
-import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
+import { isFingerprintableTag, normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import type { AuditViolation } from "./audit";
 
 export {
@@ -259,8 +259,7 @@ export async function toStableViolations(
     }
   }
 
-  const wantScreenshots =
-    options?.visualSnapshots !== false && options?.snapshotPath !== undefined;
+  const wantScreenshots = options?.visualSnapshots !== false && options?.snapshotPath !== undefined;
   if (wantScreenshots && options?.snapshotPath) {
     await captureScreenshots(page, options.snapshotPath, mainIndices, mainSelectors, result);
   }
@@ -293,11 +292,13 @@ async function captureMainFrameSignals(
     raw = await page.evaluate(
       (args: { selectors: string[] }) => {
         const AL = (window as unknown as { AccessLint?: Record<string, unknown> }).AccessLint;
-        const extractAnchor = (AL?.extractAnchor as ((el: Element) => string | null) | undefined);
-        const getComputedRole = (AL?.getComputedRole as ((el: Element) => string | null) | undefined);
-        const getAccessibleName = (AL?.getAccessibleName as ((el: Element) => string) | undefined);
-        const getHtmlSnippet = (AL?.getHtmlSnippet as ((el: Element) => string) | undefined);
-        const buildRelativeLocation = (AL?.buildRelativeLocation as ((el: Element) => string | null) | undefined);
+        const extractAnchor = AL?.extractAnchor as ((el: Element) => string | null) | undefined;
+        const getComputedRole = AL?.getComputedRole as ((el: Element) => string | null) | undefined;
+        const getAccessibleName = AL?.getAccessibleName as ((el: Element) => string) | undefined;
+        const getHtmlSnippet = AL?.getHtmlSnippet as ((el: Element) => string) | undefined;
+        const buildRelativeLocation = AL?.buildRelativeLocation as
+          | ((el: Element) => string | null)
+          | undefined;
 
         return args.selectors.map((sel): RawSignals => {
           try {
@@ -334,7 +335,9 @@ async function captureMainFrameSignals(
     if (sig.tag) out.tag = sig.tag;
     if (sig.relativeLocation) out.relativeLocation = sig.relativeLocation;
     const html = sig.html ?? violations[mainIndices[i]].html;
-    if (html) out.htmlFingerprint = sha1Short(normalizeHtml(html));
+    if (html && (!sig.tag || isFingerprintableTag(sig.tag))) {
+      out.htmlFingerprint = sha1Short(normalizeHtml(html));
+    }
     return out;
   });
 }
@@ -356,10 +359,7 @@ function ruleSlug(ruleId: string): string {
   return ruleId.replace(/\//g, "_");
 }
 
-function screenshotFilename(
-  v: SnapshotViolation,
-  existing: Set<string>,
-): string {
+function screenshotFilename(v: SnapshotViolation, existing: Set<string>): string {
   const rule = ruleSlug(v.ruleId);
   const disc = v.anchor
     ? slugForDiscriminator(v.anchor)
