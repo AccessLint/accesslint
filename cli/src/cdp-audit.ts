@@ -1,5 +1,5 @@
 import type { Violation } from "@accesslint/core";
-import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
+import { isFingerprintableTag, normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
 export { loadCoreIIFE } from "./iife-source.js";
@@ -116,7 +116,9 @@ export function mapInPageToSnapshot(violations: InPageViolation[]): SnapshotViol
     if (v.role) sv.role = v.role;
     if (v.relativeLocation) sv.relativeLocation = v.relativeLocation;
     if (v.tag) sv.tag = v.tag;
-    if (v.html) sv.htmlFingerprint = sha1Short(normalizeHtml(v.html));
+    if (v.html && (!v.tag || isFingerprintableTag(v.tag))) {
+      sv.htmlFingerprint = sha1Short(normalizeHtml(v.html));
+    }
     return sv;
   });
 }
