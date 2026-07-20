@@ -178,6 +178,41 @@ describe("visual edge cases", () => {
     expect(violations[0].context).toMatch(/required: 4\.5:1/);
   });
 
+  it("skips: empty-content ::before providing an ancestor background makes contrast unreliable", () => {
+    setContent(`
+      <style>
+        body { background: #000 }
+        .promo { position: relative; color: #000 }
+        .promo::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: #fafafa;
+          z-index: 0;
+        }
+        .content { position: relative; z-index: 1 }
+      </style>
+      <div class="promo">
+        <div class="content"><span>Text over an empty-content pseudo background</span></div>
+      </div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("does not skip: empty-content ::before without a visual background", () => {
+    setContent(`
+      <style>
+        body { background: #000 }
+        .plain { color: #000 }
+        .plain::before { content: "" }
+      </style>
+      <div class="plain">Genuine low contrast</div>
+    `);
+    const violations = run();
+    expectViolation(violations);
+    expect(violations[0].context).toMatch(/ratio: 1:1/);
+  });
+
   it("skips: ::before pseudo-element providing background overlay makes contrast unreliable", () => {
     setContent(`
       <style>

@@ -436,8 +436,9 @@ export function hasPseudoElementBackground(el: Element): boolean {
         const win = getWindow(current);
         const ps = win ? win.getComputedStyle(current, pseudo) : getComputedStyle(current, pseudo);
         const content = ps.content;
-        // No pseudo-element if content is none/normal/empty
-        if (!content || content === "none" || content === "normal" || content === '""') continue;
+        // No pseudo-element if generated content is absent.
+        // An empty string can still render a visual background.
+        if (!content || content === "none" || content === "normal") continue;
         // Check for non-transparent background color
         const bgColor = ps.backgroundColor;
         if (bgColor && !isTransparent(bgColor) && parseColorAlpha(bgColor) >= 0.1) return true;
