@@ -104,3 +104,26 @@ describe("stylesheet-applied colors at AAA", () => {
     expect(run()).toHaveLength(0);
   });
 });
+
+describe("empty-content pseudo-element backgrounds", () => {
+  it("skips: empty-content ::before providing an ancestor background makes AAA contrast unreliable", () => {
+    setContent(`
+      <style>
+        body { background: #000 }
+        .promo { position: relative; color: #000 }
+        .promo::before {
+          content: "";
+          position: absolute;
+          inset: 0;
+          background: #fafafa;
+          z-index: 0;
+        }
+        .content { position: relative; z-index: 1 }
+      </style>
+      <div class="promo">
+        <div class="content"><span>Text over an empty-content pseudo background</span></div>
+      </div>
+    `);
+    expect(run()).toHaveLength(0);
+  });
+});
