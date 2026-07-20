@@ -11,7 +11,8 @@ import {
   type BaseAccessibleMatcherOptions,
   type Impact,
 } from "@accesslint/matchers-internal/audit";
-import type { Violation } from "@accesslint/core";
+import { version as coreVersion } from "@accesslint/core";
+import type { TestEngine, TestEnvironment, Violation } from "@accesslint/core";
 
 const require = createRequire(import.meta.url);
 const iifePath = require.resolve("@accesslint/core/iife");
@@ -47,8 +48,33 @@ export interface AuditViolation {
 export interface AuditResult {
   url: string;
   timestamp: number;
+  testEngine: TestEngine;
+  testEnvironment: TestEnvironment;
   violations: AuditViolation[];
   ruleCount: number;
+  skippedRules: { ruleId: string; error: string }[];
+}
+
+/**
+ * Raw result crossing the page boundary. Metadata fields are absent when the
+ * page carries a pre-injected engine older than the metadata contract.
+ */
+type RawAuditResult = Omit<AuditResult, "testEngine" | "testEnvironment" | "skippedRules"> &
+  Partial<Pick<AuditResult, "testEngine" | "testEnvironment" | "skippedRules">>;
+
+function normalizeResult(raw: RawAuditResult): AuditResult {
+  return {
+    ...raw,
+    testEngine: raw.testEngine ?? { name: "accesslint", version: coreVersion },
+    testEnvironment: raw.testEnvironment ?? {
+      userAgent: "",
+      windowWidth: 0,
+      windowHeight: 0,
+      orientationAngle: 0,
+      orientationType: "portrait-primary",
+    },
+    skippedRules: raw.skippedRules ?? [],
+  };
 }
 
 function isPage(target: Page | Locator): target is Page {
@@ -209,13 +235,16 @@ export async function accesslintAudit(
   let result: AuditResult;
 
   if (isPage(target)) {
-    result = await page.evaluate((opts) => {
+    const rawResult: RawAuditResult = await page.evaluate((opts) => {
       const { runAudit } = (window as any).AccessLint;
       const raw = runAudit(document, opts);
       return {
         url: raw.url,
         timestamp: raw.timestamp,
+        testEngine: raw.testEngine,
+        testEnvironment: raw.testEnvironment,
         ruleCount: raw.ruleCount,
+        skippedRules: raw.skippedRules,
         violations: raw.violations.map((v: any) => ({
           ruleId: v.ruleId,
           selector: v.selector,
@@ -225,6 +254,7 @@ export async function accesslintAudit(
         })),
       };
     }, coreOpts);
+    result = normalizeResult(rawResult);
 
     if (options?.includeShadowDom !== false) {
       const shadowViolations = await auditShadowDom(page, coreOpts);
@@ -240,7 +270,7 @@ export async function accesslintAudit(
       result.violations.push(...frameViolations);
     }
   } else {
-    result = await target.evaluate((el, opts) => {
+    const rawResult: RawAuditResult = await target.evaluate((el, opts) => {
       const { runAudit } = (window as any).AccessLint;
       const raw = runAudit(document, opts);
       const scoped = raw.violations.filter((v: any) => {
@@ -254,7 +284,10 @@ export async function accesslintAudit(
       return {
         url: raw.url,
         timestamp: raw.timestamp,
+        testEngine: raw.testEngine,
+        testEnvironment: raw.testEnvironment,
         ruleCount: raw.ruleCount,
+        skippedRules: raw.skippedRules,
         violations: scoped.map((v: any) => ({
           ruleId: v.ruleId,
           selector: v.selector,
@@ -264,6 +297,7 @@ export async function accesslintAudit(
         })),
       };
     }, coreOpts);
+    result = normalizeResult(rawResult);
   }
 
   result.violations = applyFailOnFilter(result.violations, options?.failOn);

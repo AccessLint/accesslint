@@ -6,16 +6,15 @@ import type {
   TestCase,
   TestResult,
 } from "@playwright/test/reporter";
-import { writeFileSync, mkdirSync, readFileSync } from "node:fs";
+import { writeFileSync, mkdirSync } from "node:fs";
 import { resolve, dirname } from "node:path";
 import { generateEarlReport, isCorrectOutcome, type FixtureOutcome } from "./earl-report";
+import { version } from "../metadata";
 
 const EARL_OUTPUT_PATH = resolve(
   import.meta.dirname,
   "../../act-fixtures/earl-report-browser.json",
 );
-
-const PACKAGE_JSON_PATH = resolve(import.meta.dirname, "../../package.json");
 
 /**
  * Playwright reporter that generates a W3C EARL report from browser ACT tests.
@@ -105,9 +104,7 @@ export default class BrowserEarlReporter implements Reporter {
   onEnd(_result: FullResult): void {
     if (this.outcomes.length === 0) return;
 
-    const pkg = JSON.parse(readFileSync(PACKAGE_JSON_PATH, "utf-8"));
-
-    const report = generateEarlReport(this.outcomes, pkg.version);
+    const report = generateEarlReport(this.outcomes, version);
     const outputDir = dirname(EARL_OUTPUT_PATH);
     mkdirSync(outputDir, { recursive: true });
     writeFileSync(EARL_OUTPUT_PATH, JSON.stringify(report, null, 2) + "\n");

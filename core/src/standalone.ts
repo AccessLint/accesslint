@@ -1,5 +1,7 @@
 // Standalone (IIFE) entry point — excludes locale data bundles.
 
+export { version } from "./metadata";
+
 // Core audit
 export { rules, runAudit, getRuleById, getActiveRules, clearAllCaches } from "./rules/index";
 export type { ChunkedAudit, AuditOptions } from "./rules/index";
