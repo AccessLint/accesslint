@@ -259,6 +259,8 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       result: {
         url: parsed.url,
         timestamp: parsed.timestamp,
+        testEngine: parsed.testEngine,
+        testEnvironment: parsed.testEnvironment,
         ruleCount: parsed.ruleCount,
         skippedRules: parsed.skippedRules,
         violations: parsed.violations as unknown as Violation[],

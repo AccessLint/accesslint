@@ -18,6 +18,8 @@ export type {
   Rule,
   Violation,
   AuditResult,
+  TestEngine,
+  TestEnvironment,
   DiffResult,
   Fixability,
   FixSuggestion,

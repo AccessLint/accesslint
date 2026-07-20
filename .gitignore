@@ -7,3 +7,4 @@ coverage/
 results/
 .env
 .turbo/
+.worktrees/

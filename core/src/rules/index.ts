@@ -1,4 +1,5 @@
 import type { Rule, Violation, AuditResult, DiffResult } from "./types";
+import { getTestMetadata } from "../metadata";
 import {
   clearAriaHiddenCache,
   clearComputedRoleCache,
@@ -381,9 +382,12 @@ export function runAudit(doc: Document, options?: AuditOptions): AuditResult {
     }
   }
   backfillElements(violations, doc);
+  const { testEngine, testEnvironment } = getTestMetadata(doc);
   return {
     url: doc.location?.href ?? "",
     timestamp: Date.now(),
+    testEngine,
+    testEnvironment,
     violations: locale ? translateViolations(violations, locale) : violations,
     ruleCount: activeRules.length,
     skippedRules,
