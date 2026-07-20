@@ -65,7 +65,11 @@ async function ensureInjected(target: Page | Frame): Promise<void> {
     () => typeof (window as any).AccessLint !== "undefined",
   );
   if (!hasAccessLint) {
-    await target.addScriptTag({ path: iifePath });
+    // Drop the tag once the bundle has executed: leaving it in the DOM
+    // pollutes HTML snippets (and thus htmlFingerprint signals) captured
+    // from ancestors like <html>, and only on runs that had to inject.
+    const script = await target.addScriptTag({ path: iifePath });
+    await script.evaluate((el) => (el as HTMLElement).remove());
   }
 }
 

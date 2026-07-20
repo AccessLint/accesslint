@@ -23,6 +23,14 @@ export interface Tier<Sig extends string = string> {
   heal: boolean;
   /** Only match when exactly one baseline candidate remains at this tier. */
   uniquenessGated?: boolean;
+  /**
+   * Verification signal for candidate pairs at this tier. A pair whose
+   * verification values both exist and disagree is refused, and both items
+   * are released to later tiers (refuse-and-release). Either side lacking
+   * the signal leaves the match standing (missing-signal leniency), so
+   * signal-less baseline rows still match by the tier key alone.
+   */
+  verifiedBy?: Sig;
 }
 
 export interface MatchedPair<Sig extends string> {
@@ -77,13 +85,28 @@ function keyOf<Sig extends string>(item: DiffItem<Sig>, tier: Tier<Sig>): string
   return parts.join(NULL);
 }
 
+function verificationPasses<Sig extends string>(
+  a: DiffItem<Sig>,
+  b: DiffItem<Sig>,
+  signal: Sig | undefined,
+): boolean {
+  if (signal == null) return true;
+  const av = a.signals[signal];
+  const bv = b.signals[signal];
+  if (av == null || av === "" || bv == null || bv === "") return true;
+  return av === bv;
+}
+
 function consumeFromBucket<Sig extends string>(
   bucket: DiffItem<Sig>[] | undefined,
-  uniquenessGated: boolean,
+  tier: Tier<Sig>,
+  curr: DiffItem<Sig>,
 ): DiffItem<Sig> | null {
   if (!bucket || bucket.length === 0) return null;
-  if (uniquenessGated && bucket.length > 1) return null;
-  return bucket.shift() ?? null;
+  if ((tier.uniquenessGated ?? false) && bucket.length > 1) return null;
+  const index = bucket.findIndex((cand) => verificationPasses(curr, cand, tier.verifiedBy));
+  if (index === -1) return null;
+  return bucket.splice(index, 1)[0];
 }
 
 function bucketize<Sig extends string>(
@@ -132,7 +155,7 @@ export function diff<Sig extends string>(
         stillUnmatchedCurrent.push(curr);
         continue;
       }
-      const picked = consumeFromBucket(baselineBuckets.get(k), tier.uniquenessGated ?? false);
+      const picked = consumeFromBucket(baselineBuckets.get(k), tier, curr);
       if (picked == null) {
         stillUnmatchedCurrent.push(curr);
         continue;

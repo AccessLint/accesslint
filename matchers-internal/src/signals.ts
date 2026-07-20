@@ -17,7 +17,7 @@ import {
   buildRelativeLocation,
 } from "@accesslint/core";
 import type { Violation } from "@accesslint/core";
-import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
+import { isFingerprintableTag, normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import { buildTier } from "@accesslint/heal-diff";
 import type { DiffItem, Tier } from "@accesslint/heal-diff";
 
@@ -37,7 +37,12 @@ export type AccesslintSignal =
  */
 export function accesslintTiers(): Tier<AccesslintSignal>[] {
   return [
-    buildTier<AccesslintSignal>({ name: "exact", key: ["id", "selector"], heal: false }),
+    buildTier<AccesslintSignal>({
+      name: "exact",
+      key: ["id", "selector"],
+      heal: false,
+      verifiedBy: "htmlFingerprint",
+    }),
     buildTier<AccesslintSignal>({ name: "anchor", key: ["id", "anchor"], heal: true }),
     buildTier<AccesslintSignal>({ name: "role", key: ["id", "role"], heal: true }),
     buildTier<AccesslintSignal>({
@@ -89,7 +94,10 @@ export function violationToDiffItem(v: Violation, payload: unknown): DiffItem<Ac
   }
 
   const html = el ? getHtmlSnippet(el) : v.html;
-  if (html) signals.htmlFingerprint = sha1Short(normalizeHtml(html));
+  const tag = el?.tagName.toLowerCase();
+  if (html && (!tag || isFingerprintableTag(tag))) {
+    signals.htmlFingerprint = sha1Short(normalizeHtml(html));
+  }
 
   return { id: v.ruleId, signals, payload };
 }

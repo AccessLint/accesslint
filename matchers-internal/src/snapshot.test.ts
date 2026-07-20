@@ -350,6 +350,42 @@ describe("diffSnapshots — healing tiers", () => {
     expect(d.healed[0].tier).toBe("htmlFingerprint");
   });
 
+  it("refuses an exact match when htmlFingerprints disagree (verifiedBy) and heals via a later tier", () => {
+    const baseline: SnapshotViolation[] = [
+      {
+        ruleId: "img-alt",
+        selector: "body > img",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "aaa",
+      },
+    ];
+    const current: SnapshotViolation[] = [
+      { ruleId: "img-alt", selector: "body > img", htmlFingerprint: "bbb" },
+      {
+        ruleId: "img-alt",
+        selector: "main > img",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "aaa",
+      },
+    ];
+    const d = diffSnapshots(current, baseline);
+    expect(d.healed).toHaveLength(1);
+    expect(d.healed[0].tier).toBe("anchor");
+    expect(d.healed[0].newSelector).toBe("main > img");
+    expect(d.newViolations.map((v) => v.htmlFingerprint)).toEqual(["bbb"]);
+  });
+
+  it("still exact-matches when either side lacks an htmlFingerprint (missing-signal leniency)", () => {
+    const baseline: SnapshotViolation[] = [{ ruleId: "img-alt", selector: "body > img" }];
+    const current: SnapshotViolation[] = [
+      { ruleId: "img-alt", selector: "body > img", htmlFingerprint: "bbb" },
+    ];
+    const d = diffSnapshots(current, baseline);
+    expect(d.newViolations).toHaveLength(0);
+    expect(d.fixedViolations).toHaveLength(0);
+    expect(d.healed).toHaveLength(0);
+  });
+
   it("surfaces likelyMoved when healing fails but signals partially overlap", () => {
     const baseline: SnapshotViolation[] = [
       {
@@ -385,9 +421,7 @@ describe("evaluateSnapshot — healing", () => {
   it("heals without failing, rewrites baseline, and logs a healed history event", () => {
     dir = tempDir();
     const path = join(dir, "heal.json");
-    saveSnapshot(path, [
-      { ruleId: "img-alt", selector: "body > img", anchor: "data-testid=hero" },
-    ]);
+    saveSnapshot(path, [{ ruleId: "img-alt", selector: "body > img", anchor: "data-testid=hero" }]);
     const result = evaluateSnapshot(
       [{ ruleId: "img-alt", selector: "main > figure > img", anchor: "data-testid=hero" }],
       path,
@@ -445,11 +479,11 @@ describe("evaluateSnapshot — healing", () => {
         ruleId: "color-contrast",
         selector: "button",
         role: "button[name=Submit]",
-        htmlFingerprint: "old",
+        visualFingerprint: "old",
       },
     ]);
     const result = evaluateSnapshot(
-      [{ ruleId: "color-contrast", selector: "button", htmlFingerprint: "new" }],
+      [{ ruleId: "color-contrast", selector: "button", visualFingerprint: "new" }],
       path,
       { name: "preserve" },
     );
@@ -458,15 +492,13 @@ describe("evaluateSnapshot — healing", () => {
 
     const saved = loadSnapshot(path)?.[0];
     expect(saved?.role).toBe("button[name=Submit]"); // preserved
-    expect(saved?.htmlFingerprint).toBe("new"); // refreshed
+    expect(saved?.visualFingerprint).toBe("new"); // refreshed
   });
 
   it("does not rewrite baseline when nothing drifted", () => {
     dir = tempDir();
     const path = join(dir, "idle.json");
-    const v: SnapshotViolation[] = [
-      { ruleId: "img-alt", selector: "img", htmlFingerprint: "abc" },
-    ];
+    const v: SnapshotViolation[] = [{ ruleId: "img-alt", selector: "img", htmlFingerprint: "abc" }];
     saveSnapshot(path, v);
     const historyBefore = readHistory(path).length;
     const result = evaluateSnapshot(v, path, { name: "idle" });

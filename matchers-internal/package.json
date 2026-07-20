@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/matchers-internal",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Internal shared matcher logic for @accesslint/vitest and @accesslint/jest. Not published.",
   "license": "MIT",

@@ -171,12 +171,18 @@ test.describe("accesslintAudit", () => {
     expect(ruleIds).toContain("readable/html-has-lang");
   });
 
-  test("re-injection guard — no duplicate script tags", async ({ page }) => {
+  test("re-injection guard — script tag removed after load, bundle stays resident", async ({
+    page,
+  }) => {
     await page.setContent(ACCESSIBLE_HTML);
     await accesslintAudit(page);
     await accesslintAudit(page);
     const scriptCount = await page.evaluate(() => document.querySelectorAll("script").length);
-    expect(scriptCount).toBe(1);
+    expect(scriptCount).toBe(0);
+    const hasAccessLint = await page.evaluate(
+      () => typeof (window as { AccessLint?: unknown }).AccessLint !== "undefined",
+    );
+    expect(hasAccessLint).toBe(true);
   });
 
   test("failOn=critical filters out non-critical violations", async ({ page }) => {

@@ -19,14 +19,8 @@ function item(id: string, signals: Partial<Record<Sig, string>>): DiffItem<Sig> 
 
 describe("diff() — T1 regression lock", () => {
   it("reproduces compareViolations exact-match semantics", () => {
-    const baseline = [
-      item("a", { selector: "img" }),
-      item("b", { selector: "html" }),
-    ];
-    const current = [
-      item("a", { selector: "img" }),
-      item("c", { selector: "h1" }),
-    ];
+    const baseline = [item("a", { selector: "img" }), item("b", { selector: "html" })];
+    const current = [item("a", { selector: "img" }), item("c", { selector: "h1" })];
     const result = diff(baseline, current, [T1]);
     expect(result.matched).toHaveLength(1);
     expect(result.matched[0].baseline.id).toBe("a");
@@ -37,10 +31,7 @@ describe("diff() — T1 regression lock", () => {
 
   it("handles duplicate items by count", () => {
     const sel = "img";
-    const baseline = [
-      item("a", { selector: sel }),
-      item("a", { selector: sel }),
-    ];
+    const baseline = [item("a", { selector: sel }), item("a", { selector: sel })];
     const current = [
       item("a", { selector: sel }),
       item("a", { selector: sel }),
@@ -55,8 +46,12 @@ describe("diff() — T1 regression lock", () => {
 
 describe("diff() — healing tiers", () => {
   it("prefers T1 exact over T2 anchor when both match", () => {
-    const baseline = [item("img-alt", { selector: "html > body > img", anchor: "data-testid=hero" })];
-    const current = [item("img-alt", { selector: "html > body > img", anchor: "data-testid=hero" })];
+    const baseline = [
+      item("img-alt", { selector: "html > body > img", anchor: "data-testid=hero" }),
+    ];
+    const current = [
+      item("img-alt", { selector: "html > body > img", anchor: "data-testid=hero" }),
+    ];
     const result = diff(baseline, current, [T1, T2]);
     expect(result.matched).toHaveLength(1);
     expect(result.matched[0].tier).toBe("exact");
@@ -65,7 +60,9 @@ describe("diff() — healing tiers", () => {
 
   it("heals via T2 anchor when selector changed but anchor matches", () => {
     const baseline = [item("img-alt", { selector: "body > img", anchor: "data-testid=hero" })];
-    const current = [item("img-alt", { selector: "main > figure > img", anchor: "data-testid=hero" })];
+    const current = [
+      item("img-alt", { selector: "main > figure > img", anchor: "data-testid=hero" }),
+    ];
     const result = diff(baseline, current, [T1, T2]);
     expect(result.matched).toHaveLength(0);
     expect(result.healed).toHaveLength(1);
@@ -104,7 +101,11 @@ describe("diff() — healing tiers", () => {
 describe("diff() — uniqueness-gated tier", () => {
   it("heals when exactly one baseline candidate matches", () => {
     const baseline = [
-      item("img-alt", { selector: "body > img:nth-of-type(1)", relativeLocation: "main", tag: "img" }),
+      item("img-alt", {
+        selector: "body > img:nth-of-type(1)",
+        relativeLocation: "main",
+        tag: "img",
+      }),
     ];
     const current = [
       item("img-alt", { selector: "main > figure > img", relativeLocation: "main", tag: "img" }),
@@ -116,14 +117,118 @@ describe("diff() — uniqueness-gated tier", () => {
 
   it("refuses to heal when two baseline candidates share the key", () => {
     const baseline = [
-      item("img-alt", { selector: "body > img:nth-of-type(1)", relativeLocation: "main", tag: "img" }),
-      item("img-alt", { selector: "body > img:nth-of-type(2)", relativeLocation: "main", tag: "img" }),
+      item("img-alt", {
+        selector: "body > img:nth-of-type(1)",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+      item("img-alt", {
+        selector: "body > img:nth-of-type(2)",
+        relativeLocation: "main",
+        tag: "img",
+      }),
     ];
-    const current = [item("img-alt", { selector: "main > figure > img", relativeLocation: "main", tag: "img" })];
+    const current = [
+      item("img-alt", { selector: "main > figure > img", relativeLocation: "main", tag: "img" }),
+    ];
     const result = diff(baseline, current, [T1, T6]);
     expect(result.healed).toHaveLength(0);
     expect(result.new).toHaveLength(1);
     expect(result.fixed).toHaveLength(2);
+  });
+});
+
+describe("diff() — verifiedBy", () => {
+  const T1v = buildTier<Sig>({
+    name: "exact",
+    key: ["id", "selector"],
+    heal: false,
+    verifiedBy: "htmlFingerprint",
+  });
+
+  it("refuse-and-release: disagreeing verification signals refuse the pair and release both items to later tiers", () => {
+    const baseline = [
+      item("img-alt", {
+        selector: "body > img",
+        htmlFingerprint: "aaa",
+        anchor: "data-testid=hero",
+      }),
+    ];
+    const current = [
+      item("img-alt", { selector: "body > img", htmlFingerprint: "bbb" }),
+      item("img-alt", {
+        selector: "main > img",
+        htmlFingerprint: "aaa",
+        anchor: "data-testid=hero",
+      }),
+    ];
+    const result = diff(baseline, current, [T1v, T2]);
+    expect(result.matched).toHaveLength(0);
+    expect(result.healed).toHaveLength(1);
+    expect(result.healed[0].tier).toBe("anchor");
+    expect(result.healed[0].current.signals.selector).toBe("main > img");
+    expect(result.new.map((i) => i.signals.htmlFingerprint)).toEqual(["bbb"]);
+  });
+
+  it("refuse-and-release: an impostor at the same address lands as new + fixed, not a silent match", () => {
+    const baseline = [item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" })];
+    const current = [item("img-alt", { selector: "body > img", htmlFingerprint: "bbb" })];
+    const result = diff(baseline, current, [T1v]);
+    expect(result.matched).toHaveLength(0);
+    expect(result.fixed).toHaveLength(1);
+    expect(result.new).toHaveLength(1);
+  });
+
+  it("refuse-and-release: swapped elements heal back to their true partners at a later tier", () => {
+    const baseline = [
+      item("img-alt", { selector: "s1", htmlFingerprint: "f1" }),
+      item("img-alt", { selector: "s2", htmlFingerprint: "f2" }),
+    ];
+    const current = [
+      item("img-alt", { selector: "s2", htmlFingerprint: "f1" }),
+      item("img-alt", { selector: "s1", htmlFingerprint: "f2" }),
+    ];
+    const result = diff(baseline, current, [T1v, T5]);
+    expect(result.matched).toHaveLength(0);
+    expect(result.healed).toHaveLength(2);
+    for (const pair of result.healed) {
+      expect(pair.tier).toBe("htmlFingerprint");
+      expect(pair.baseline.signals.htmlFingerprint).toBe(pair.current.signals.htmlFingerprint);
+    }
+  });
+
+  it("missing-signal leniency: a baseline row without the verification signal matches by the tier key alone", () => {
+    const baseline = [item("img-alt", { selector: "body > img" })];
+    const current = [item("img-alt", { selector: "body > img", htmlFingerprint: "bbb" })];
+    const result = diff(baseline, current, [T1v]);
+    expect(result.matched).toHaveLength(1);
+    expect(result.matched[0].tier).toBe("exact");
+  });
+
+  it("missing-signal leniency: a current item without the verification signal matches by the tier key alone", () => {
+    const baseline = [item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" })];
+    const current = [item("img-alt", { selector: "body > img" })];
+    const result = diff(baseline, current, [T1v]);
+    expect(result.matched).toHaveLength(1);
+  });
+
+  it("agreeing verification signals match as usual", () => {
+    const baseline = [item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" })];
+    const current = [item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" })];
+    const result = diff(baseline, current, [T1v]);
+    expect(result.matched).toHaveLength(1);
+  });
+
+  it("picks the verifying candidate among duplicates sharing the tier key", () => {
+    const baseline = [
+      item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" }),
+      item("img-alt", { selector: "body > img", htmlFingerprint: "bbb" }),
+    ];
+    const current = [item("img-alt", { selector: "body > img", htmlFingerprint: "bbb" })];
+    const result = diff(baseline, current, [T1v]);
+    expect(result.matched).toHaveLength(1);
+    expect(result.matched[0].baseline.signals.htmlFingerprint).toBe("bbb");
+    expect(result.fixed.map((i) => i.signals.htmlFingerprint)).toEqual(["aaa"]);
   });
 });
 
@@ -158,8 +263,12 @@ describe("diff() — likelyMoved", () => {
   });
 
   it("does not attach across different ids", () => {
-    const baseline = [item("img-alt", { tag: "img", htmlFingerprint: "x", relativeLocation: "main" })];
-    const current = [item("button-name", { tag: "img", htmlFingerprint: "x", relativeLocation: "main" })];
+    const baseline = [
+      item("img-alt", { tag: "img", htmlFingerprint: "x", relativeLocation: "main" }),
+    ];
+    const current = [
+      item("button-name", { tag: "img", htmlFingerprint: "x", relativeLocation: "main" }),
+    ];
     const result = diff(baseline, current, [T1]);
     expect(result.likelyMoved).toHaveLength(0);
   });

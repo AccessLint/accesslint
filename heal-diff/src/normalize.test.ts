@@ -1,5 +1,12 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect } from "vitest";
-import { normalizeHtml, sha1Short, dhash } from "./normalize";
+import {
+  NORMALIZE_VERSION,
+  isFingerprintableTag,
+  normalizeHtml,
+  sha1Short,
+  dhash,
+} from "./normalize";
 
 describe("normalizeHtml", () => {
   it("is invariant under whitespace", () => {
@@ -57,6 +64,55 @@ describe("normalizeHtml", () => {
     const out = normalizeHtml(`<p>${long}</p>`);
     expect(out).toBe(`<p>${"a".repeat(64)}</p>`);
   });
+
+  it("strips query strings from href", () => {
+    const a = normalizeHtml('<a href="/pricing?utm_source=x&v=3">x</a>');
+    const b = normalizeHtml('<a href="/pricing">x</a>');
+    expect(a).toBe(b);
+  });
+
+  it("strips fragments from href", () => {
+    const a = normalizeHtml('<a href="/docs#section-2">x</a>');
+    const b = normalizeHtml('<a href="/docs">x</a>');
+    expect(a).toBe(b);
+  });
+
+  it("strips query strings from src", () => {
+    const a = normalizeHtml('<img alt="x" src="/hero.png?cache=123abc">');
+    const b = normalizeHtml('<img alt="x" src="/hero.png">');
+    expect(a).toBe(b);
+  });
+
+  it("remains sensitive to URL path changes", () => {
+    expect(normalizeHtml('<a href="/pricing?a=1">x</a>')).not.toBe(
+      normalizeHtml('<a href="/checkout?a=1">x</a>'),
+    );
+  });
+
+  it("leaves ? and # alone in non-URL attributes", () => {
+    const out = normalizeHtml('<button aria-label="what? #1">x</button>');
+    expect(out).toContain('aria-label="what? #1"');
+  });
+});
+
+describe("isFingerprintableTag", () => {
+  it("excludes page-scoped elements", () => {
+    expect(isFingerprintableTag("html")).toBe(false);
+    expect(isFingerprintableTag("body")).toBe(false);
+    expect(isFingerprintableTag("HTML")).toBe(false);
+  });
+
+  it("includes ordinary elements", () => {
+    expect(isFingerprintableTag("img")).toBe(true);
+    expect(isFingerprintableTag("button")).toBe(true);
+    expect(isFingerprintableTag("main")).toBe(true);
+  });
+});
+
+describe("NORMALIZE_VERSION", () => {
+  it("is exported and current", () => {
+    expect(NORMALIZE_VERSION).toBe(2);
+  });
 });
 
 describe("sha1Short", () => {
@@ -71,6 +127,22 @@ describe("sha1Short", () => {
 
   it("is sensitive to input", () => {
     expect(sha1Short("a")).not.toBe(sha1Short("b"));
+  });
+
+  it("matches node:crypto sha1 output — stored fingerprints survive the browser-safe hash", () => {
+    const inputs = [
+      "",
+      "hello",
+      '<img alt="hi" src="/x.png">',
+      "é✓ multibyte ✨",
+      "a".repeat(55), // one byte short of a block boundary after padding
+      "b".repeat(64), // exactly one block of input
+      "c".repeat(200), // multi-block
+    ];
+    for (const input of inputs) {
+      const expected = createHash("sha1").update(input, "utf8").digest("hex").slice(0, 12);
+      expect(sha1Short(input)).toBe(expected);
+    }
   });
 });
 
