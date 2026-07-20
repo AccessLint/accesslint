@@ -8,7 +8,12 @@
  * the browser page) import only the runtime-agnostic utilities from here;
  * the unused DOM wrappers are tree-shaken from their bundles.
  */
-import { getRuleById, getSelector, querySelectorShadowAware, runAudit } from "@accesslint/core";
+import {
+  getRuleById,
+  getResilientLocator,
+  querySelectorShadowAware,
+  runAudit,
+} from "@accesslint/core";
 import type { Rule, Violation } from "@accesslint/core";
 
 export type Impact = "critical" | "serious" | "moderate" | "minor";
@@ -233,5 +238,5 @@ function isInside(target: Node, root: Element): boolean {
 }
 
 export function stableSelector(v: Violation): string {
-  return v.element ? getSelector(v.element) : v.selector;
+  return v.element ? getResilientLocator(v.element) : v.selector;
 }

@@ -1,3 +1,5 @@
+import { isStableId } from "./generated-id";
+
 let _selectorCache = new WeakMap<Element, string>();
 
 export function clearSelectorCache(): void {
@@ -32,7 +34,7 @@ const ANCHOR_ATTRS = [
  * element across DOM refactors.
  */
 export function extractAnchor(el: Element): string | null {
-  if (el.id && el.id.length > 0 && el.id.length < 100) {
+  if (isStableId(el.id)) {
     return `id=${el.id}`;
   }
   for (const attr of ANCHOR_ATTRS) {
@@ -72,7 +74,7 @@ function buildSegment(el: Element): string {
 
 /** Build a selector within a single root (document or shadow root). */
 function buildSelectorWithinRoot(el: Element): string {
-  if (el.id) return `#${CSS.escape(el.id)}`;
+  if (isStableId(el.id)) return `#${CSS.escape(el.id)}`;
 
   const root = el.getRootNode() as Document | ShadowRoot;
   const docEl = root instanceof ShadowRoot ? null : (root as Document).documentElement;
@@ -84,8 +86,8 @@ function buildSelectorWithinRoot(el: Element): string {
   let current: Element | null = el;
 
   while (current && current !== docEl) {
-    // Anchor to nearest ancestor with an ID
-    if (current !== el && current.id) {
+    // Anchor to nearest ancestor with a stable ID
+    if (current !== el && isStableId(current.id)) {
       parts.unshift(`#${CSS.escape(current.id)}`);
       break;
     }

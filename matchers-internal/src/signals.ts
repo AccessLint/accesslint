@@ -13,7 +13,7 @@ import {
   getAccessibleName,
   getComputedRole,
   getHtmlSnippet,
-  getSelector,
+  getResilientLocator,
   buildRelativeLocation,
 } from "@accesslint/core";
 import type { Violation } from "@accesslint/core";
@@ -73,14 +73,11 @@ function roleSignal(el: Element): string | null {
  * The `payload` carries the full SnapshotViolation so we can recover
  * it after diffing.
  */
-export function violationToDiffItem(
-  v: Violation,
-  payload: unknown,
-): DiffItem<AccesslintSignal> {
+export function violationToDiffItem(v: Violation, payload: unknown): DiffItem<AccesslintSignal> {
   const signals: Partial<Record<AccesslintSignal, string>> = {};
   const el = v.element;
 
-  signals.selector = el ? getSelector(el) : v.selector;
+  signals.selector = el ? getResilientLocator(el) : v.selector;
   if (el) {
     const anchor = coreExtractAnchor(el);
     if (anchor) signals.anchor = anchor;
@@ -101,18 +98,16 @@ export function violationToDiffItem(
  * Build a DiffItem from an already-stored SnapshotViolation (no live
  * Element). Used when reading a baseline from disk.
  */
-export function snapshotViolationToDiffItem(
-  v: {
-    ruleId: string;
-    selector: string;
-    anchor?: string;
-    role?: string;
-    visualFingerprint?: string;
-    htmlFingerprint?: string;
-    relativeLocation?: string;
-    tag?: string;
-  },
-): DiffItem<AccesslintSignal> {
+export function snapshotViolationToDiffItem(v: {
+  ruleId: string;
+  selector: string;
+  anchor?: string;
+  role?: string;
+  visualFingerprint?: string;
+  htmlFingerprint?: string;
+  relativeLocation?: string;
+  tag?: string;
+}): DiffItem<AccesslintSignal> {
   const signals: Partial<Record<AccesslintSignal, string>> = { selector: v.selector };
   if (v.anchor) signals.anchor = v.anchor;
   if (v.role) signals.role = v.role;

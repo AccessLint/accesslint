@@ -49,6 +49,9 @@ export {
   buildRelativeLocation,
 } from "./rules/utils/selector";
 
+export { getResilientLocator } from "./rules/utils/resilient-locator";
+export { isGeneratedId, isStableId } from "./rules/utils/generated-id";
+
 // Cache clearing (useful for test helpers and extension integration)
 export { clearAriaAttrAuditCache } from "./rules/aria/aria-attr-audit";
 export { clearColorCaches } from "./rules/utils/color";

@@ -28,8 +28,8 @@ const SIZE_BUDGETS: Record<string, { raw: number; gzip: number }> = {
   "index.iife.js": { raw: 185_000, gzip: 50_000 },
   "index.cjs": { raw: 410_000, gzip: 100_000 },
   "index.js": { raw: 410_000, gzip: 100_000 },
-  "index.d.ts": { raw: 13_500, gzip: 4_500 },
-  "index.d.cts": { raw: 13_500, gzip: 4_500 },
+  "index.d.ts": { raw: 15_500, gzip: 5_500 },
+  "index.d.cts": { raw: 15_500, gzip: 5_500 },
 };
 
 describe("bundle size budgets", () => {

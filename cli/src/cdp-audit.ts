@@ -44,6 +44,7 @@ export function buildAuditExpression(
     const _getAccessibleName = typeof AL.getAccessibleName === "function" ? AL.getAccessibleName : null;
     const _buildRelativeLocation = typeof AL.buildRelativeLocation === "function" ? AL.buildRelativeLocation : null;
     const _getRuleById = typeof AL.getRuleById === "function" ? AL.getRuleById : null;
+    const _getResilientLocator = typeof AL.getResilientLocator === "function" ? AL.getResilientLocator : null;
     return JSON.stringify({
       ok: true,
       url: __r.url,
@@ -58,6 +59,7 @@ export function buildAuditExpression(
         const role = roleBase ? (roleName ? roleBase + '[name="' + roleName + '"]' : roleBase) : undefined;
         const relativeLocation = el && _buildRelativeLocation ? _buildRelativeLocation(el) : undefined;
         const tag = el ? el.tagName.toLowerCase() : undefined;
+        const resilientLocator = el && _getResilientLocator ? _getResilientLocator(el) : undefined;
         const rule = _getRuleById ? _getRuleById(v.ruleId) : undefined;
         return {
           ruleId: v.ruleId, selector: v.selector, html: v.html, impact: v.impact,
@@ -69,6 +71,7 @@ export function buildAuditExpression(
           role: role || undefined,
           relativeLocation: relativeLocation || undefined,
           tag: tag || undefined,
+          resilientLocator: resilientLocator || undefined,
         };
       }),
     });
@@ -92,6 +95,7 @@ export interface InPageViolation {
   role?: string;
   relativeLocation?: string;
   tag?: string;
+  resilientLocator?: string;
 }
 
 export interface InPageOk {
@@ -111,7 +115,7 @@ export interface InPageErr {
 /** Map raw in-page violations to the stable identity used for snapshot diffing. */
 export function mapInPageToSnapshot(violations: InPageViolation[]): SnapshotViolation[] {
   return violations.map((v) => {
-    const sv: SnapshotViolation = { ruleId: v.ruleId, selector: v.selector };
+    const sv: SnapshotViolation = { ruleId: v.ruleId, selector: v.resilientLocator || v.selector };
     if (v.anchor) sv.anchor = v.anchor;
     if (v.role) sv.role = v.role;
     if (v.relativeLocation) sv.relativeLocation = v.relativeLocation;
