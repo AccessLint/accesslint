@@ -1,0 +1,44 @@
+name: Publish @accesslint/heal-diff
+
+# Publishes to GitHub Packages (npm.pkg.github.com) as a private, org-scoped
+# package — deliberately not on public npm. GITHUB_TOKEN can create and
+# publish the package on first run, so no manual bootstrap is needed.
+
+on:
+  push:
+    tags: ["heal-diff/v*"]
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: "@accesslint"
+
+      - run: bun install
+
+      - run: npx turbo run build --filter=@accesslint/heal-diff
+
+      - run: npm publish
+        working-directory: heal-diff
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/heal-diff v${GITHUB_REF_NAME#heal-diff/v}"
+        env:
+          GH_TOKEN: ${{ github.token }}

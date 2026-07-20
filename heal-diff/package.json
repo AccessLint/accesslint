@@ -4,6 +4,14 @@
   "description": "Multi-signal diff engine for baseline/current sets with tiered matching, auto-healing, and likely-moved detection.",
   "license": "MIT",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AccessLint/accesslint.git",
+    "directory": "heal-diff"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "files": ["dist"],
   "exports": {
     ".": {
