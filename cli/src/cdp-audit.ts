@@ -11,16 +11,27 @@ export interface CoreAuditExprOptions {
 }
 
 /**
+ * Sentinel environment matching core's getTestMetadata fallbacks, for engines
+ * older than the testEngine/testEnvironment contract.
+ */
+const FALLBACK_ENVIRONMENT_JS = `{ userAgent: "", windowWidth: 0, windowHeight: 0, orientationAngle: 0, orientationType: "portrait-primary" }`;
+
+/**
  * Build the in-page expression that injects @accesslint/core and runs an audit.
  * Used by the CLI's single-shot live audit to produce stable violation identities.
+ *
+ * `engineVersion` is the version of the resolved IIFE (from loadCoreIIFE),
+ * used to backfill `testEngine` when the injected engine predates it.
  */
 export function buildAuditExpression(
   iifeBytes: string,
   coreOptions: CoreAuditExprOptions,
   selector?: string,
+  engineVersion = "unknown",
 ): string {
   const optsJson = JSON.stringify(coreOptions);
   const selectorJson = selector ? JSON.stringify(selector) : "null";
+  const engineJson = JSON.stringify({ name: "accesslint", version: engineVersion });
   return `${iifeBytes}
 ;(async () => {
   try {
@@ -49,8 +60,8 @@ export function buildAuditExpression(
       ok: true,
       url: __r.url,
       timestamp: __r.timestamp,
-      testEngine: __r.testEngine,
-      testEnvironment: __r.testEnvironment,
+      testEngine: __r.testEngine || ${engineJson},
+      testEnvironment: __r.testEnvironment || ${FALLBACK_ENVIRONMENT_JS},
       ruleCount: __r.ruleCount,
       skippedRules: __r.skippedRules || [],
       violations: __violations.map(function (v) {

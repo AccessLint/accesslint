@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import packageJson from "../package.json";
-import { getTestMetadata } from "./metadata";
+import { getTestMetadata, version } from "./metadata";
+
+describe("version", () => {
+  it("exposes the engine version", () => {
+    expect(version).toBe(packageJson.version);
+    expect(version).toMatch(/^\d+\.\d+\.\d+/);
+  });
+});
 
 const fallbackEnvironment = {
   userAgent: "",

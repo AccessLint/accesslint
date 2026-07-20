@@ -128,6 +128,21 @@ test.describe("accesslintAudit", () => {
     expect(result.ruleCount).toBeGreaterThan(0);
   });
 
+  test("carries engine and environment metadata across the page boundary", async ({ page }) => {
+    await page.setContent(ACCESSIBLE_HTML);
+    const result = await accesslintAudit(page);
+    expect(result.testEngine.name).toBe("accesslint");
+    expect(result.testEngine.version).toMatch(/^\d+\.\d+\.\d+/);
+    expect(result.testEnvironment.userAgent).not.toBe("");
+    expect(result.testEnvironment.windowWidth).toBeGreaterThan(0);
+    expect(result.testEnvironment.windowHeight).toBeGreaterThan(0);
+    expect(result.skippedRules).toEqual([]);
+
+    const scoped = await accesslintAudit(page.locator("main"));
+    expect(scoped.testEngine).toEqual(result.testEngine);
+    expect(scoped.testEnvironment.userAgent).toBe(result.testEnvironment.userAgent);
+  });
+
   test("inaccessible page has violations", async ({ page }) => {
     await page.setContent(INACCESSIBLE_HTML);
     const result = await accesslintAudit(page);

@@ -1,3 +1,5 @@
+export { version } from "./metadata";
+
 // Core audit
 export {
   rules,

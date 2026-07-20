@@ -1,5 +1,8 @@
-import packageJson from "../package.json";
+import packageJson from "../package.json" with { type: "json" };
 import type { TestEngine, TestEnvironment } from "./rules/types";
+
+/** The @accesslint/core engine version, mirroring `axe.version`. */
+export const version: string = packageJson.version;
 
 export interface TestMetadata {
   testEngine: TestEngine;

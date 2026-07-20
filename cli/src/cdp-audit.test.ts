@@ -38,4 +38,37 @@ describe("buildAuditExpression", () => {
     expect(parsed.testEngine).toEqual(testEngine);
     expect(parsed.testEnvironment).toEqual(testEnvironment);
   });
+
+  it("backfills metadata when the injected engine predates the contract", async () => {
+    const windowStub = {
+      AccessLint: {
+        runAudit: () => ({
+          url: "https://example.com/",
+          timestamp: 123,
+          ruleCount: 94,
+          skippedRules: [],
+          violations: [],
+        }),
+      },
+    };
+    const documentStub = {};
+    const expression = buildAuditExpression("", {}, undefined, "0.15.0");
+    const evaluate = new Function(
+      "window",
+      "document",
+      "expression",
+      "return eval(expression);",
+    ) as (window: unknown, document: unknown, expression: string) => Promise<string>;
+
+    const parsed = JSON.parse(await evaluate(windowStub, documentStub, expression));
+
+    expect(parsed.testEngine).toEqual({ name: "accesslint", version: "0.15.0" });
+    expect(parsed.testEnvironment).toEqual({
+      userAgent: "",
+      windowWidth: 0,
+      windowHeight: 0,
+      orientationAngle: 0,
+      orientationType: "portrait-primary",
+    });
+  });
 });

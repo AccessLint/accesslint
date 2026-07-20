@@ -216,8 +216,8 @@ export async function runLiveAudit(opts: RunLiveAuditOptions): Promise<RunLiveAu
       await waitForSelector(client, opts.selector, opts.waitTimeoutMs ?? WAIT_FOR_DEFAULT_MS);
     }
 
-    const { bytes } = loadCoreIIFE();
-    const expression = buildAuditExpression(bytes, opts.coreOptions, opts.selector);
+    const { bytes, version } = loadCoreIIFE();
+    const expression = buildAuditExpression(bytes, opts.coreOptions, opts.selector, version);
 
     const evalResult = await client.Runtime.evaluate({
       expression,

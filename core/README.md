@@ -148,7 +148,11 @@ interface TestEnvironment {
   orientationAngle: number;
   orientationType: string;
 }
+```
 
+`testEngine.version` is the `@accesslint/core` engine version. `testEnvironment` describes the audited document's realm; unreadable values fall back to `""`, `0`, and `"portrait-primary"`.
+
+```ts
 interface Violation {
   ruleId: string;
   selector: string;
@@ -170,6 +174,14 @@ interface SourceLocation {
   /** 0 = JSX literal that produced the element; 1+ = enclosing component(s). */
   ownerDepth: number;
 }
+```
+
+### `version: string`
+
+The engine version, mirroring `axe.version`. Also available as `AccessLint.version` on the standalone (IIFE) global.
+
+```ts
+import { version } from "@accesslint/core";
 ```
 
 ### `createChunkedAudit(doc: Document, options?: AuditOptions): ChunkedAudit`

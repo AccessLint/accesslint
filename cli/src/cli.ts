@@ -5,6 +5,7 @@ import { resolveInput } from "./input.js";
 import { isHTMLFragment } from "./html-util.js";
 import { format } from "./format.js";
 import { runLiveAudit } from "./cdp.js";
+import { coreEngineVersion } from "./iife-source.js";
 import {
   evaluateSnapshot,
   isUpdateMode,
@@ -243,7 +244,7 @@ function formatSnapshotResult(snap: SnapshotResult, name: string): string {
 const main = defineCommand({
   meta: {
     name: "accesslint",
-    version,
+    version: `${version} (engine ${coreEngineVersion()})`,
     description: "Audit HTML for accessibility violations",
   },
   subCommands: {

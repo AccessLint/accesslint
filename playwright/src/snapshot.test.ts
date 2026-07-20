@@ -133,8 +133,8 @@ test.describe("loadSnapshot / saveSnapshot", () => {
     const loaded = loadSnapshot(path);
 
     expect(loaded).toEqual([
-      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
       { ruleId: "readable/html-has-lang", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ]);
 
     rmSync(dir, { recursive: true });
@@ -280,7 +280,9 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "new.json");
 
-    saveSnapshot(path, [{ ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" }]);
+    saveSnapshot(path, [
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+    ]);
 
     const result = evaluateSnapshot(
       [
@@ -323,11 +325,17 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "force.json");
 
-    saveSnapshot(path, [{ ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" }]);
+    saveSnapshot(path, [
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+    ]);
 
-    const result = evaluateSnapshot([{ ruleId: "readable/html-has-lang", selector: "html" }], path, {
-      update: true,
-    });
+    const result = evaluateSnapshot(
+      [{ ruleId: "readable/html-has-lang", selector: "html" }],
+      path,
+      {
+        update: true,
+      },
+    );
 
     expect(result.pass).toBe(true);
     expect(result.updated).toBe(true);
