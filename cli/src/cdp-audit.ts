@@ -1,4 +1,4 @@
-import type { Violation } from "@accesslint/core";
+import type { TestEngine, TestEnvironment, Violation } from "@accesslint/core";
 import { isFingerprintableTag, normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
@@ -49,6 +49,8 @@ export function buildAuditExpression(
       ok: true,
       url: __r.url,
       timestamp: __r.timestamp,
+      testEngine: __r.testEngine,
+      testEnvironment: __r.testEnvironment,
       ruleCount: __r.ruleCount,
       skippedRules: __r.skippedRules || [],
       violations: __violations.map(function (v) {
@@ -102,6 +104,8 @@ export interface InPageOk {
   ok: true;
   url: string;
   timestamp: number;
+  testEngine: TestEngine;
+  testEnvironment: TestEnvironment;
   ruleCount: number;
   skippedRules: { ruleId: string; error: string }[];
   violations: InPageViolation[];

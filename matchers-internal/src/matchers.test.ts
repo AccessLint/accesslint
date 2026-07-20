@@ -23,7 +23,21 @@ const mockRunAudit = vi.mocked(runAudit);
 const mockGetRuleById = vi.mocked(getRuleById);
 
 function auditResult(violations: Violation[]): AuditResult {
-  return { url: "about:blank", timestamp: 0, violations, ruleCount: 1, skippedRules: [] };
+  return {
+    url: "about:blank",
+    timestamp: 0,
+    testEngine: { name: "accesslint", version: "0.14.1" },
+    testEnvironment: {
+      userAgent: "",
+      windowWidth: 0,
+      windowHeight: 0,
+      orientationAngle: 0,
+      orientationType: "portrait-primary",
+    },
+    violations,
+    ruleCount: 1,
+    skippedRules: [],
+  };
 }
 
 function violation(overrides: Partial<Violation> = {}): Violation {

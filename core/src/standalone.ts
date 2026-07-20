@@ -13,6 +13,8 @@ export type {
   Rule,
   Violation,
   AuditResult,
+  TestEngine,
+  TestEnvironment,
   DeclarativeRule,
   CheckType,
   SourceLocation,

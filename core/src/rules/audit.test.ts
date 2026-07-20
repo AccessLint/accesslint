@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { makeDoc } from "../test-helpers";
 import { runAudit, diffAudit, getActiveRules, createChunkedAudit } from "./index";
 import { generateDoc, SMALL_SIZE } from "../bench/fixtures";
+import packageJson from "../../package.json";
 
 describe("runAudit integration", () => {
   it("returns violations on a realistic document", () => {
@@ -33,6 +34,24 @@ describe("runAudit integration", () => {
     );
     const result = runAudit(doc);
     expect(result.violations).toHaveLength(0);
+  });
+
+  it("reports the test engine and audited document environment", () => {
+    const doc = makeDoc(
+      '<html lang="en"><head><title>Metadata</title></head><body><main><h1>Hello</h1></main></body></html>',
+    );
+
+    const result = runAudit(doc);
+    const view = doc.defaultView!;
+
+    expect(result.testEngine).toEqual({ name: "accesslint", version: packageJson.version });
+    expect(result.testEnvironment).toEqual({
+      userAgent: view.navigator.userAgent,
+      windowWidth: view.innerWidth,
+      windowHeight: view.innerHeight,
+      orientationAngle: view.screen.orientation?.angle ?? 0,
+      orientationType: view.screen.orientation?.type ?? "portrait-primary",
+    });
   });
 
   it("is deterministic across runs", () => {
@@ -204,7 +223,21 @@ describe("diffAudit", () => {
   });
 
   it("handles empty results", () => {
-    const empty = { url: "", timestamp: 0, violations: [], ruleCount: 0, skippedRules: [] };
+    const empty = {
+      url: "",
+      timestamp: 0,
+      testEngine: { name: "accesslint" as const, version: packageJson.version },
+      testEnvironment: {
+        userAgent: "",
+        windowWidth: 0,
+        windowHeight: 0,
+        orientationAngle: 0,
+        orientationType: "portrait-primary",
+      },
+      violations: [],
+      ruleCount: 0,
+      skippedRules: [],
+    };
     const diff = diffAudit(empty, empty);
     expect(diff.added).toHaveLength(0);
     expect(diff.fixed).toHaveLength(0);

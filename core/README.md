@@ -129,8 +129,24 @@ interface AuditOptions {
 interface AuditResult {
   url: string;
   timestamp: number;
+  testEngine: TestEngine;
+  testEnvironment: TestEnvironment;
   violations: Violation[];
   ruleCount: number;
+  skippedRules: { ruleId: string; error: string }[];
+}
+
+interface TestEngine {
+  name: "accesslint";
+  version: string;
+}
+
+interface TestEnvironment {
+  userAgent: string;
+  windowWidth: number;
+  windowHeight: number;
+  orientationAngle: number;
+  orientationType: string;
 }
 
 interface Violation {
