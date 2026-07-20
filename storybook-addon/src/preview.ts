@@ -22,7 +22,7 @@ declare const __ACCESSLINT_SKIP_TAGS__: string[];
 // apply to individual components rendered in Storybook. Callers may extend
 // these with {@link setAuditOptions}.
 let AUDIT_OPTIONS: AuditOptions = {
-  disabledRules: ["accesslint-045"],
+  disabledRules: ["landmarks/region"],
 };
 
 /**

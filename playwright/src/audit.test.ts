@@ -133,7 +133,7 @@ test.describe("accesslintAudit", () => {
     const result = await accesslintAudit(page);
     expect(result.violations.length).toBeGreaterThan(0);
     const ruleIds = result.violations.map((v) => v.ruleId);
-    // accesslint-011 = img missing alt, accesslint-080 = html missing lang
+    // text-alternatives/img-alt = img missing alt, readable/html-has-lang = html missing lang
     expect(ruleIds).toContain("text-alternatives/img-alt");
     expect(ruleIds).toContain("readable/html-has-lang");
   });
@@ -167,7 +167,7 @@ test.describe("accesslintAudit", () => {
     });
     const ruleIds = result.violations.map((v) => v.ruleId);
     expect(ruleIds).not.toContain("text-alternatives/img-alt");
-    // accesslint-080 (html-has-lang) should still be present
+    // readable/html-has-lang should still be present
     expect(ruleIds).toContain("readable/html-has-lang");
   });
 

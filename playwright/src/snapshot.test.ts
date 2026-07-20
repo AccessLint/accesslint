@@ -125,16 +125,16 @@ test.describe("loadSnapshot / saveSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "test.json");
     const violations: SnapshotViolation[] = [
-      { ruleId: "accesslint-080", selector: "html" },
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "readable/html-has-lang", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
 
     saveSnapshot(path, violations);
     const loaded = loadSnapshot(path);
 
     expect(loaded).toEqual([
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-      { ruleId: "accesslint-080", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+      { ruleId: "readable/html-has-lang", selector: "html" },
     ]);
 
     rmSync(dir, { recursive: true });
@@ -152,7 +152,7 @@ test.describe("loadSnapshot / saveSnapshot", () => {
 test.describe("compareViolations", () => {
   test("identical sets → no changes", () => {
     const v: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
     const { newViolations, fixedViolations } = compareViolations(v, v);
     expect(newViolations).toHaveLength(0);
@@ -161,39 +161,39 @@ test.describe("compareViolations", () => {
 
   test("detects new violations", () => {
     const baseline: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
     const current: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-      { ruleId: "accesslint-080", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+      { ruleId: "readable/html-has-lang", selector: "html" },
     ];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(1);
-    expect(newViolations[0].ruleId).toBe("accesslint-080");
+    expect(newViolations[0].ruleId).toBe("readable/html-has-lang");
     expect(fixedViolations).toHaveLength(0);
   });
 
   test("detects fixed violations", () => {
     const baseline: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-      { ruleId: "accesslint-080", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+      { ruleId: "readable/html-has-lang", selector: "html" },
     ];
     const current: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(0);
     expect(fixedViolations).toHaveLength(1);
-    expect(fixedViolations[0].ruleId).toBe("accesslint-080");
+    expect(fixedViolations[0].ruleId).toBe("readable/html-has-lang");
   });
 
   test("detects both new and fixed", () => {
     const baseline: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
-    const current: SnapshotViolation[] = [{ ruleId: "accesslint-080", selector: "html" }];
+    const current: SnapshotViolation[] = [{ ruleId: "readable/html-has-lang", selector: "html" }];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(1);
@@ -203,13 +203,13 @@ test.describe("compareViolations", () => {
   test("handles duplicate selectors — added", () => {
     const sel = "getByRole('img')";
     const baseline: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
     ];
     const current: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
     ];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
@@ -220,11 +220,11 @@ test.describe("compareViolations", () => {
   test("handles duplicate selectors — removed", () => {
     const sel = "getByRole('img')";
     const baseline: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
     ];
-    const current: SnapshotViolation[] = [{ ruleId: "accesslint-011", selector: sel }];
+    const current: SnapshotViolation[] = [{ ruleId: "text-alternatives/img-alt", selector: sel }];
 
     const { newViolations, fixedViolations } = compareViolations(current, baseline);
     expect(newViolations).toHaveLength(0);
@@ -234,8 +234,8 @@ test.describe("compareViolations", () => {
   test("handles duplicate selectors — unchanged count", () => {
     const sel = "getByRole('img')";
     const violations: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: sel },
-      { ruleId: "accesslint-011", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
+      { ruleId: "text-alternatives/img-alt", selector: sel },
     ];
 
     const { newViolations, fixedViolations } = compareViolations(violations, violations);
@@ -249,7 +249,7 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "first.json");
     const violations: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
 
     const result = evaluateSnapshot(violations, path);
@@ -264,7 +264,7 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "match.json");
     const violations: SnapshotViolation[] = [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
     ];
 
     saveSnapshot(path, violations);
@@ -280,12 +280,12 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "new.json");
 
-    saveSnapshot(path, [{ ruleId: "accesslint-011", selector: "html > body > main > img" }]);
+    saveSnapshot(path, [{ ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" }]);
 
     const result = evaluateSnapshot(
       [
-        { ruleId: "accesslint-011", selector: "html > body > main > img" },
-        { ruleId: "accesslint-080", selector: "html" },
+        { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+        { ruleId: "readable/html-has-lang", selector: "html" },
       ],
       path,
     );
@@ -301,12 +301,12 @@ test.describe("evaluateSnapshot", () => {
     const path = join(dir, "ratchet.json");
 
     saveSnapshot(path, [
-      { ruleId: "accesslint-011", selector: "html > body > main > img" },
-      { ruleId: "accesslint-080", selector: "html" },
+      { ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" },
+      { ruleId: "readable/html-has-lang", selector: "html" },
     ]);
 
     const result = evaluateSnapshot(
-      [{ ruleId: "accesslint-011", selector: "html > body > main > img" }],
+      [{ ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" }],
       path,
     );
 
@@ -323,9 +323,9 @@ test.describe("evaluateSnapshot", () => {
     const dir = createTempDir();
     const path = join(dir, "force.json");
 
-    saveSnapshot(path, [{ ruleId: "accesslint-011", selector: "html > body > main > img" }]);
+    saveSnapshot(path, [{ ruleId: "text-alternatives/img-alt", selector: "html > body > main > img" }]);
 
-    const result = evaluateSnapshot([{ ruleId: "accesslint-080", selector: "html" }], path, {
+    const result = evaluateSnapshot([{ ruleId: "readable/html-has-lang", selector: "html" }], path, {
       update: true,
     });
 
@@ -333,7 +333,7 @@ test.describe("evaluateSnapshot", () => {
     expect(result.updated).toBe(true);
 
     const updated = loadSnapshot(path);
-    expect(updated).toEqual([{ ruleId: "accesslint-080", selector: "html" }]);
+    expect(updated).toEqual([{ ruleId: "readable/html-has-lang", selector: "html" }]);
 
     rmSync(dir, { recursive: true });
   });
@@ -471,13 +471,13 @@ test.describe("toBeAccessible with snapshot", () => {
     await expect(page).toBeAccessible({
       snapshot: "disabled",
       snapshotDir: dir,
-      disabledRules: ["accesslint-011"],
+      disabledRules: ["text-alternatives/img-alt"],
     });
 
     const snapshotPath = join(dir, "disabled.json");
     const snapshot: SnapshotViolation[] = JSON.parse(readFileSync(snapshotPath, "utf-8"));
     const ruleIds = snapshot.map((v) => v.ruleId);
-    expect(ruleIds).not.toContain("accesslint-011");
+    expect(ruleIds).not.toContain("text-alternatives/img-alt");
 
     rmSync(dir, { recursive: true });
   });
