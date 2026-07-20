@@ -11,6 +11,7 @@ export { compileDeclarativeRule, validateDeclarativeRule } from "./rules/engine"
 // Types
 export type {
   Rule,
+  DeprecatedInfo,
   Violation,
   AuditResult,
   TestEngine,

@@ -6,6 +6,18 @@
  */
 export type Fixability = "mechanical" | "contextual" | "visual";
 
+/** Deprecation metadata for a rule that is being phased out. */
+export interface DeprecatedInfo {
+  /** Why the rule is deprecated or how to migrate away from it. */
+  message?: string;
+  /** Version that deprecated the rule (no leading "v"), e.g. "0.15.0". */
+  deprecatedSince?: string;
+  /** Version the rule is expected to be removed in, or null to keep it indefinitely. */
+  availableUntil?: string | null;
+  /** IDs of replacement rules, e.g. ["labels-and-names/form-label"]. */
+  replacedBy?: string[];
+}
+
 export interface Rule {
   id: string;
   category: string;
@@ -20,6 +32,8 @@ export interface Rule {
   description: string;
   /** Generic remediation guidance for the AI to contextualize */
   guidance?: string;
+  /** Present when the rule is deprecated; consumers should surface it and prefer replacements. */
+  deprecated?: DeprecatedInfo;
   /**
    * Optional applicability guard for ACT conformance testing.
    * Return false when the document has no test targets for this rule —
