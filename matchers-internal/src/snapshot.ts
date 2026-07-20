@@ -30,7 +30,7 @@ import {
 } from "./signals";
 import type { AccesslintSignal } from "./signals";
 import { getAccessibleName, getComputedRole, getHtmlSnippet } from "@accesslint/core";
-import { normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
+import { isFingerprintableTag, normalizeHtml, sha1Short } from "@accesslint/heal-diff/normalize";
 
 export interface SnapshotViolation {
   ruleId: string;
@@ -222,7 +222,10 @@ function driftedSignalFields(baseline: SnapshotViolation, current: SnapshotViola
  * current overlaid. Baseline-only signals are preserved (current may lack
  * them transiently when the element detaches or ARIA info is unavailable).
  */
-function mergedForRefresh(baseline: SnapshotViolation, current: SnapshotViolation): SnapshotViolation {
+function mergedForRefresh(
+  baseline: SnapshotViolation,
+  current: SnapshotViolation,
+): SnapshotViolation {
   const out: SnapshotViolation = { ...baseline, selector: current.selector };
   for (const field of REFRESHABLE_FIELDS) {
     const c = current[field];
@@ -516,7 +519,9 @@ export function toSnapshotViolation(v: Violation): SnapshotViolation {
   }
 
   const html = el ? getHtmlSnippet(el) : v.html;
-  if (html) out.htmlFingerprint = sha1Short(normalizeHtml(html));
+  if (html && (!out.tag || isFingerprintableTag(out.tag))) {
+    out.htmlFingerprint = sha1Short(normalizeHtml(html));
+  }
 
   return out;
 }
