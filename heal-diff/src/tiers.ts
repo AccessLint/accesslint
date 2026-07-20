@@ -6,11 +6,13 @@ export function buildTier<Sig extends string>(args: {
   key: readonly TierKey<Sig>[];
   heal: boolean;
   uniquenessGated?: boolean;
+  verifiedBy?: Sig;
 }): Tier<Sig> {
   return {
     name: args.name,
     key: args.key,
     heal: args.heal,
     uniquenessGated: args.uniquenessGated,
+    verifiedBy: args.verifiedBy,
   };
 }

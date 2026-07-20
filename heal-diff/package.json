@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/heal-diff",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Multi-signal diff engine for baseline/current sets with tiered matching, auto-healing, and likely-moved detection.",
   "license": "MIT",
   "type": "module",

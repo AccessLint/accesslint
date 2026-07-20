@@ -1,16 +1,30 @@
 /**
  * HTML + hashing utilities for building signal values.
  *
- * No DOM dependency: operates on HTML strings. Suitable for node and
- * browser environments. The accesslint matcher feeds `getHtmlSnippet`
- * output (capped at 200 chars) into `normalizeHtml`, then hashes the
- * result to produce `htmlFingerprint`.
+ * No DOM or node dependency: operates on HTML strings with a pure-JS
+ * hash, so the same module runs in node sidecars and in-page bundles.
+ * The accesslint matcher feeds `getHtmlSnippet` output (capped at 200
+ * chars) into `normalizeHtml`, then hashes the result to produce
+ * `htmlFingerprint`.
  */
 
-import { createHash } from "node:crypto";
+/**
+ * Version of the normalization algorithm. Bump whenever `normalizeHtml`
+ * can produce different output for the same input — stored fingerprints
+ * minted under an older version must be treated as cold. Owned here;
+ * downstream fingerprint wrappers must not version independently.
+ *
+ * 1: attribute drop/sort, generated-id filtering, 64-char text truncation.
+ * 2: adds URL query/fragment stripping on href/src values.
+ */
+export const NORMALIZE_VERSION = 2;
 
 /** Attributes removed entirely during normalization. */
 const DROP_ATTRS = new Set(["class", "style"]);
+
+/** Attributes whose values are URLs: query strings and fragments are
+ * stripped (cache busters, UTM params) so only the path identifies. */
+const URL_ATTRS = new Set(["href", "src"]);
 
 /** IDs matching these patterns are treated as generated and dropped. */
 const GENERATED_ID_PATTERNS: RegExp[] = [
@@ -52,6 +66,7 @@ function normalizeAttributes(attrText: string): string {
       }
       return true;
     })
+    .map((a) => (URL_ATTRS.has(a.name) ? { name: a.name, value: a.value.split(/[?#]/)[0] } : a))
     .sort((a, b) => a.name.localeCompare(b.name));
 
   return pairs.map((a) => (a.value === "" ? a.name : `${a.name}="${a.value}"`)).join(" ");
@@ -68,14 +83,17 @@ const TAG_RE = /<(\/?)([a-zA-Z][a-zA-Z0-9-]*)((?:\s+[^>]*)?)\s*(\/?)>/g;
  */
 export function normalizeHtml(html: string): string {
   // Rewrite each tag
-  const withNormalizedTags = html.replace(TAG_RE, (_, closing: string, tag: string, attrs: string, self: string) => {
-    const lower = tag.toLowerCase();
-    const attrPart = attrs.trim();
-    const normalizedAttrs = attrPart ? normalizeAttributes(attrPart) : "";
-    const attrSegment = normalizedAttrs ? ` ${normalizedAttrs}` : "";
-    const selfClose = self ? "/" : "";
-    return `<${closing}${lower}${attrSegment}${selfClose}>`;
-  });
+  const withNormalizedTags = html.replace(
+    TAG_RE,
+    (_, closing: string, tag: string, attrs: string, self: string) => {
+      const lower = tag.toLowerCase();
+      const attrPart = attrs.trim();
+      const normalizedAttrs = attrPart ? normalizeAttributes(attrPart) : "";
+      const attrSegment = normalizedAttrs ? ` ${normalizedAttrs}` : "";
+      const selfClose = self ? "/" : "";
+      return `<${closing}${lower}${attrSegment}${selfClose}>`;
+    },
+  );
 
   // Split into tag / text segments and truncate text runs.
   const parts: string[] = [];
@@ -102,9 +120,93 @@ function truncateText(text: string): string {
   return collapsed.slice(0, 64);
 }
 
+/**
+ * Whether an element of this tag should carry an `htmlFingerprint` signal.
+ * `<html>` and `<body>` snippets serialize the whole page, so their
+ * fingerprint is page-scoped noise: any edit anywhere near the top of the
+ * document changes it, and both elements are unique per page (their address
+ * cannot host an impostor). Signal capture skips them; missing-signal
+ * leniency then keeps exact matches standing under `verifiedBy`.
+ */
+export function isFingerprintableTag(tag: string): boolean {
+  const lower = tag.toLowerCase();
+  return lower !== "html" && lower !== "body";
+}
+
 /** SHA-1 hash truncated to 12 hex chars — compact, low collision rate for short snippets. */
 export function sha1Short(input: string): string {
-  return createHash("sha1").update(input).digest("hex").slice(0, 12);
+  return sha1Hex(input).slice(0, 12);
+}
+
+/**
+ * Pure-JS SHA-1 over the UTF-8 bytes of `input`, hex-encoded.
+ * Output is identical to `node:crypto`'s sha1 digest; implemented inline
+ * so the fingerprint path has no node builtins and bundles for the
+ * browser unchanged. Synchronous by design (WebCrypto's sha-1 is
+ * async-only). Used for identity, not security.
+ */
+function sha1Hex(input: string): string {
+  const data = new TextEncoder().encode(input);
+  const paddedLen = Math.ceil((data.length + 9) / 64) * 64;
+  const bytes = new Uint8Array(paddedLen);
+  bytes.set(data);
+  bytes[data.length] = 0x80;
+  const view = new DataView(bytes.buffer);
+  const bitLen = data.length * 8;
+  view.setUint32(paddedLen - 8, Math.floor(bitLen / 0x100000000));
+  view.setUint32(paddedLen - 4, bitLen >>> 0);
+
+  let h0 = 0x67452301;
+  let h1 = 0xefcdab89;
+  let h2 = 0x98badcfe;
+  let h3 = 0x10325476;
+  let h4 = 0xc3d2e1f0;
+  const w = new Uint32Array(80);
+
+  for (let block = 0; block < paddedLen; block += 64) {
+    for (let t = 0; t < 16; t++) w[t] = view.getUint32(block + t * 4);
+    for (let t = 16; t < 80; t++) {
+      const x = w[t - 3] ^ w[t - 8] ^ w[t - 14] ^ w[t - 16];
+      w[t] = (x << 1) | (x >>> 31);
+    }
+
+    let a = h0;
+    let b = h1;
+    let c = h2;
+    let d = h3;
+    let e = h4;
+    for (let t = 0; t < 80; t++) {
+      let f: number;
+      let k: number;
+      if (t < 20) {
+        f = (b & c) | (~b & d);
+        k = 0x5a827999;
+      } else if (t < 40) {
+        f = b ^ c ^ d;
+        k = 0x6ed9eba1;
+      } else if (t < 60) {
+        f = (b & c) | (b & d) | (c & d);
+        k = 0x8f1bbcdc;
+      } else {
+        f = b ^ c ^ d;
+        k = 0xca62c1d6;
+      }
+      const temp = (((a << 5) | (a >>> 27)) + f + e + k + w[t]) >>> 0;
+      e = d;
+      d = c;
+      c = (b << 30) | (b >>> 2);
+      b = a;
+      a = temp;
+    }
+
+    h0 = (h0 + a) >>> 0;
+    h1 = (h1 + b) >>> 0;
+    h2 = (h2 + c) >>> 0;
+    h3 = (h3 + d) >>> 0;
+    h4 = (h4 + e) >>> 0;
+  }
+
+  return [h0, h1, h2, h3, h4].map((h) => h.toString(16).padStart(8, "0")).join("");
 }
 
 /**
