@@ -11,6 +11,11 @@ import {
   evaluateSnapshot,
 } from "./snapshot";
 import type { SnapshotViolation } from "./snapshot";
+// `historyPathFor` isn't re-exported by ./snapshot; matchers-internal is a
+// devDependency, so read the sidecar path from the source of truth.
+import { historyPathFor } from "@accesslint/matchers-internal/snapshot";
+import type { HistoryRecord } from "@accesslint/matchers-internal/snapshot";
+import { toBeAccessible } from "./matchers";
 
 // Auto-register toBeAccessible matcher
 import "./index";
@@ -75,6 +80,25 @@ function createTempDir(): string {
   );
   mkdirSync(dir, { recursive: true });
   return dir;
+}
+
+function readHistory(snapshotPath: string): HistoryRecord[] {
+  const path = historyPathFor(snapshotPath);
+  if (!existsSync(path)) return [];
+  return readFileSync(path, "utf-8")
+    .split("\n")
+    .filter((line) => line.trim().length > 0)
+    .map((line) => JSON.parse(line) as HistoryRecord);
+}
+
+function healEvents(snapshotPath: string): HistoryRecord[] {
+  return readHistory(snapshotPath).filter((r) => r.event === "healed");
+}
+
+function requireBaseline(snapshotPath: string): SnapshotViolation[] {
+  const baseline = loadSnapshot(snapshotPath);
+  expect(baseline).not.toBeNull();
+  return baseline!;
 }
 
 // ── Unit tests ─────────────────────────────────────────────────────────────
@@ -591,5 +615,309 @@ test.describe("toBeAccessible with snapshot", () => {
     });
 
     rmSync(dir, { recursive: true });
+  });
+});
+
+// ── Healing end-to-end (real Chromium: audit → signal capture → tiered diff) ──
+//
+// Implements RFC validation item 1 (heal-diff/docs/RFC-multi-signal-healing.md,
+// "synthetic fixture corpus") at the browser level. Every fixture below was
+// confirmed with a throwaway probe that printed the captured
+// SnapshotViolation[] for both versions; the recorded facts are what each
+// assertion depends on.
+//
+// The hard part is making the stable selector actually differ: `normalize()`
+// is designed to survive refactors, so a naive before/after pair exact-matches
+// at T1 and never exercises healing. Notably `data-testid` is *also*
+// Playwright's testIdAttribute, so an anchored element normalizes to
+// `getByTestId(...)` — position-independent, always T1. The fixtures use
+// `data-id` (an accesslint anchor attr Playwright ignores) plus duplicate
+// same-role/same-text siblings, which forces positional disambiguation.
+
+/**
+ * T2 fixture. Violating `<img data-id="hero">` beside a NON-violating named
+ * look-alike, so exactly one violation. Probe-confirmed: `getByRole('img')`
+ * matches both images, so normalize disambiguates positionally
+ * (`.first()` → `.nth(1)` after the reorder) while `data-id=hero` survives.
+ */
+const ANCHOR_HEAL_BEFORE = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Gallery</title></head>
+<body>
+  <main>
+    <h1>Gallery</h1>
+    <img data-id="hero" src="hero.png">
+    <img src="team.png" alt="Team photo">
+  </main>
+</body>
+</html>`;
+
+const ANCHOR_HEAL_AFTER = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Gallery</title></head>
+<body>
+  <main>
+    <h1>Gallery</h1>
+    <img src="team.png" alt="Team photo">
+    <img data-id="hero" src="hero.png">
+  </main>
+</body>
+</html>`;
+
+/**
+ * T5 fixture. `<div tabindex="1">` is role-less, so the role tier (which sits
+ * above htmlFingerprint and would otherwise shadow it) is skipped on both
+ * sides; the div carries no anchor attribute either. Probe-confirmed: the
+ * identical-text twin makes normalize emit `getByText('Widget').nth(1)` →
+ * `.nth(2)` after the reorder ("Widgets" in the `<h1>` is index 0), while the
+ * violating div's own outerHTML — and therefore its htmlFingerprint — is
+ * byte-identical across both versions.
+ */
+const FINGERPRINT_HEAL_BEFORE = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <div tabindex="1">Widget</div>
+    <div>Widget</div>
+  </main>
+</body>
+</html>`;
+
+const FINGERPRINT_HEAL_AFTER = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <div>Widget</div>
+    <div tabindex="1">Widget</div>
+  </main>
+</body>
+</html>`;
+
+/**
+ * T6 fixture. Two role-less, anchor-less, same-tag violations directly under
+ * `<main>`. Probe-confirmed: both share `relativeLocation` = `main > near
+ * "Widgets"` and `tag` = `div` in both versions, and the refactor changes
+ * BOTH elements' text, so all four htmlFingerprints are distinct. Every
+ * stronger tier therefore misses and the relativeLocation bucket holds 2
+ * baseline candidates, which the uniqueness gate refuses.
+ */
+const AMBIGUOUS_BEFORE = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <div tabindex="1">Alpha</div>
+    <div tabindex="2">Beta</div>
+  </main>
+</body>
+</html>`;
+
+const AMBIGUOUS_AFTER = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <section><div tabindex="1">Alpha renamed</div></section>
+    <section><div tabindex="2">Beta renamed</div></section>
+  </main>
+</body>
+</html>`;
+
+/**
+ * Negative-control fixture. Probe-confirmed: the kept violation normalizes to
+ * `getByText('Alpha')` in both versions, so it T1-matches and leaves no
+ * unmatched baseline entry for a weaker tier to hand to the newcomer.
+ */
+const NEW_VIOLATION_BEFORE = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <div tabindex="1">Alpha</div>
+  </main>
+</body>
+</html>`;
+
+const NEW_VIOLATION_AFTER = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Widgets</title></head>
+<body>
+  <main>
+    <h1>Widgets</h1>
+    <div tabindex="1">Alpha</div>
+    <div tabindex="3">Gamma</div>
+  </main>
+</body>
+</html>`;
+
+test.describe("toBeAccessible with snapshot — healing (e2e)", () => {
+  test("heals at the anchor tier when the stable selector moves", async ({ page }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "anchor-heal.json");
+
+    try {
+      await page.setContent(ANCHOR_HEAL_BEFORE);
+      await expect(page).toBeAccessible({
+        snapshot: "anchor-heal",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      const baseline = requireBaseline(snapshotPath);
+      expect(baseline).toHaveLength(1);
+      expect(baseline[0].ruleId).toBe("text-alternatives/img-alt");
+      expect(baseline[0].selector).toBe("getByRole('img').first()");
+      expect(baseline[0].anchor).toBe("data-id=hero");
+      // In-browser captureMainFrameSignals produced a real fingerprint.
+      expect(baseline[0].htmlFingerprint).toMatch(/^[0-9a-f]{12}$/);
+
+      await page.setContent(ANCHOR_HEAL_AFTER);
+      await expect(page).toBeAccessible({
+        snapshot: "anchor-heal",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      const healed = requireBaseline(snapshotPath);
+      expect(healed).toHaveLength(1);
+      expect(healed[0].selector).toBe("getByRole('img').nth(1)");
+      expect(healed[0].anchor).toBe("data-id=hero");
+
+      const heals = healEvents(snapshotPath);
+      expect(heals).toHaveLength(1);
+      expect(heals[0].healedTier).toBe("anchor");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("heals at the htmlFingerprint tier when no anchor or role is available", async ({
+    page,
+  }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "fingerprint-heal.json");
+
+    try {
+      await page.setContent(FINGERPRINT_HEAL_BEFORE);
+      await expect(page).toBeAccessible({
+        snapshot: "fingerprint-heal",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      const baseline = requireBaseline(snapshotPath);
+      expect(baseline).toHaveLength(1);
+      expect(baseline[0].ruleId).toBe("keyboard-accessible/tabindex");
+      expect(baseline[0].selector).toBe("getByText('Widget').nth(1)");
+      // The tiers above htmlFingerprint have nothing to key on.
+      expect(baseline[0].anchor).toBeUndefined();
+      expect(baseline[0].role).toBeUndefined();
+      const fingerprint = baseline[0].htmlFingerprint;
+      expect(fingerprint).toMatch(/^[0-9a-f]{12}$/);
+
+      await page.setContent(FINGERPRINT_HEAL_AFTER);
+      await expect(page).toBeAccessible({
+        snapshot: "fingerprint-heal",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      const healed = requireBaseline(snapshotPath);
+      expect(healed).toHaveLength(1);
+      expect(healed[0].selector).toBe("getByText('Widget').nth(2)");
+      expect(healed[0].htmlFingerprint).toBe(fingerprint);
+
+      const heals = healEvents(snapshotPath);
+      expect(heals).toHaveLength(1);
+      expect(heals[0].healedTier).toBe("htmlFingerprint");
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("uniqueness gate refuses to heal two ambiguous look-alikes", async ({ page }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "ambiguous.json");
+
+    try {
+      await page.setContent(AMBIGUOUS_BEFORE);
+      await expect(page).toBeAccessible({
+        snapshot: "ambiguous",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+      expect(requireBaseline(snapshotPath)).toHaveLength(2);
+
+      await page.setContent(AMBIGUOUS_AFTER);
+      const result = await toBeAccessible(page, {
+        snapshot: "ambiguous",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      expect(result.pass).toBe(false);
+      const message = result.message();
+      expect(message).toContain("found 2 new");
+      expect(message).toContain("likely moved from:");
+      expect(message).toContain("matched on: tag, relativeLocation");
+
+      expect(healEvents(snapshotPath)).toHaveLength(0);
+
+      // Failing run leaves the baseline untouched.
+      const after = requireBaseline(snapshotPath);
+      expect(after.map((v) => v.selector).sort()).toEqual([
+        "getByText('Alpha')",
+        "getByText('Beta')",
+      ]);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("a genuinely new violation is reported, never healed", async ({ page }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "new-violation.json");
+
+    try {
+      await page.setContent(NEW_VIOLATION_BEFORE);
+      await expect(page).toBeAccessible({
+        snapshot: "new-violation",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+      expect(requireBaseline(snapshotPath)).toHaveLength(1);
+
+      await page.setContent(NEW_VIOLATION_AFTER);
+      const result = await toBeAccessible(page, {
+        snapshot: "new-violation",
+        snapshotDir: dir,
+        visualSnapshots: false,
+      });
+
+      expect(result.pass).toBe(false);
+      const message = result.message();
+      expect(message).toContain("found 1 new");
+      expect(message).toContain("getByText('Gamma')");
+      expect(message).not.toContain("getByText('Alpha')");
+
+      expect(healEvents(snapshotPath)).toHaveLength(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
