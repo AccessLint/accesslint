@@ -2,14 +2,23 @@
  * Parse `.history.ndjson` sidecar files emitted by @accesslint/matchers-internal.
  *
  * The sidecar is append-only NDJSON — one record per snapshot write event
- * (`created`, `ratchet-down`, `force-update`). Malformed lines are skipped
- * with a warning rather than aborting, since the file can be concatenated
- * from merge commits or partially written on a crash.
+ * (`created`, `ratchet-down`, `force-update`, `healed`, `refreshed`).
+ * Malformed lines are skipped with a warning rather than aborting, since the
+ * file can be concatenated from merge commits or partially written on a
+ * crash.
  */
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-export type HistoryEvent = "created" | "ratchet-down" | "force-update";
+export type HistoryEvent = "created" | "ratchet-down" | "force-update" | "healed" | "refreshed";
+
+const HISTORY_EVENTS: readonly string[] = [
+  "created",
+  "ratchet-down",
+  "force-update",
+  "healed",
+  "refreshed",
+];
 
 export interface HistoryRecord {
   ts: string;
@@ -20,6 +29,10 @@ export interface HistoryRecord {
   total: number;
   addedRules: string[];
   removedRules: string[];
+  /** Tier that healed the selector. Present on `healed` records only. */
+  healedTier?: string;
+  /** Signal fields refreshed. Present on `refreshed` records only. */
+  refreshedFields?: string[];
 }
 
 const HISTORY_FILENAME = ".history.ndjson";
@@ -46,7 +59,8 @@ function isValid(rec: Partial<HistoryRecord>): rec is HistoryRecord {
   return (
     typeof rec.ts === "string" &&
     typeof rec.name === "string" &&
-    (rec.event === "created" || rec.event === "ratchet-down" || rec.event === "force-update") &&
+    typeof rec.event === "string" &&
+    HISTORY_EVENTS.includes(rec.event) &&
     typeof rec.added === "number" &&
     typeof rec.removed === "number" &&
     typeof rec.total === "number" &&

@@ -66,6 +66,40 @@ describe("parseHistory", () => {
     expect(parseHistory(bad + "\n")).toHaveLength(0);
   });
 
+  it("retains healed and refreshed records", () => {
+    const text =
+      [
+        {
+          ts: "2026-04-01T00:00:00Z",
+          name: "home",
+          event: "healed",
+          added: 0,
+          removed: 0,
+          total: 3,
+          addedRules: [],
+          removedRules: [],
+          healedTier: "anchor",
+        },
+        {
+          ts: "2026-04-01T00:01:00Z",
+          name: "home",
+          event: "refreshed",
+          added: 0,
+          removed: 0,
+          total: 3,
+          addedRules: [],
+          removedRules: [],
+          refreshedFields: ["htmlFingerprint"],
+        },
+      ]
+        .map((r) => JSON.stringify(r))
+        .join("\n") + "\n";
+    const records = parseHistory(text);
+    expect(records.map((r) => r.event)).toEqual(["healed", "refreshed"]);
+    expect(records[0].healedTier).toBe("anchor");
+    expect(records[1].refreshedFields).toEqual(["htmlFingerprint"]);
+  });
+
   it("rejects unknown event types", () => {
     const bad = JSON.stringify({
       ts: "2026-04-01T00:00:00Z",
