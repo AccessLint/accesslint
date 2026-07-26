@@ -12,6 +12,7 @@ import {
   historyPathFor,
   HISTORY_FILENAME,
   loadSnapshot,
+  refusedHealLines,
   resolveSnapshotPath,
   saveSnapshot,
   screenshotsDirFor,
@@ -386,6 +387,31 @@ describe("diffSnapshots — healing tiers", () => {
     expect(d.healed).toHaveLength(0);
   });
 
+  it("surfaces a refused heal and drops the likelyMoved hint for that pair", () => {
+    const shared = {
+      ruleId: "text-alternatives/img-alt",
+      selector: "getByTestId('hero')",
+      anchor: "data-testid=hero",
+      relativeLocation: "main",
+      tag: "img",
+    };
+    const baseline: SnapshotViolation[] = [{ ...shared, htmlFingerprint: "aaa" }];
+    const current: SnapshotViolation[] = [{ ...shared, htmlFingerprint: "bbb" }];
+
+    const d = diffSnapshots(current, baseline);
+    expect(d.healed).toHaveLength(0);
+    expect(d.newViolations).toHaveLength(1);
+    expect(d.fixedViolations).toHaveLength(1);
+    expect(d.refused).toHaveLength(1);
+    expect(d.refused[0].ruleId).toBe("text-alternatives/img-alt");
+    expect(d.refused[0].signal).toBe("htmlFingerprint");
+    expect(d.refused[0].tier).toBe("exact");
+    expect(d.refused[0].candidate.htmlFingerprint).toBe("aaa");
+    expect(d.refused[0].current.htmlFingerprint).toBe("bbb");
+    // tag + relativeLocation would otherwise clear the hint threshold.
+    expect(d.likelyMoved).toHaveLength(0);
+  });
+
   it("surfaces likelyMoved when healing fails but signals partially overlap", () => {
     const baseline: SnapshotViolation[] = [
       {
@@ -409,6 +435,81 @@ describe("diffSnapshots — healing tiers", () => {
     expect(d.healed).toHaveLength(1);
     expect(d.healed[0].tier).toBe("htmlFingerprint");
     expect(d.likelyMoved).toHaveLength(0);
+  });
+});
+
+describe("refusedHealLines", () => {
+  const base = {
+    ruleId: "text-alternatives/img-alt",
+    signal: "htmlFingerprint",
+    tier: "exact",
+  };
+
+  it("names the disagreeing signal and the anchor an impostor could be reusing", () => {
+    const lines = refusedHealLines({
+      ...base,
+      current: {
+        ruleId: base.ruleId,
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+      },
+      candidate: {
+        ruleId: base.ruleId,
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+      },
+    });
+    expect(lines).toEqual([
+      "    refused to heal: htmlFingerprint at this selector differs from the baseline",
+      "    either you edited this element, or a different element now uses data-testid=hero",
+      "    if you edited it: run with ACCESSLINT_UPDATE=1",
+    ]);
+  });
+
+  it("does not claim an anchor when the element has none", () => {
+    const lines = refusedHealLines({
+      ...base,
+      current: { ruleId: base.ruleId, selector: "body > img" },
+      candidate: { ruleId: base.ruleId, selector: "body > img" },
+    });
+    expect(lines[1]).toContain("or a different element now sits at this selector");
+  });
+
+  it("prints both screenshots only when they are genuinely different images", () => {
+    const withPaths = (baselineShot: string, currentShot: string) =>
+      refusedHealLines({
+        ...base,
+        current: {
+          ruleId: base.ruleId,
+          selector: "getByTestId('hero')",
+          screenshotPath: currentShot,
+        },
+        candidate: {
+          ruleId: base.ruleId,
+          selector: "getByTestId('hero')",
+          screenshotPath: baselineShot,
+        },
+      });
+
+    expect(withPaths("g/a_aaaaaaaa.png", "g/a_bbbbbbbb.png").slice(-2)).toEqual([
+      "    baseline screenshot: g/a_aaaaaaaa.png",
+      "    current screenshot:  g/a_bbbbbbbb.png",
+    ]);
+    expect(withPaths("g/a.png", "g/a.png").join("\n")).not.toContain("screenshot:");
+  });
+
+  it("takes a runner-specific update hint", () => {
+    const lines = refusedHealLines(
+      {
+        ...base,
+        current: { ruleId: base.ruleId, selector: "body > img" },
+        candidate: { ruleId: base.ruleId, selector: "body > img" },
+      },
+      { updateHint: "re-run with --update-snapshot or ACCESSLINT_UPDATE=1" },
+    );
+    expect(lines[2]).toBe(
+      "    if you edited it: re-run with --update-snapshot or ACCESSLINT_UPDATE=1",
+    );
   });
 });
 

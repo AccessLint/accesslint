@@ -58,6 +58,22 @@ export interface LikelyMovedHint {
   sharedSignals: string[];
 }
 
+/**
+ * A heal the matcher refused: the pair met at a verified tier and the
+ * verification signal disagreed, so `current` is reported new rather than
+ * healed onto `candidate`. Mirrors `LikelyMovedHint`, and replaces it for
+ * the pairs it covers — a refusal is a decision, not a guess.
+ */
+export interface RefusedHeal {
+  ruleId: string;
+  current: SnapshotViolation;
+  candidate: SnapshotViolation;
+  /** Signal whose values disagreed, e.g. "htmlFingerprint". */
+  signal: string;
+  /** Tier at which the two met. */
+  tier: string;
+}
+
 export interface RefreshedViolation {
   ruleId: string;
   selector: string;
@@ -71,8 +87,45 @@ export interface SnapshotResult {
   healed: HealedViolation[];
   refreshed: RefreshedViolation[];
   likelyMoved: LikelyMovedHint[];
+  refused: RefusedHeal[];
   updated: boolean;
   created: boolean;
+}
+
+/**
+ * Explain one refused heal, as indented lines under the violation it
+ * belongs to. Shared by every render site (jest/vitest, playwright, cli) so
+ * the wording stays in one place.
+ *
+ * Names the disagreeing signal and gives both causes with the action for
+ * each. Raw hashes are omitted deliberately — 12 hex chars tell a human
+ * nothing; the two screenshots are what make the call decidable, so they
+ * are printed whenever both exist and are genuinely different images.
+ */
+export function refusedHealLines(
+  refused: RefusedHeal,
+  options?: { indent?: string; updateHint?: string },
+): string[] {
+  const indent = options?.indent ?? "    ";
+  const updateHint = options?.updateHint ?? "run with ACCESSLINT_UPDATE=1";
+  const anchor = refused.current.anchor ?? refused.candidate.anchor;
+
+  const lines = [
+    `${indent}refused to heal: ${refused.signal} at this selector differs from the baseline`,
+    anchor
+      ? `${indent}either you edited this element, or a different element now uses ${anchor}`
+      : `${indent}either you edited this element, or a different element now sits at this selector`,
+    `${indent}if you edited it: ${updateHint}`,
+  ];
+
+  const baselineShot = refused.candidate.screenshotPath;
+  const currentShot = refused.current.screenshotPath;
+  if (baselineShot && currentShot && baselineShot !== currentShot) {
+    lines.push(`${indent}baseline screenshot: ${baselineShot}`);
+    lines.push(`${indent}current screenshot:  ${currentShot}`);
+  }
+
+  return lines;
 }
 
 export type HistoryEvent = "created" | "ratchet-down" | "force-update" | "healed" | "refreshed";
@@ -269,6 +322,7 @@ export function diffSnapshots(
   healed: HealedViolation[];
   refreshed: RefreshedViolation[];
   likelyMoved: LikelyMovedHint[];
+  refused: RefusedHeal[];
   reconciledBaseline: SnapshotViolation[];
   raw: DiffResult<AccesslintSignal>;
 } {
@@ -294,6 +348,14 @@ export function diffSnapshots(
     current: fromDiffItem(lm.current),
     candidate: fromDiffItem(lm.candidate),
     sharedSignals: lm.sharedSignals,
+  }));
+
+  const refused: RefusedHeal[] = result.refused.map((r) => ({
+    ruleId: r.current.id,
+    current: fromDiffItem(r.current),
+    candidate: fromDiffItem(r.baseline),
+    signal: r.signal,
+    tier: r.tier,
   }));
 
   // Reconciled baseline: exact matches carry forward but refresh any signals
@@ -326,6 +388,7 @@ export function diffSnapshots(
     healed,
     refreshed,
     likelyMoved,
+    refused,
     reconciledBaseline,
     raw: result,
   };
@@ -400,6 +463,7 @@ export function evaluateSnapshot(
       healed: [],
       refreshed: [],
       likelyMoved: [],
+      refused: [],
       updated: false,
       created: true,
     };
@@ -427,6 +491,7 @@ export function evaluateSnapshot(
       healed: [],
       refreshed: [],
       likelyMoved: [],
+      refused: [],
       updated: true,
       created: false,
     };
@@ -487,6 +552,7 @@ export function evaluateSnapshot(
     healed: d.healed,
     refreshed: d.refreshed,
     likelyMoved: d.likelyMoved,
+    refused: d.refused,
     updated: shouldRewrite,
     created: false,
   };

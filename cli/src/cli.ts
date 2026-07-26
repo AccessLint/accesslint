@@ -9,6 +9,7 @@ import { coreEngineVersion } from "./iife-source.js";
 import {
   evaluateSnapshot,
   isUpdateMode,
+  refusedHealLines,
   resolveSnapshotPath,
   validateSnapshotName,
 } from "@accesslint/matchers-internal/snapshot";
@@ -203,13 +204,19 @@ function formatSnapshotResult(snap: SnapshotResult, name: string): string {
     const lines = [
       `Expected no new violations beyond snapshot "${name}", but found ${snap.newViolations.length} new:`,
     ];
+    const updateHint = "re-run with --update-snapshot or ACCESSLINT_UPDATE=1";
     for (const v of snap.newViolations) {
       lines.push(`  ${v.ruleId}: ${v.selector}`);
+      const refused = snap.refused.find((r) => r.current.selector === v.selector);
+      if (refused) {
+        lines.push(...refusedHealLines(refused, { updateHint }));
+        continue;
+      }
       const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
       if (hint) {
         lines.push(`    likely moved from: ${hint.candidate.selector}`);
         lines.push(`    matched on: ${hint.sharedSignals.join(", ")}`);
-        lines.push(`    if same: re-run with --update-snapshot or ACCESSLINT_UPDATE=1`);
+        lines.push(`    if same: ${updateHint}`);
         lines.push(`    if new: add a data-testid to disambiguate`);
       }
     }

@@ -14,6 +14,7 @@ import {
   validateSnapshotName,
   resolveSnapshotPath,
   evaluateSnapshot,
+  refusedHealLines,
   waitForPageSettle,
   toStableViolations,
 } from "./snapshot";
@@ -112,6 +113,11 @@ export async function toBeAccessible(target: Page | Locator, options?: SnapshotM
         ];
         for (const v of snap.newViolations) {
           lines.push(`  ${v.ruleId}: ${v.selector}`);
+          const refused = snap.refused.find((r) => r.current.selector === v.selector);
+          if (refused) {
+            lines.push(...refusedHealLines(refused));
+            continue;
+          }
           const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
           if (hint) {
             lines.push(`    likely moved from: ${hint.candidate.selector}`);

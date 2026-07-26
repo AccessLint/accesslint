@@ -20,11 +20,13 @@ export {
   saveSnapshot,
   compareViolations,
   evaluateSnapshot,
+  refusedHealLines,
   screenshotsDirFor,
   type SnapshotViolation,
   type SnapshotResult,
   type HealedViolation,
   type LikelyMovedHint,
+  type RefusedHeal,
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
