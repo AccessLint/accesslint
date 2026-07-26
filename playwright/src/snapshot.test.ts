@@ -921,6 +921,50 @@ test.describe("toBeAccessible with snapshot — healing (e2e)", () => {
     }
   });
 
+  test("refuses to heal an impostor reusing a data-testid, and says why", async ({ page }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "impostor.json");
+
+    try {
+      await page.setContent(IMPOSTOR_BEFORE);
+      await expect(page).toBeAccessible({ snapshot: "impostor", snapshotDir: dir });
+
+      const baseline = requireBaseline(snapshotPath);
+      expect(baseline).toHaveLength(1);
+      expect(baseline[0].selector).toBe("getByTestId('hero')");
+      expect(baseline[0].anchor).toBe("data-testid=hero");
+      const baselineFingerprint = baseline[0].htmlFingerprint;
+      expect(baselineFingerprint).toMatch(/^[0-9a-f]{12}$/);
+
+      await page.setContent(IMPOSTOR_AFTER);
+      const result = await toBeAccessible(page, { snapshot: "impostor", snapshotDir: dir });
+
+      expect(result.pass).toBe(false);
+      const message = result.message();
+      expect(message).toContain("found 1 new");
+      expect(message).toContain("refused to heal");
+      expect(message).toContain("htmlFingerprint");
+      expect(message).toContain("data-testid=hero");
+      // The hint layer must not also fire: it would coach the developer into
+      // adding a data-testid the element already has.
+      expect(message).not.toContain("likely moved from");
+
+      const shots = message
+        .split("\n")
+        .filter((line) => line.includes("screenshot:"))
+        .map((line) => line.split(":").pop()!.trim());
+      expect(shots).toHaveLength(2);
+      expect(shots[0]).not.toBe(shots[1]);
+      for (const shot of shots) expect(existsSync(join(dir, shot))).toBe(true);
+
+      expect(healEvents(snapshotPath)).toHaveLength(0);
+      // A failing run leaves the baseline alone.
+      expect(requireBaseline(snapshotPath)[0].htmlFingerprint).toBe(baselineFingerprint);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("a genuinely new violation is reported, never healed", async ({ page }) => {
     const dir = createTempDir();
     const snapshotPath = join(dir, "new-violation.json");
