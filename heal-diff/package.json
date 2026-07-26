@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/heal-diff",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Multi-signal diff engine for baseline/current sets with tiered matching, auto-healing, and likely-moved detection.",
   "license": "MIT",
   "type": "module",
@@ -9,10 +9,15 @@
     "url": "https://github.com/AccessLint/accesslint.git",
     "directory": "heal-diff"
   },
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+  "bugs": {
+    "url": "https://github.com/AccessLint/accesslint/issues"
   },
-  "files": ["dist"],
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
   "exports": {
     ".": {
       "import": {
@@ -38,11 +43,20 @@
   "scripts": {
     "build": "tsdown",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
   },
   "devDependencies": {
     "tsdown": "^0.21.9",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
-  }
+  },
+  "keywords": [
+    "diff",
+    "baseline",
+    "snapshot",
+    "healing",
+    "selector",
+    "accesslint"
+  ]
 }
