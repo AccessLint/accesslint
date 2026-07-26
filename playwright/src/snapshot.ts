@@ -3,9 +3,9 @@
  *
  * Generic snapshot file I/O + comparison logic lives in
  * `@accesslint/matchers-internal/snapshot` (shared across all matcher
- * packages). This file owns the Playwright-specific pieces: page-settle
- * heuristic, selector stabilization via `locator.normalize()`, and frame
- * navigation for `>>>iframe>`-prefixed violation selectors.
+ * packages). This file owns the Playwright-specific pieces: selector
+ * stabilization via `locator.normalize()`, and frame navigation for
+ * `>>>iframe>`-prefixed violation selectors.
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
@@ -28,59 +28,15 @@ export {
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
-// ---------------------------------------------------------------------------
-// Page settle heuristic
-// ---------------------------------------------------------------------------
+// The page-settle heuristic moved to ./audit so the side-effect-free
+// `@accesslint/playwright/audit` entry can offer it without dragging snapshot
+// file I/O along. Re-exported here for callers that import it from ./snapshot.
+export { waitForPageSettle } from "./audit";
 
 function getPage(target: Page | Locator): Page {
   return typeof (target as Page).goto === "function"
     ? (target as Page)
     : (target as Locator).page();
-}
-
-/**
- * Wait for the page to reach a stable state before auditing.
- *
- * 1. Waits for `domcontentloaded`
- * 2. Waits for a 100 ms window with no DOM mutations (max 2 s)
- */
-export async function waitForPageSettle(target: Page | Locator): Promise<void> {
-  const page = getPage(target);
-
-  await page.waitForLoadState("domcontentloaded").catch(() => {});
-
-  await page
-    .evaluate(
-      () =>
-        new Promise<void>((resolve) => {
-          const maxWait = setTimeout(() => {
-            observer.disconnect();
-            resolve();
-          }, 2_000);
-
-          let quietTimer = setTimeout(() => {
-            clearTimeout(maxWait);
-            observer.disconnect();
-            resolve();
-          }, 100);
-
-          const observer = new MutationObserver(() => {
-            clearTimeout(quietTimer);
-            quietTimer = setTimeout(() => {
-              clearTimeout(maxWait);
-              observer.disconnect();
-              resolve();
-            }, 100);
-          });
-
-          observer.observe(document, {
-            childList: true,
-            subtree: true,
-            attributes: true,
-          });
-        }),
-    )
-    .catch(() => {});
 }
 
 // ---------------------------------------------------------------------------

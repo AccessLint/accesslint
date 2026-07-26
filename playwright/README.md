@@ -146,6 +146,38 @@ test("check specific violations", async ({ page }) => {
 });
 ```
 
+### Outside the test runner
+
+The root entry registers `toBeAccessible()` with Playwright's `expect` when it
+loads, so it needs `@playwright/test`. Code driving raw `playwright` — a
+crawler, a scanning service, a script — imports the audit layer from
+`@accesslint/playwright/audit` instead, which has no import-time side effects
+and only needs `@playwright/test` for types:
+
+```ts
+import { chromium } from "playwright";
+import {
+  accesslintAudit,
+  auditFrames,
+  auditShadowDom,
+  ensureInjected,
+  waitForPageSettle,
+} from "@accesslint/playwright/audit";
+
+const page = await (await chromium.launch()).newPage();
+await page.goto("https://example.com");
+await waitForPageSettle(page);
+const result = await accesslintAudit(page);
+```
+
+`accesslintAudit` walks the main document, shadow roots, and frames in one
+call. The pieces are exported individually for callers who need to compose the
+traversal themselves — to time-box each phase against a wall-clock budget, say,
+since `auditShadowDom` runs a cold-cache rule sweep per shadow root. Call
+`ensureInjected(target)` before `auditShadowDom`; `auditFrames` injects into
+each frame itself and takes `{ sameOriginOnly: true }` to skip third-party
+frames.
+
 ### Failure messages
 
 Failures include impact, WCAG criterion, level, selector, and — when available — remediation guidance:

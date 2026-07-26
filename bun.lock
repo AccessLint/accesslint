@@ -49,7 +49,7 @@
     },
     "cli": {
       "name": "@accesslint/cli",
-      "version": "0.9.0",
+      "version": "0.12.0",
       "bin": {
         "accesslint": "./dist/cli.js",
       },
@@ -90,7 +90,7 @@
     },
     "core": {
       "name": "@accesslint/core",
-      "version": "0.13.0",
+      "version": "0.16.0",
       "devDependencies": {
         "@playwright/test": "^1.58.2",
         "@types/node": "^24.5.0",
@@ -106,7 +106,7 @@
     },
     "heal-diff": {
       "name": "@accesslint/heal-diff",
-      "version": "0.1.0",
+      "version": "0.2.1",
       "devDependencies": {
         "tsdown": "^0.21.9",
         "typescript": "^5.7.0",
@@ -136,7 +136,7 @@
     },
     "matchers-internal": {
       "name": "@accesslint/matchers-internal",
-      "version": "0.0.0",
+      "version": "0.1.0",
       "dependencies": {
         "@accesslint/core": "workspace:*",
         "@accesslint/heal-diff": "workspace:*",
@@ -150,7 +150,7 @@
     },
     "mcp": {
       "name": "@accesslint/mcp",
-      "version": "0.9.0",
+      "version": "0.10.0",
       "bin": {
         "accesslint-mcp": "./bin/accesslint-mcp.js",
       },
@@ -174,7 +174,7 @@
     },
     "playwright": {
       "name": "@accesslint/playwright",
-      "version": "0.5.0",
+      "version": "0.8.0",
       "dependencies": {
         "@accesslint/core": "workspace:*",
       },
@@ -183,12 +183,16 @@
         "@accesslint/matchers-internal": "workspace:*",
         "@playwright/test": "^1.59.0",
         "@types/node": "^25.2.3",
+        "playwright-core": "^1.59.0",
         "tsdown": "^0.21.9",
         "typescript": "^5.7.0",
       },
       "peerDependencies": {
         "@playwright/test": ">=1.40.0",
       },
+      "optionalPeers": [
+        "@playwright/test",
+      ],
     },
     "report": {
       "name": "@accesslint/report",

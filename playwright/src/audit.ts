@@ -1,7 +1,13 @@
 /**
- * Core audit logic — IIFE injection, audit execution, and formatting.
+ * Core audit logic — IIFE injection, page settle, audit execution, formatting.
  *
  * Works with both Page and Locator targets.
+ *
+ * This module is the `@accesslint/playwright/audit` entry point and is
+ * deliberately free of import-time side effects: the root entry registers the
+ * `toBeAccessible()` matcher with Playwright's `expect`, which makes it
+ * unimportable from code driving raw `playwright` rather than
+ * `@playwright/test`. Everything here works against either.
  */
 import { createRequire } from "node:module";
 import type { Page, Locator, Frame } from "@playwright/test";
@@ -30,7 +36,7 @@ export interface AccessibleMatcherOptions extends BaseAccessibleMatcherOptions {
  * Options subset that `@accesslint/core`'s `runAudit` accepts in-page. Needs
  * to be JSON-serializable because `page.evaluate` sends it across the boundary.
  */
-interface CoreAuditOptions {
+export interface CoreAuditOptions {
   disabledRules?: string[];
   includeAAA?: boolean;
   componentMode?: boolean;
@@ -86,7 +92,56 @@ function getPage(target: Page | Locator): Page {
   return target.page();
 }
 
-async function ensureInjected(target: Page | Frame): Promise<void> {
+/**
+ * Wait for the page to reach a stable state before auditing.
+ *
+ * 1. Waits for `domcontentloaded`
+ * 2. Waits for a 100 ms window with no DOM mutations (max 2 s)
+ */
+export async function waitForPageSettle(target: Page | Locator): Promise<void> {
+  const page = getPage(target);
+
+  await page.waitForLoadState("domcontentloaded").catch(() => {});
+
+  await page
+    .evaluate(
+      () =>
+        new Promise<void>((resolve) => {
+          const maxWait = setTimeout(() => {
+            observer.disconnect();
+            resolve();
+          }, 2_000);
+
+          let quietTimer = setTimeout(() => {
+            clearTimeout(maxWait);
+            observer.disconnect();
+            resolve();
+          }, 100);
+
+          const observer = new MutationObserver(() => {
+            clearTimeout(quietTimer);
+            quietTimer = setTimeout(() => {
+              clearTimeout(maxWait);
+              observer.disconnect();
+              resolve();
+            }, 100);
+          });
+
+          observer.observe(document, {
+            childList: true,
+            subtree: true,
+            attributes: true,
+          });
+        }),
+    )
+    .catch(() => {});
+}
+
+/**
+ * Inject the `@accesslint/core` IIFE bundle as `window.AccessLint`, unless the
+ * target already carries it.
+ */
+export async function ensureInjected(target: Page | Frame): Promise<void> {
   const hasAccessLint = await target.evaluate(
     () => typeof (window as any).AccessLint !== "undefined",
   );
@@ -99,7 +154,14 @@ async function ensureInjected(target: Page | Frame): Promise<void> {
   }
 }
 
-async function auditShadowDom(
+/**
+ * Audit every shadow root reachable from `target`, one cold-cache rule sweep
+ * per root. Callers composing their own traversal should time-box this: pages
+ * built on a design system can carry hundreds of roots.
+ *
+ * Requires `ensureInjected(target)` first.
+ */
+export async function auditShadowDom(
   target: Page | Frame,
   coreOpts: CoreAuditOptions,
 ): Promise<AuditViolation[]> {
@@ -170,17 +232,44 @@ async function getFrameSelectorPrefix(frame: Frame): Promise<string> {
   return parts.join(" ");
 }
 
-async function auditFrames(
+export interface AuditFramesOptions {
+  /** Also audit shadow roots inside each frame. Defaults to true. */
+  includeShadowDom?: boolean;
+  /**
+   * Restrict to frames sharing the page's origin. Off by default (audit every
+   * frame); callers who don't want third-party iframe cost or noise turn it on.
+   */
+  sameOriginOnly?: boolean;
+}
+
+function originOf(url: string): string | null {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Audit each child frame and prefix its violation selectors with the
+ * `>>>iframe>` path that locates the frame from the main document.
+ *
+ * Injects into each frame itself; no `ensureInjected` needed up front.
+ */
+export async function auditFrames(
   page: Page,
   includeShadowDom: boolean,
   coreOpts: CoreAuditOptions,
+  options?: AuditFramesOptions,
 ): Promise<AuditViolation[]> {
   const violations: AuditViolation[] = [];
   const mainFrame = page.mainFrame();
+  const pageOrigin = options?.sameOriginOnly ? originOf(mainFrame.url()) : null;
 
   for (const frame of page.frames()) {
     if (frame === mainFrame) continue;
     if (frame.url() === "about:blank") continue;
+    if (pageOrigin !== null && originOf(frame.url()) !== pageOrigin) continue;
 
     try {
       await ensureInjected(frame);

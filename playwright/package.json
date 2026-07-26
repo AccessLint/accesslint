@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/playwright",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Accessibility assertions for Playwright — toBeAccessible() matcher powered by AccessLint",
   "license": "MIT",
   "publishConfig": {
@@ -35,6 +35,16 @@
         "types": "./dist/matchers.d.cts",
         "default": "./dist/matchers.cjs"
       }
+    },
+    "./audit": {
+      "import": {
+        "types": "./dist/audit.d.ts",
+        "default": "./dist/audit.js"
+      },
+      "require": {
+        "types": "./dist/audit.d.cts",
+        "default": "./dist/audit.cjs"
+      }
     }
   },
   "main": "dist/index.cjs",
@@ -58,11 +68,17 @@
     "@accesslint/matchers-internal": "workspace:*",
     "@playwright/test": "^1.59.0",
     "@types/node": "^25.2.3",
+    "playwright-core": "^1.59.0",
     "tsdown": "^0.21.9",
     "typescript": "^5.7.0"
   },
   "peerDependencies": {
     "@playwright/test": ">=1.40.0"
+  },
+  "peerDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
   },
   "keywords": [
     "playwright",
