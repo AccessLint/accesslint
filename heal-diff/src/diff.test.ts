@@ -219,6 +219,19 @@ describe("diff() — verifiedBy", () => {
     expect(result.matched).toHaveLength(1);
   });
 
+  it("swapped elements leave no unresolved refusal to report", () => {
+    const baseline = [
+      item("img-alt", { selector: "s1", htmlFingerprint: "f1" }),
+      item("img-alt", { selector: "s2", htmlFingerprint: "f2" }),
+    ];
+    const current = [
+      item("img-alt", { selector: "s2", htmlFingerprint: "f1" }),
+      item("img-alt", { selector: "s1", htmlFingerprint: "f2" }),
+    ];
+    const result = diff(baseline, current, [T1v, T5]);
+    expect(result.refused).toHaveLength(0);
+  });
+
   it("picks the verifying candidate among duplicates sharing the tier key", () => {
     const baseline = [
       item("img-alt", { selector: "body > img", htmlFingerprint: "aaa" }),
@@ -229,6 +242,118 @@ describe("diff() — verifiedBy", () => {
     expect(result.matched).toHaveLength(1);
     expect(result.matched[0].baseline.signals.htmlFingerprint).toBe("bbb");
     expect(result.fixed.map((i) => i.signals.htmlFingerprint)).toEqual(["aaa"]);
+  });
+});
+
+describe("diff() — refusal memory", () => {
+  const T1v = buildTier<Sig>({
+    name: "exact",
+    key: ["id", "selector"],
+    heal: false,
+    verifiedBy: "htmlFingerprint",
+  });
+
+  // A `data-testid` element is the worst case: its anchor is a strict function
+  // of its selector, so without refusal memory T1's verification buys nothing —
+  // the anchor tier re-pairs the same two items unverified one tier later.
+  it("does not re-match a pair the exact tier refused at the anchor tier", () => {
+    const baseline = [
+      item("img-alt", {
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "aaa",
+      }),
+    ];
+    const current = [
+      item("img-alt", {
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "bbb",
+      }),
+    ];
+    const result = diff(baseline, current, [T1v, T2]);
+    expect(result.healed).toHaveLength(0);
+    expect(result.new).toHaveLength(1);
+    expect(result.fixed).toHaveLength(1);
+    expect(result.refused).toHaveLength(1);
+    expect(result.refused[0].tier).toBe("exact");
+    expect(result.refused[0].signal).toBe("htmlFingerprint");
+    expect(result.refused[0].baseline.signals.htmlFingerprint).toBe("aaa");
+    expect(result.refused[0].current.signals.htmlFingerprint).toBe("bbb");
+  });
+
+  it("still heals on the anchor when the pair never met at the exact tier", () => {
+    const baseline = [
+      item("img-alt", {
+        selector: "body > img",
+        anchor: "data-id=hero",
+        htmlFingerprint: "aaa",
+      }),
+    ];
+    const current = [
+      item("img-alt", {
+        selector: "main > figure > img",
+        anchor: "data-id=hero",
+        htmlFingerprint: "bbb",
+      }),
+    ];
+    const result = diff(baseline, current, [T1v, T2]);
+    expect(result.healed).toHaveLength(1);
+    expect(result.healed[0].tier).toBe("anchor");
+    expect(result.refused).toHaveLength(0);
+  });
+
+  it("leaves the uniqueness gate counting raw candidates, refusals included", () => {
+    const baseline = [
+      item("img-alt", {
+        selector: "s1",
+        htmlFingerprint: "aaa",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+      item("img-alt", {
+        selector: "s2",
+        htmlFingerprint: "ccc",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+    ];
+    const current = [
+      item("img-alt", {
+        selector: "s1",
+        htmlFingerprint: "bbb",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+    ];
+    const result = diff(baseline, current, [T1v, T6]);
+    expect(result.healed).toHaveLength(0);
+    expect(result.new).toHaveLength(1);
+    expect(result.fixed).toHaveLength(2);
+  });
+
+  it("keeps a refused pair out of likelyMoved", () => {
+    const baseline = [
+      item("img-alt", {
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "aaa",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+    ];
+    const current = [
+      item("img-alt", {
+        selector: "getByTestId('hero')",
+        anchor: "data-testid=hero",
+        htmlFingerprint: "bbb",
+        relativeLocation: "main",
+        tag: "img",
+      }),
+    ];
+    const result = diff(baseline, current, [T1v, T2]);
+    expect(result.new).toHaveLength(1);
+    expect(result.likelyMoved).toHaveLength(0);
   });
 });
 

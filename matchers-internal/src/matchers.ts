@@ -17,6 +17,7 @@ import { getCachedAudit, isFixtureActive, setCachedAudit } from "./cache";
 import {
   evaluateSnapshot,
   isUpdateMode,
+  refusedHealLines,
   resolveSnapshotPath,
   toSnapshotViolations,
   validateSnapshotName,
@@ -132,9 +133,7 @@ function snapshotMessage(snap: SnapshotResult, name: string, current: SnapshotVi
     }
 
     for (const h of snap.healed) {
-      parts.push(
-        `  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`,
-      );
+      parts.push(`  healed ${h.ruleId} via ${h.tier}: ${h.oldSelector} -> ${h.newSelector}`);
     }
 
     return parts.join("\n");
@@ -147,6 +146,11 @@ function snapshotMessage(snap: SnapshotResult, name: string, current: SnapshotVi
   );
   for (const v of snap.newViolations) {
     lines.push(`  ${v.ruleId}: ${v.selector}`);
+    const refused = snap.refused.find((r) => r.current.selector === v.selector);
+    if (refused) {
+      lines.push(...refusedHealLines(refused));
+      continue;
+    }
     const hint = snap.likelyMoved.find((lm) => lm.current.selector === v.selector);
     if (hint) {
       lines.push(`    likely moved from: ${hint.candidate.selector}`);

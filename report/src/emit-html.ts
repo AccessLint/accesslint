@@ -133,14 +133,13 @@ function tableOfContents(report: Report): string {
       const first = s.points[0]?.total ?? 0;
       const last = s.currentTotal;
       const delta = last - first;
-      const deltaText =
-        delta === 0
-          ? "–"
-          : delta > 0
-            ? `+${delta}`
-            : `−${Math.abs(delta)}`;
+      const deltaText = delta === 0 ? "–" : delta > 0 ? `+${delta}` : `−${Math.abs(delta)}`;
       const deltaClass =
-        delta === 0 ? "toc-delta toc-delta-flat" : delta > 0 ? "toc-delta toc-delta-regress" : "toc-delta toc-delta-fix";
+        delta === 0
+          ? "toc-delta toc-delta-flat"
+          : delta > 0
+            ? "toc-delta toc-delta-regress"
+            : "toc-delta toc-delta-fix";
       return `<li><a href="#snapshot-${anchorId(s.name)}"><span class="toc-name">${escapeHtml(s.name)}</span><span class="toc-total">${s.currentTotal}</span><span class="${deltaClass}">${escapeHtml(deltaText)}</span></a></li>`;
     })
     .join("");
@@ -319,7 +318,8 @@ function chartDescription(s: SnapshotTimeline): string {
   );
   parts.push(`Y axis range ${min} to ${max}, currently ${last}.`);
   if (last < first) parts.push(`Reduced by ${first - last} from the initial baseline of ${first}.`);
-  else if (last > first) parts.push(`Increased by ${last - first} from the initial baseline of ${first}.`);
+  else if (last > first)
+    parts.push(`Increased by ${last - first} from the initial baseline of ${first}.`);
   else parts.push(`Unchanged from the initial baseline of ${first}.`);
   if (forceUpdates > 0) {
     parts.push(
@@ -390,7 +390,13 @@ function rulesSection(report: Report): string {
 
 function levelBadge(level: string): string {
   const cls =
-    level === "A" ? "level-a" : level === "AA" ? "level-aa" : level === "AAA" ? "level-aaa" : "level-unknown";
+    level === "A"
+      ? "level-a"
+      : level === "AA"
+        ? "level-aa"
+        : level === "AAA"
+          ? "level-aaa"
+          : "level-unknown";
   return `<span class="level ${cls}">${escapeHtml(level === "unknown" ? "–" : level)}</span>`;
 }
 
@@ -401,8 +407,10 @@ function netClass(n: number): string {
 }
 
 function renderNet(n: number): string {
-  if (n > 0) return `<span class="direction" aria-hidden="true">▲</span><span class="sr-text">increased by </span>${n}`;
-  if (n < 0) return `<span class="direction" aria-hidden="true">▼</span><span class="sr-text">decreased by </span>${Math.abs(n)}`;
+  if (n > 0)
+    return `<span class="direction" aria-hidden="true">▲</span><span class="sr-text">increased by </span>${n}`;
+  if (n < 0)
+    return `<span class="direction" aria-hidden="true">▼</span><span class="sr-text">decreased by </span>${Math.abs(n)}`;
   return `<span class="direction" aria-hidden="true">=</span><span class="sr-text">unchanged</span>0`;
 }
 
@@ -461,11 +469,17 @@ function formatDateTime(iso: string): string {
 function eventGlyph(event: SnapshotTimelinePoint["event"]): string {
   if (event === "created") return "○";
   if (event === "ratchet-down") return "◆";
+  if (event === "healed" || event === "refreshed") return "↻";
   return "▲";
 }
 
 function anchorId(name: string): string {
-  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "unnamed";
+  return (
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "") || "unnamed"
+  );
 }
 
 function escapeHtml(s: string): string {
@@ -507,7 +521,10 @@ function monthTicks(tMin: number, tMax: number): Array<{ ts: number; label: stri
   const fmt: Intl.DateTimeFormatOptions = { month: "short", timeZone: "UTC" };
   let cursor = new Date(start);
   while (cursor.getTime() <= tMax) {
-    out.push({ ts: cursor.getTime(), label: cursor.toLocaleDateString("en-US", fmt).toUpperCase() });
+    out.push({
+      ts: cursor.getTime(),
+      label: cursor.toLocaleDateString("en-US", fmt).toUpperCase(),
+    });
     cursor = new Date(cursor);
     cursor.setUTCMonth(cursor.getUTCMonth() + stride);
   }
@@ -1015,6 +1032,7 @@ a:hover { color: var(--focus); }
 .tag-created { color: var(--chart-line); border-color: var(--hairline-2); }
 .tag-ratchet-down { background: var(--fix-bg); color: var(--fix); border-color: transparent; }
 .tag-force-update { background: var(--regress-bg); color: var(--regress); border-color: transparent; }
+.tag-healed, .tag-refreshed { color: var(--muted); border-color: var(--hairline-2); }
 
 /* ----- Level badges ----- */
 .level {

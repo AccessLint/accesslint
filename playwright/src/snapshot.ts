@@ -20,11 +20,13 @@ export {
   saveSnapshot,
   compareViolations,
   evaluateSnapshot,
+  refusedHealLines,
   screenshotsDirFor,
   type SnapshotViolation,
   type SnapshotResult,
   type HealedViolation,
   type LikelyMovedHint,
+  type RefusedHeal,
 } from "@accesslint/matchers-internal/snapshot";
 import type { SnapshotViolation } from "@accesslint/matchers-internal/snapshot";
 
@@ -315,14 +317,21 @@ function ruleSlug(ruleId: string): string {
   return ruleId.replace(/\//g, "_");
 }
 
+/**
+ * `<rule>_<anchorSlug>_<fp8>.png` — the fingerprint is part of the name, not
+ * a fallback for a missing anchor. Keying on the anchor alone made an
+ * element's baseline and impostor images compute the same path, and since
+ * each run starts with a fresh `used` set, the second run overwrote the
+ * first: no baseline image was ever retained for an anchored element. Both
+ * the refused-heal message and the likely-moved hint are only decidable when
+ * the two images survive side by side.
+ */
 function screenshotFilename(v: SnapshotViolation, existing: Set<string>): string {
-  const rule = ruleSlug(v.ruleId);
-  const disc = v.anchor
-    ? slugForDiscriminator(v.anchor)
-    : v.htmlFingerprint
-      ? v.htmlFingerprint.slice(0, 8)
-      : "x";
-  const base = `${rule}_${disc}`;
+  const parts = [ruleSlug(v.ruleId)];
+  if (v.anchor) parts.push(slugForDiscriminator(v.anchor));
+  if (v.htmlFingerprint) parts.push(v.htmlFingerprint.slice(0, 8));
+  if (parts.length === 1) parts.push("x");
+  const base = parts.join("_");
   let name = `${base}.png`;
   let i = 1;
   while (existing.has(name)) {
