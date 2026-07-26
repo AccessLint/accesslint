@@ -66,7 +66,9 @@ Refused pairs are excluded from this scan, in the engine rather than at each ren
 
 ### 5. Keep screenshots, not just hashes
 
-Playwright captures per-violation PNGs via `locator.screenshot()` with bounded concurrency (4 parallel) into `<baselineName>-screenshots/<ruleIdSlug>_<discriminator>.png`. Filenames follow the ecosystem convention (Playwright / jest-image-snapshot / Cypress): sibling directory, human-readable names, binary in git. Discriminator is the slugified anchor when present, else the first 8 hex of `htmlFingerprint`. Orphan PNGs are GC'd on save. The image is what makes the "likely moved" hint instantly decidable.
+Playwright captures per-violation PNGs via `locator.screenshot()` with bounded concurrency (4 parallel) into `<baselineName>-screenshots/<ruleIdSlug>_<anchorSlug>_<fp8>.png`. Filenames follow the ecosystem convention (Playwright / jest-image-snapshot / Cypress): sibling directory, human-readable names, binary in git. Orphan PNGs are GC'd on save. The image is what makes the "likely moved" hint and the refused-heal message instantly decidable.
+
+Names are content-addressed: the first 8 hex of `htmlFingerprint` is part of the name, not a fallback for a missing anchor. Discriminating on the anchor alone made an element's baseline and impostor images compute the same path, and since each run starts with a fresh in-use set, the second run overwrote the first — no baseline image was ever retained for an anchored element, which is exactly the case where the two images matter most.
 
 ### 6. Grouping collapses root causes
 

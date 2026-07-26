@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { mkdirSync, rmSync, readFileSync, existsSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, rmSync, readFileSync, readdirSync, existsSync } from "node:fs";
+import { basename, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
   validateSnapshotName,
@@ -765,6 +765,38 @@ const NEW_VIOLATION_AFTER = `
 </body>
 </html>`;
 
+/**
+ * Impostor fixture. Both versions carry the same `data-testid`, so both
+ * normalize to `getByTestId('hero')` and the `anchor` signal is a strict
+ * function of the selector — the case where T1's verification used to buy
+ * nothing, since the anchor tier re-paired the refused pair one tier later.
+ * The `src` change moves the htmlFingerprint (inline `style` is dropped by
+ * normalization, so it colors the screenshots without touching identity).
+ */
+const IMPOSTOR_BEFORE = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Gallery</title></head>
+<body>
+  <main>
+    <h1>Gallery</h1>
+    <img data-testid="hero" src="hero.png" style="width:200px;height:100px;background:#c00">
+  </main>
+</body>
+</html>`;
+
+const IMPOSTOR_AFTER = `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Gallery</title></head>
+<body>
+  <main>
+    <h1>Gallery</h1>
+    <img data-testid="hero" src="banner.png" style="width:200px;height:100px;background:#00c">
+  </main>
+</body>
+</html>`;
+
 test.describe("toBeAccessible with snapshot — healing (e2e)", () => {
   test("heals at the anchor tier when the stable selector moves", async ({ page }) => {
     const dir = createTempDir();
@@ -916,6 +948,39 @@ test.describe("toBeAccessible with snapshot — healing (e2e)", () => {
       expect(message).not.toContain("getByText('Alpha')");
 
       expect(healEvents(snapshotPath)).toHaveLength(0);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+test.describe("screenshot filenames", () => {
+  test("an anchored element keeps its baseline image when the markup changes", async ({ page }) => {
+    const dir = createTempDir();
+    const snapshotPath = join(dir, "shots.json");
+    const shotsDir = join(dir, "shots-screenshots");
+
+    try {
+      await page.setContent(IMPOSTOR_BEFORE);
+      await expect(page).toBeAccessible({ snapshot: "shots", snapshotDir: dir });
+
+      const baselineShot = requireBaseline(snapshotPath)[0].screenshotPath;
+      expect(baselineShot).toBeTruthy();
+      expect(readdirSync(shotsDir)).toEqual([basename(baselineShot!)]);
+
+      // Same anchor, same selector, different markup. Discriminating on the
+      // anchor alone computed the same path here and overwrote the baseline.
+      await page.setContent(IMPOSTOR_AFTER);
+      await toBeAccessible(page, { snapshot: "shots", snapshotDir: dir });
+
+      const files = readdirSync(shotsDir).sort();
+      expect(files).toHaveLength(2);
+      expect(files).toContain(basename(baselineShot!));
+      for (const file of files) {
+        expect(file).toContain("data-testid-hero");
+      }
+      const [a, b] = files.map((f) => readFileSync(join(shotsDir, f)));
+      expect(a.equals(b)).toBe(false);
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
