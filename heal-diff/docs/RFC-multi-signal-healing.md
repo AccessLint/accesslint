@@ -50,9 +50,19 @@ Accesslint's tier list:
 
 When tiers 2–6 match, the baseline entry is replaced in memory with the current-run item's full signal set, a `"healed"` record is appended to `.history.ndjson` with `{ tier, ruleId, oldSelector, newSelector }`, and the failure message prints one line per heal. The test still passes. Every heal is visible; none is silent. Healing + ratchet can happen in the same run.
 
+#### Refusal is terminal for the pair
+
+T1 carries `verifiedBy: htmlFingerprint`: when both items have a fingerprint and the values disagree, the pair is refused and both items are released to the tiers below (refuse-and-release). Release alone is not enough. `data-testid` is both the `anchor` signal and — since it is Playwright's default `testIdAttribute` — the `selector`, so for any element carrying one the anchor tier keys on exactly the information T1 just rejected, and re-pairs the impostor unverified one tier later. That is a silent false heal on the most common anchor attribute in the wild.
+
+So a refusal is remembered for the run: **these two items are not the same element**, which stays true at every weaker tier, and no later tier may pair them. The alternatives were both worse. Sending a refused *item* straight to `new` breaks the swapped-elements case, where two elements are refused at T1 and must still heal to their true partners at T5 — the refusal is a fact about the pair, not about either item. Adding `verifiedBy` tier by tier is whack-a-mole that terminates only when every tier verifies, which is a global fingerprint gate: it would refuse the legitimate "anchored element moved *and* its markup churned" case, precisely what the anchor tier exists to survive.
+
+Refusal memory is keyed on object identity, not signal values — matching is count-based, so two items with identical signals are distinct items and value-keying would refuse both when only one was refused. The uniqueness gate keeps counting raw bucket length, refusals included, which preserves the invariant that **a refusal can only ever subtract a heal, never create one**. Pairs still unresolved at the end of the run surface as `DiffResult.refused` with the disagreeing signal name, and the matcher renders them in place of the "likely moved" hint (§4).
+
 ### 4. "Likely moved" as a diagnostic, not a match
 
 For violations that don't heal, a post-pass scans the unmatched sets and pairs any current with any baseline sharing two-or-more of `{tag, htmlFingerprint, relativeLocation}`. These are surfaced as `likelyMoved` metadata alongside the failure message, with the shared signal names and (where available) paths to baseline and current element screenshots. The developer reads one block and decides: same issue moved → `ACCESSLINT_UPDATE=1`; genuinely new → add a `data-testid`.
+
+Refused pairs are excluded from this scan, in the engine rather than at each render site. A refused pair typically shares `tag` and `relativeLocation`, so it clears the threshold and every line of the resulting hint is false: it claims the element moved from its own selector, and it coaches the developer to add a `data-testid` the element already has, or to run `ACCESSLINT_UPDATE=1` on markup the matcher just decided is a different element. Turning silent heals into failures is only worth it if the failure says something true.
 
 ### 5. Keep screenshots, not just hashes
 
@@ -101,6 +111,19 @@ Cheapest first. The risk we bound is *silent false heal* (accepting a real regre
 - **Screenshot PNGs in git** unless opted out. Matches ecosystem convention.
 - **Tier 6 can false-heal** under exotic duplicates. Mitigated by uniqueness-gating.
 - **Role and HTML fingerprint require live DOM access**. jsdom provides it; Playwright computes in-page via `AccessLint` IIFE globals.
+
+## Known limitation: an impostor that reuses a non-selector anchor
+
+Refusals originate at T1, so the hole closes only where the pair actually meets there. For `data-testid` that is always, since the selector *is* the test id. For an anchor the selector doesn't encode, it isn't:
+
+```
+baseline: getByRole('img').first()  anchor data-id=hero  fp aaa
+current:  getByRole('img').nth(1)   anchor data-id=hero  fp bbb   <- different element
+```
+
+The two never meet at T1, so nothing is refused and the anchor tier heals. Signal for signal this is identical to the legitimate "moved and its markup churned" case; no deterministic rule separates them, and gating anchor heals on fingerprint agreement would close it by gutting the tier.
+
+Held open pending data. Proposed investigation: instrument the anchor-heal path to record when it heals across a fingerprint disagreement, then measure frequency — either from real app git histories (audit commit N and N+1, compare captured signals) or by shipping it as a passing-run warning first and collecting real usage. Whether gating is affordable is a question about that frequency, not about the mechanism.
 
 ## Open questions
 

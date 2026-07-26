@@ -5,6 +5,7 @@ export type {
   MatchedPair,
   HealedPair,
   LikelyMoved,
+  RefusedPair,
   Group,
   GroupingConfig,
   DiffOptions,
