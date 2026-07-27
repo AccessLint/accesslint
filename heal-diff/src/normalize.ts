@@ -16,8 +16,10 @@
  *
  * 1: attribute drop/sort, generated-id filtering, 64-char text truncation.
  * 2: adds URL query/fragment stripping on href/src values.
+ * 3: widens generated-id filtering to the full core pattern set (base-32
+ *    `useId` counters, MUI/emotion, Radix/Headless UI/Reach prefixes).
  */
-export const NORMALIZE_VERSION = 2;
+export const NORMALIZE_VERSION = 3;
 
 /** Attributes removed entirely during normalization. */
 const DROP_ATTRS = new Set(["class", "style"]);
@@ -26,14 +28,36 @@ const DROP_ATTRS = new Set(["class", "style"]);
  * stripped (cache busters, UTM params) so only the path identifies. */
 const URL_ATTRS = new Set(["href", "src"]);
 
-/** IDs matching these patterns are treated as generated and dropped. */
+/**
+ * IDs matching these patterns are treated as generated and dropped.
+ *
+ * Deliberately duplicated from `@accesslint/core`'s
+ * `rules/utils/generated-id.ts` rather than imported: both packages ship with
+ * zero runtime dependencies, and neither direction of the import is honest —
+ * a pure diff engine should not pull in the WCAG rule engine, and the rule
+ * engine should not depend on something downstream of it. The two copies are
+ * pinned together by the contract test in
+ * `matchers-internal/src/generated-id-contract.test.ts`, which is the one
+ * package that already depends on both. Change one, change the other, and
+ * bump NORMALIZE_VERSION.
+ */
 const GENERATED_ID_PATTERNS: RegExp[] = [
-  /^:r\d+:$/, // React useId
-  /^[a-f0-9]{8,}$/i, // long hex (emotion, uuid fragments)
-  /^[a-z0-9_-]+-[a-f0-9]{6,}$/i, // prefix + hash suffix
+  // React useId — `:r0:`, `:r1a:` (base-32 counter), and SSR `:R...:` form.
+  /^:r[0-9a-z]+:$/i,
+  // MUI / emotion auto ids — `«1»`, `mui-123`, `css-1ab2c3`.
+  /^«.+»$/,
+  /^mui-\d+$/,
+  /^css-[a-z0-9]+$/i,
+  // Radix / Headless UI / Reach UI prefixed ids — `radix-:r1:`, `headlessui-menu-:r3:`.
+  /^(radix|headlessui|reach)-/i,
+  // Long hex blobs (emotion class hashes, uuid fragments).
+  /^[a-f0-9]{8,}$/i,
+  // prefix + hash suffix — `field-9f3a1c`, `Tooltip-1a2b3c4`.
+  /^[a-z0-9_-]+-[a-f0-9]{6,}$/i,
 ];
 
-function isGeneratedId(value: string): boolean {
+/** True when `value` looks like a framework-generated id (unstable across runs). */
+export function isGeneratedId(value: string): boolean {
   return GENERATED_ID_PATTERNS.some((p) => p.test(value));
 }
 

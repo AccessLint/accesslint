@@ -229,7 +229,7 @@ function isLandmark(el: Element): boolean {
 
 function segmentFor(el: Element): string {
   const tag = el.tagName.toLowerCase();
-  if (el.id) return `${tag}#${el.id}`;
+  if (isStableId(el.id)) return `${tag}#${el.id}`;
   const role = el.getAttribute("role");
   return role ? `${tag}[role=${role}]` : tag;
 }
@@ -263,7 +263,7 @@ export function buildRelativeLocation(el: Element): string | null {
   const trail: string[] = [segmentFor(landmark)];
 
   for (const ancestor of between) {
-    if (ancestor.id || ancestor.getAttribute("role")) {
+    if (isStableId(ancestor.id) || ancestor.getAttribute("role")) {
       trail.push(segmentFor(ancestor));
       break;
     }
