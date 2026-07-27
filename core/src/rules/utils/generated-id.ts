@@ -9,6 +9,11 @@
  * "generated".
  */
 
+// `@accesslint/heal-diff`'s normalize.ts carries an identical copy of this
+// list: both packages ship zero runtime dependencies, so it is duplicated
+// rather than imported. matchers-internal/src/generated-id-contract.test.ts
+// fails if the two drift. Change one, change the other, and bump heal-diff's
+// NORMALIZE_VERSION.
 const GENERATED_ID_PATTERNS: RegExp[] = [
   // React useId — `:r0:`, `:r1a:` (base-32 counter), and SSR `:R...:` form.
   /^:r[0-9a-z]+:$/i,

@@ -45,6 +45,27 @@ describe("normalizeHtml", () => {
     expect(a).toBe(b);
   });
 
+  // These regenerate per mount, so leaving any of them in the digest gives the
+  // same unchanged element a fresh fingerprint on every audit run.
+  it.each([
+    [":r1a:", "React base-32 useId counter"],
+    [":R7:", "React SSR useId"],
+    ["radix-:r5:", "Radix UI"],
+    ["headlessui-menu-:r3:", "Headless UI"],
+    ["reach-dialog-1", "Reach UI"],
+    ["mui-123", "MUI"],
+    ["css-1ab2c3", "emotion"],
+    ["«1»", "MUI/emotion bracket form"],
+  ])("drops the %s id (%s)", (id) => {
+    expect(normalizeHtml(`<input id="${id}" type="text">`)).toBe(
+      normalizeHtml('<input type="text">'),
+    );
+  });
+
+  it("keeps authored ids", () => {
+    expect(normalizeHtml('<input id="email-field" type="text">')).toContain('id="email-field"');
+  });
+
   it("keeps semantic attributes like alt, href, aria-*", () => {
     const out = normalizeHtml('<a href="/x" aria-label="go">x</a>');
     expect(out).toContain('href="/x"');
@@ -111,7 +132,7 @@ describe("isFingerprintableTag", () => {
 
 describe("NORMALIZE_VERSION", () => {
   it("is exported and current", () => {
-    expect(NORMALIZE_VERSION).toBe(2);
+    expect(NORMALIZE_VERSION).toBe(3);
   });
 });
 
