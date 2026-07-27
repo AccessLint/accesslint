@@ -1,6 +1,11 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { isGeneratedId, isStableId } from "./generated-id";
-import { getSelector, extractAnchor, clearSelectorCache } from "./selector";
+import {
+  getSelector,
+  extractAnchor,
+  buildRelativeLocation,
+  clearSelectorCache,
+} from "./selector";
 import { makeDoc } from "../../test-helpers";
 
 afterEach(() => clearSelectorCache());
@@ -56,5 +61,28 @@ describe("selector hardening", () => {
     const doc = makeDoc(`<button id=":r3:" name="save">x</button>`);
     const btn = doc.querySelector("button")!;
     expect(extractAnchor(btn)).toBe("name=save");
+  });
+
+  it("buildRelativeLocation ignores a generated id on the landmark", () => {
+    const build = (id: string) =>
+      buildRelativeLocation(
+        makeDoc(`<main id="${id}"><p>Email</p><button>x</button></main>`).querySelector("button")!,
+      );
+    expect(build("radix-:r1:")).toBe(build("radix-:r9:"));
+    expect(build("radix-:r1:")).not.toContain("radix");
+  });
+
+  it("buildRelativeLocation still uses an authored landmark id", () => {
+    const doc = makeDoc(`<main id="content"><p>Email</p><button>x</button></main>`);
+    expect(buildRelativeLocation(doc.querySelector("button")!)).toContain("main#content");
+  });
+
+  // A generated id must not win the intermediate-ancestor slot; the walk has to
+  // keep going and find the ancestor that actually carries stable identity.
+  it("buildRelativeLocation skips a generated-id ancestor for a role-bearing one", () => {
+    const doc = makeDoc(
+      `<main><div role="group"><div id=":r4:"><p>Email</p><button>x</button></div></div></main>`,
+    );
+    expect(buildRelativeLocation(doc.querySelector("button")!)).toContain("[role=group]");
   });
 });
