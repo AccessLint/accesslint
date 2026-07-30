@@ -7,7 +7,16 @@ function body(source: string): string {
   expect(render).not.toBeNull();
   // The marker attribute is what the audit layer strips; drop it here so these
   // assertions read as the HTML the engine parses.
-  return render!.bodyHtml.replace(new RegExp(` ?${MARKER_ATTRIBUTE}="\\d+"`, "g"), "");
+  return render!.trees
+    .map((tree) => tree.bodyHtml)
+    .join("")
+    .replace(new RegExp(` ?${MARKER_ATTRIBUTE}="\\d+"`, "g"), "");
+}
+
+function tree(source: string) {
+  const render = renderJsx(source, { typescript: true });
+  expect(render).not.toBeNull();
+  return render!.trees[0];
 }
 
 describe("attributes", () => {
@@ -83,10 +92,7 @@ describe("children", () => {
   });
 
   it("emits both arms of a ternary", () => {
-    const render = renderJsx(`const A = <div>{on ? <b>on</b> : <i>off</i>}</div>;`, {
-      typescript: true,
-    });
-    expect(render?.hasBranch).toBe(true);
+    expect(tree(`const A = <div>{on ? <b>on</b> : <i>off</i>}</div>;`).hasBranch).toBe(true);
     expect(body(`const A = <div>{on ? <b>on</b> : <i>off</i>}</div>;`)).toBe(
       `<div><b>on</b><i>off</i></div>`,
     );
@@ -167,11 +173,12 @@ describe("a root layout", () => {
       { typescript: true },
     );
 
-    expect(render?.htmlAttributes).toEqual([["lang", "en"]]);
-    expect(render?.headHtml).toContain("<title");
+    const layout = render!.trees[0];
+    expect(layout.htmlAttributes).toEqual([["lang", "en"]]);
+    expect(layout.headHtml).toContain("<title");
     // `{children}` in a `<body>` is markup, not a name: nothing stands in for it.
-    expect(render?.bodyHtml).toBe("");
-    expect(render?.nodes[render!.htmlNodeIndex!]?.tag).toBe("html");
+    expect(layout.bodyHtml).toBe("");
+    expect(render?.nodes[layout.htmlNodeIndex!]?.tag).toBe("html");
   });
 });
 

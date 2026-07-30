@@ -31,6 +31,11 @@ export const SOURCE_MODE_DISABLED_RULES = [
   "distinguishable/word-spacing",
   "keyboard-accessible/scrollable-region",
   "keyboard-accessible/focus-visible",
+  // A `<div tabindex="0">` is either a keyboard-reachable scroll container — the
+  // recommended pattern — or a control built out of a div. Which one it is
+  // depends on whether the element scrolls, and that is a layout fact. Same
+  // gap as scrollable-region above, so the same answer.
+  "keyboard-accessible/focus-order",
   "aria/aria-hidden-focus",
   "landmarks/region",
   // Cross-element idref
@@ -69,10 +74,23 @@ export const FRAGMENT_DISABLED_RULES = [
 export const HTML_ELEMENT_RULE = "readable/html-has-lang";
 
 /**
+ * Container integrity: these read an element's *direct* children and nothing
+ * deeper, so only a direct unknown child silences them. A `<div>` mapped into a
+ * `<ul>` is still a finding when the `<div>`'s own contents are unknown — the
+ * defect is where the div sits, not what it holds.
+ */
+export const DIRECT_CHILD_RULES = new Set([
+  "adaptable/list-children",
+  "adaptable/definition-list",
+  "adaptable/aria-required-children",
+]);
+
+/**
  * Rules whose verdict depends on what an element *contains* — container
  * integrity, and every name-from-content rule. A component child or an opaque
  * expression child makes the contents unknown, so these go silent for that
- * element.
+ * element. All but DIRECT_CHILD_RULES read the whole subtree: an accessible name
+ * comes from any descendant, and a table's cells are not its children.
  */
 export const CHILD_DEPENDENT_RULES = new Set([
   "adaptable/list-children",
@@ -101,11 +119,20 @@ export const CHILD_DEPENDENT_RULES = new Set([
  * container, and where the container is. `list-children` reports the stray
  * `<div>`, not the `<ul>` that holds it, so it is the `<ul>`'s unknowns that
  * decide whether the finding stands.
+ *
+ * `containerTags` is the other half. These rules have a second branch that
+ * reports the container itself — for bare text directly inside a list — and then
+ * the element in hand already *is* the container. `<ol><Link>Text</Link></ol>`
+ * lands there: the text came from a component, so the container's own unknowns
+ * are the ones that matter.
  */
-export const CONTAINER_MEMBER_RULES: Record<string, "parent" | "table"> = {
-  "adaptable/list-children": "parent",
-  "adaptable/definition-list": "parent",
-  "adaptable/td-has-header": "table",
+export const CONTAINER_MEMBER_RULES: Record<
+  string,
+  { ancestor: "parent" | "table"; containerTags: string[] }
+> = {
+  "adaptable/list-children": { ancestor: "parent", containerTags: ["ul", "ol"] },
+  "adaptable/definition-list": { ancestor: "parent", containerTags: ["dl"] },
+  "adaptable/td-has-header": { ancestor: "table", containerTags: ["table"] },
 };
 
 /** Rules that resolve an accessible name, which any descendant can supply. */

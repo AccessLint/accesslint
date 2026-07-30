@@ -54,7 +54,7 @@ function kebab(property: string): string {
 /**
  * A style object is worth resolving rather than dropping: an element with
  * `display: none` is out of the accessibility tree, and rules skip it. Drop it
- * blind and every hidden element becomes a finding.
+ * unread and every hidden element becomes a finding.
  *
  * Literal declarations are emitted. A non-literal value is skipped when its
  * property cannot hide anything, and makes the whole style unknown when it can

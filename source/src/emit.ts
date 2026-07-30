@@ -27,14 +27,26 @@ export interface NodeMeta {
   pinnedAfterSpread: Set<string>;
   /** An unknown that hides the element and everything under it. */
   subtreeUnknown?: { attribute: string; expression: string };
-  /** Set when a child's contents are unknown: a component, or an opaque expression. */
-  unknowableChild?: {
-    kind: "component-child" | "opaque-expression";
-    detail: string;
-    expression?: string;
-  };
+  /**
+   * Set when a *direct* child's contents are unknown: a component, or an opaque
+   * expression. This is what the container-integrity rules read, and they only
+   * look one level down.
+   */
+  unknowableChild?: Unknowable;
+  /**
+   * Set when anything anywhere below the element is unknown. An accessible name
+   * is computed from the whole subtree, so `<button><div>{label}</div></button>`
+   * is a named button even though the button's own children are both known.
+   */
+  unknownContent?: Unknowable;
   /** True when the element is emitted from one arm of an exclusive branch. */
   branch: boolean;
+}
+
+export interface Unknowable {
+  kind: "component-child" | "opaque-expression";
+  detail: string;
+  expression?: string;
 }
 
 // JSX text and attribute strings carry HTML entities through to the DOM

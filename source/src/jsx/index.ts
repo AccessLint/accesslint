@@ -1,7 +1,7 @@
 import { parse, type ParserOptions } from "@babel/parser";
 import type * as t from "@babel/types";
-import { Emitter, escapeText, type NodeMeta } from "../emit";
-import type { SourceRender } from "../render";
+import { Emitter, escapeText, type NodeMeta, type Unknowable } from "../emit";
+import { wrapperFor, type SourceRender, type SourceTree } from "../render";
 import {
   ATTRIBUTE_PLACEHOLDER,
   SUBTREE_SEMANTICS_ATTRIBUTES,
@@ -52,7 +52,10 @@ function parseJsx(source: string, typescript: boolean): t.File | null {
 /** What a child contributes to its parent element beyond markup. */
 interface Emitted {
   html: string;
-  unknowable?: NodeMeta["unknowableChild"];
+  /** Makes the parent's *direct* children unknown. */
+  unknowable?: Unknowable;
+  /** Makes everything in the parent's subtree unknown, however deep it sits. */
+  contentUnknown?: Unknowable;
 }
 
 /** What a child needs to know about where it sits. */
@@ -81,60 +84,81 @@ class JsxAdapter {
   constructor(private readonly source: string) {}
 
   render(ast: t.File): SourceRender {
-    const headParts: string[] = [];
-    const bodyParts: string[] = [];
-    let htmlAttributes: [string, string][] = [];
-    let htmlNodeIndex: number | null = null;
+    const trees: SourceTree[] = [];
+    let htmlRootSeen = false;
 
-    const roots = findJsxRoots(ast);
-    for (const root of roots) {
+    for (const root of findJsxRoots(ast)) {
+      // Each root is its own tree, and its own document later: they are
+      // independent components, and concatenating them lets the HTML parser
+      // rearrange one root's elements around another's.
+      const branchBefore = this.hasBranch;
+      this.hasBranch = false;
+
       if (root.type === "JSXFragment") {
-        bodyParts.push(this.children(root.children, null, false).html);
-        continue;
-      }
-
-      const name = elementName(root.openingElement.name);
-      if (name.intrinsic && name.tag === "html" && htmlNodeIndex === null) {
-        // A root layout's `<html>` is the one page-level shape a component file
-        // can legitimately carry. The document already has an html element, so
-        // this one contributes its attributes to the documentElement and its
-        // head/body children are distributed into the real head and body.
-        const { attributes, meta } = this.attributes(root.openingElement, false, "html");
-        for (const child of root.children) {
-          if (child.type === "JSXElement") {
-            const childName = elementName(child.openingElement.name);
-            if (childName.intrinsic && childName.tag === "head") {
-              headParts.push(
-                this.children(child.children, { tag: "head", textPosition: false }, false).html,
-              );
-              continue;
-            }
-            if (childName.intrinsic && childName.tag === "body") {
-              bodyParts.push(
-                this.children(child.children, { tag: "body", textPosition: false }, false).html,
-              );
-              continue;
-            }
-          }
-          bodyParts.push(this.child(child, { tag: "html", textPosition: false }, false).html);
+        trees.push(this.tree(this.children(root.children, null, false).html));
+      } else {
+        const name = elementName(root.openingElement.name);
+        if (name.intrinsic && name.tag === "html" && !htmlRootSeen) {
+          htmlRootSeen = true;
+          trees.push(this.documentTree(root));
+        } else {
+          trees.push(this.tree(this.node(root, null, false).html));
         }
-        htmlAttributes = attributes;
-        htmlNodeIndex = this.emitter.allocate(meta);
-        continue;
       }
 
-      bodyParts.push(this.node(root, null, false).html);
+      this.hasBranch = branchBefore;
     }
 
+    return { trees, nodes: this.emitter.nodes };
+  }
+
+  private tree(bodyHtml: string, extras: Partial<SourceTree> = {}): SourceTree {
     return {
-      headHtml: headParts.join(""),
-      bodyHtml: bodyParts.join(""),
-      htmlAttributes,
-      htmlNodeIndex,
-      nodes: this.emitter.nodes,
+      headHtml: "",
+      bodyHtml,
+      htmlAttributes: [],
+      htmlNodeIndex: null,
+      wrapper: wrapperFor(bodyHtml),
       hasBranch: this.hasBranch,
-      rootCount: roots.length,
+      ...extras,
     };
+  }
+
+  /**
+   * A root layout's `<html>` is the one page-level shape a component file can
+   * legitimately carry. The document already has an html element, so this one
+   * contributes its attributes to the documentElement and its head/body children
+   * are distributed into the real head and body.
+   */
+  private documentTree(root: t.JSXElement): SourceTree {
+    const headParts: string[] = [];
+    const bodyParts: string[] = [];
+    const { attributes, meta } = this.attributes(root.openingElement, false, "html");
+
+    for (const child of root.children) {
+      if (child.type === "JSXElement") {
+        const childName = elementName(child.openingElement.name);
+        if (childName.intrinsic && childName.tag === "head") {
+          headParts.push(
+            this.children(child.children, { tag: "head", textPosition: false }, false).html,
+          );
+          continue;
+        }
+        if (childName.intrinsic && childName.tag === "body") {
+          bodyParts.push(
+            this.children(child.children, { tag: "body", textPosition: false }, false).html,
+          );
+          continue;
+        }
+      }
+      bodyParts.push(this.child(child, { tag: "html", textPosition: false }, false).html);
+    }
+
+    return this.tree(bodyParts.join(""), {
+      headHtml: headParts.join(""),
+      htmlAttributes: attributes,
+      htmlNodeIndex: this.emitter.allocate(meta),
+    });
   }
 
   /** A JSX element or fragment, wherever it sits. */
@@ -147,10 +171,10 @@ class JsxAdapter {
       // `<>` is not an element and hides nothing: its children are right here.
       return this.children(node.children, parent, branch);
     }
-    return this.element(node, branch);
+    return this.element(node, parent, branch);
   }
 
-  private element(node: t.JSXElement, branch: boolean): Emitted {
+  private element(node: t.JSXElement, parent: ParentInfo | null, branch: boolean): Emitted {
     const name = elementName(node.openingElement.name);
 
     if (!name.intrinsic) {
@@ -158,24 +182,39 @@ class JsxAdapter {
       // emitted in place, so intrinsic islands inside a component stay
       // auditable. What the component itself renders is unknown here, which is
       // what the parent has to be told.
-      const inner = this.children(node.children, null, branch);
-      return {
-        html: inner.html,
-        unknowable: {
-          kind: "component-child",
-          detail: `<${name.text}> is a component; what it renders is not in this file`,
-          expression: `<${name.text}>`,
-        },
+      const unknowable: Unknowable = {
+        kind: "component-child",
+        detail: `<${name.text}> is a component; what it renders is not in this file`,
+        expression: `<${name.text}>`,
       };
+
+      // Except in a table or a select. There, the component's real output is a
+      // row or an option, and emitting its children in its place puts markup
+      // where an HTML parser will not keep it: a `<h1>` inside `<tbody>` is
+      // foster-parented out, element and text separately, which flattens
+      // everything after it and reports empty headings that are not empty.
+      if (parent && STRICT_CONTENT_TAGS.has(parent.tag)) {
+        return { html: "", unknowable, contentUnknown: unknowable };
+      }
+
+      const inner = this.children(node.children, null, branch);
+      return { html: inner.html, unknowable, contentUnknown: unknowable };
     }
 
     const tag = name.tag;
     const { attributes, meta, textPosition } = this.attributes(node.openingElement, branch, tag);
     const contents = this.children(node.children, { tag, textPosition }, branch);
     if (!meta.unknowableChild) meta.unknowableChild = contents.unknowable;
+    meta.unknownContent = meta.unknowableChild ?? contents.contentUnknown;
 
     const index = this.emitter.allocate(meta);
-    return { html: this.emitter.element(index, tag, attributes, contents.html) };
+    return {
+      html: this.emitter.element(index, tag, attributes, contents.html),
+      // The element itself is a known child of its parent; what is unknown is
+      // what sits inside it, and that carries all the way up because an
+      // accessible name is computed from the whole subtree.
+      contentUnknown: meta.unknownContent,
+    };
   }
 
   private attributes(
@@ -254,6 +293,13 @@ class JsxAdapter {
         });
       } else if (lastSpread >= 0) {
         meta.pinnedAfterSpread.add(name);
+      }
+
+      // A utility class is the other common way a component hides something,
+      // and `hidden` means display:none everywhere it is used. We do not claim
+      // the element *is* hidden — only that we cannot prove it is not.
+      if (name === "class" && resolved.kind === "known" && hidingClass(resolved.value)) {
+        meta.subtreeUnknown = { attribute: "class", expression: resolved.value };
       }
 
       if (resolved.kind === "absent") return;
@@ -378,15 +424,17 @@ class JsxAdapter {
     branch: boolean,
   ): Emitted {
     const parts: string[] = [];
-    let unknowable: NodeMeta["unknowableChild"] | undefined;
+    let unknowable: Unknowable | undefined;
+    let contentUnknown: Unknowable | undefined;
 
     for (const child of children) {
       const emitted = this.child(child, parent, branch);
       parts.push(emitted.html);
       if (!unknowable) unknowable = emitted.unknowable;
+      if (!contentUnknown) contentUnknown = emitted.contentUnknown;
     }
 
-    return { html: parts.join(""), unknowable };
+    return { html: parts.join(""), unknowable, contentUnknown };
   }
 
   private child(
@@ -532,6 +580,7 @@ class JsxAdapter {
     return {
       html: parts.map((part) => part.html).join(""),
       unknowable: parts.find((part) => part.unknowable)?.unknowable,
+      contentUnknown: parts.find((part) => part.contentUnknown)?.contentUnknown,
     };
   }
 
@@ -543,13 +592,13 @@ class JsxAdapter {
    */
   private opaque(node: t.Node, parent: ParentInfo | null): Emitted {
     const expression = this.text(node);
-    const unknowable = {
-      kind: "opaque-expression" as const,
+    const unknowable: Unknowable = {
+      kind: "opaque-expression",
       detail: `\`${expression}\` may render anything`,
       expression,
     };
-    if (parent?.textPosition) return { html: escapeText(TEXT_PLACEHOLDER), unknowable };
-    return { html: "", unknowable };
+    const html = parent?.textPosition ? escapeText(TEXT_PLACEHOLDER) : "";
+    return { html, unknowable, contentUnknown: unknowable };
   }
 
   /** The source text of a node, for the record of what was unknown. */
@@ -565,6 +614,39 @@ class JsxAdapter {
     const text = this.source.slice(node.start, node.end).replace(/\s+/g, " ").trim();
     return text.length > MAX_EXPRESSION_LENGTH ? `${text.slice(0, MAX_EXPRESSION_LENGTH)}…` : text;
   }
+}
+
+/**
+ * Elements whose children an HTML parser will rearrange if they are not the
+ * children it expects. A component sitting in one of these is left unexpanded.
+ */
+const STRICT_CONTENT_TAGS = new Set([
+  "table",
+  "thead",
+  "tbody",
+  "tfoot",
+  "tr",
+  "colgroup",
+  "select",
+  "optgroup",
+]);
+
+/** Utility classes whose whole job is to take the element out of the layout. */
+const HIDING_CLASSES = new Set(["hidden", "invisible"]);
+
+/**
+ * `hidden md:block` is not hidden — it is hidden on a phone and shown from the
+ * md breakpoint up, which is the single most common shape a Tailwind class list
+ * takes. Only an unqualified hide counts, or every responsive column in every
+ * marketing page goes unaudited.
+ */
+const RESHOWN_AT_BREAKPOINT =
+  /^[a-z0-9]+:(block|flex|grid|inline|inline-block|inline-flex|table|table-cell|contents|visible)$/;
+
+function hidingClass(value: string): boolean {
+  const tokens = value.split(/\s+/);
+  if (!tokens.some((token) => HIDING_CLASSES.has(token))) return false;
+  return !tokens.some((token) => RESHOWN_AT_BREAKPOINT.test(token));
 }
 
 function unwrap(node: t.Expression | t.JSXEmptyExpression): t.Expression | t.JSXEmptyExpression {

@@ -21,6 +21,8 @@ export type UnknownKind =
   | "unknown-semantics"
   /** aria-labelledby points at an id this file does not define. */
   | "external-idref"
+  /** The container the rule reasons about is not in this file. */
+  | "external-container"
   /** The file emits exclusive branches, so document order is not a real order. */
   | "exclusive-branches";
 
@@ -66,6 +68,12 @@ export interface SourceAuditResult {
   dialect: Dialect | null;
   /** False when the file could not be parsed — findings and candidates are empty. */
   parsed: boolean;
+  /**
+   * Set when the file was deliberately not audited: its JSX is rendered by
+   * something that is not a DOM, or it is a test file. Findings and candidates
+   * are empty.
+   */
+  skipped?: "non-dom-renderer" | "test-file";
   /** The synthetic HTML the engine audited, markers removed. For debugging. */
   html: string;
 }
@@ -84,6 +92,11 @@ export interface AuditSourceOptions {
   filename?: string;
   /** Overrides detection from `filename`. */
   dialect?: Dialect;
+  /**
+   * Audit `*.test.tsx`, `__tests__/`, and fixture directories too. Off by
+   * default: a fixture's markup is written to be wrong.
+   */
+  includeTestFiles?: boolean;
   /**
    * Merged over the source-mode defaults. `disabledRules` adds to
    * `SOURCE_MODE_DISABLED_RULES` rather than replacing it, and `componentMode`

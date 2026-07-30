@@ -135,14 +135,27 @@ describe("expressions", () => {
     expect(ruleIds(result).filter((id) => id === "navigable/empty-heading")).toHaveLength(2);
   });
 
-  it("silences heading order across two components in one file", () => {
+  it("never compares two components in one file", () => {
+    // Each root is audited in its own document, so an <h1> here and an <h3>
+    // there is not a heading order and the question never comes up.
     const result = audit(`
       export const Title = () => <h1>Title</h1>;
       export const Section = () => <h3>Section</h3>;
     `);
     expect(ruleIds(result)).not.toContain("navigable/heading-order");
-    const candidate = result.candidates.find((c) => c.ruleId === "navigable/heading-order");
-    expect(candidate?.unknown.kind).toBe("exclusive-branches");
+    expect(candidateIds(result)).not.toContain("navigable/heading-order");
+  });
+
+  it("reports a heading order defect inside one component", () => {
+    const result = audit(`
+      export const Page = () => (
+        <div>
+          <h1>Title</h1>
+          <h3>Section</h3>
+        </div>
+      );
+    `);
+    expect(ruleIds(result)).toContain("navigable/heading-order");
   });
 
   it("silences heading order once the file emits exclusive branches", () => {
@@ -226,6 +239,253 @@ describe("page-level questions", () => {
     expect(ruleIds(result)).not.toContain("navigable/document-title");
     expect(ruleIds(result)).not.toContain("landmarks/landmark-main");
     expect(ruleIds(result)).not.toContain("readable/html-has-lang");
+  });
+});
+
+// Every case in this block is a false positive the corpus run found: a real repo,
+// a finding a human triager called wrong, and the reason it was wrong.
+describe("what the corpus taught", () => {
+  it("names a button from text anywhere in its subtree", () => {
+    // supabase ContextMenu.tsx: the label is one level down, so the button's own
+    // children were both known and the name looked missing.
+    const result = audit(`
+      export const Item = ({ item }) => (
+        <button type="button">
+          <div className="label">{item.label}</div>
+        </button>
+      );
+    `);
+    expect(ruleIds(result)).not.toContain("labels-and-names/button-name");
+  });
+
+  it("still reports an icon-only button with nothing to name it", () => {
+    const result = audit(`
+      export const Close = () => (
+        <button type="button">
+          <svg viewBox="0 0 24 24" />
+        </button>
+      );
+    `);
+    expect(ruleIds(result)).toContain("labels-and-names/button-name");
+  });
+
+  it("keeps container integrity one level deep", () => {
+    // The div's own contents being unknown says nothing about where the div sits.
+    const result = audit(`
+      export const List = ({ items }) => (
+        <ul>
+          {items.map((item) => (
+            <div key={item.id}>{item.label}</div>
+          ))}
+        </ul>
+      );
+    `);
+    expect(ruleIds(result)).toContain("adaptable/list-children");
+  });
+
+  it("says nothing about a list whose text came from a component", () => {
+    // supabase LWSummary.tsx: <ol><Link>…</Link></ol> renders an <a> child, not
+    // the bare text the engine saw.
+    const result = audit(`
+      export const Days = () => (
+        <ol className="border-t">
+          <Link href="/a">Open Source Hackathon</Link>
+        </ol>
+      );
+    `);
+    expect(result.findings).toEqual([]);
+    const candidate = result.candidates.find((c) => c.ruleId === "adaptable/list-children");
+    expect(candidate?.unknown.kind).toBe("component-child");
+  });
+
+  it("says nothing about a table whose rows are components", () => {
+    const result = audit(`
+      export const Pricing = ({ plans }) => (
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Feature</th>
+            </tr>
+          </thead>
+          <tbody>
+            <PricingRow plans={plans} />
+          </tbody>
+        </table>
+      );
+    `);
+    expect(ruleIds(result)).not.toContain("adaptable/th-has-data-cells");
+  });
+
+  it("treats a hiding utility class as a hiding it cannot rule out", () => {
+    const result = audit(`
+      export const Submit = () => <button type="submit" className="hidden" tabIndex={-1} />;
+    `);
+    expect(result.findings).toEqual([]);
+    expect(result.candidates[0]?.unknown.kind).toBe("unknown-semantics");
+  });
+
+  it("audits a column that a breakpoint shows again", () => {
+    // shadcn's login blocks: `hidden lg:block` is a responsive column, not a
+    // hidden one, and the alt text inside it is read by anyone on a laptop.
+    const result = audit(`
+      export const Login = () => (
+        <div className="relative hidden bg-muted lg:block">
+          <img src="/placeholder.svg" alt="Image" className="absolute inset-0" />
+        </div>
+      );
+    `);
+    expect(ruleIds(result)).toContain("text-alternatives/image-alt-words");
+  });
+
+  it("says nothing about JSX that renders to an image, not a document", () => {
+    const result = audit(
+      `
+      import { ImageResponse } from "next/og";
+
+      export default function OG() {
+        return new ImageResponse(
+          <div style={{ display: "flex" }}>
+            <img src={logo} width="200" height="200" />
+          </div>,
+        );
+      }
+    `,
+      "route.tsx",
+    );
+    expect(result.skipped).toBe("non-dom-renderer");
+    expect(result.findings).toEqual([]);
+  });
+
+  it("recognizes a satori component file by its tw prop", () => {
+    const result = audit(`
+      export const Card = ({ logo }) => (
+        <div tw="flex items-center">
+          <img src={logo} width="90px" height="90px" tw="mr-6" />
+        </div>
+      );
+    `);
+    expect(result.skipped).toBe("non-dom-renderer");
+  });
+
+  it("leaves test fixtures alone unless asked", () => {
+    const source = `export const Fixture = () => <button type="button" tabIndex={3} />;`;
+    expect(audit(source, "FocusTrap.test.tsx").skipped).toBe("test-file");
+    expect(audit(source, "test/fixtures/FocusTrap.tsx").skipped).toBe("test-file");
+    const included = auditSource({
+      source,
+      filename: "FocusTrap.test.tsx",
+      document: testDocument(),
+      includeTestFiles: true,
+    });
+    expect(included.skipped).toBeUndefined();
+    expect(included.findings.map((f) => f.ruleId)).toContain("keyboard-accessible/tabindex");
+  });
+
+  it("keeps a table fragment's own structure, and asks nothing of the table around it", () => {
+    // A component that renders one row is dropped outright by an HTML parser
+    // unless it is wrapped, and everything after it in the document gets
+    // rearranged. Wrapped, the row survives — and no rule may then reason about
+    // the table we invented to hold it.
+    const result = audit(`
+      export const Row = ({ name }) => (
+        <tr>
+          <td>{name}</td>
+          <td>
+            <button type="button" />
+          </td>
+        </tr>
+      );
+    `);
+    expect(result.html).toContain("<tr");
+    expect(result.html).toContain("<button");
+    expect(ruleIds(result)).toContain("labels-and-names/button-name");
+    expect(ruleIds(result)).not.toContain("adaptable/td-has-header");
+  });
+
+  it("puts each finding on its own line when two elements look alike", () => {
+    // supabase launch-week: two <a href={expr}> both render href="unknown", so
+    // both got the same CSS selector and every finding landed on the first one.
+    const result = audit(`
+      export const Links = ({ blog, docs }) => (
+        <div>
+          <a href={blog}>
+            <img src="/blog.svg" />
+          </a>
+          {docs && (
+            <a href={docs}>
+              <img src="/docs.svg" />
+            </a>
+          )}
+        </div>
+      );
+    `);
+    const lines = result.findings
+      .filter((finding) => finding.ruleId === "text-alternatives/img-alt")
+      .map((finding) => finding.line);
+    expect(lines).toEqual([5, 9]);
+  });
+
+  it("leaves a component in a table unexpanded", () => {
+    // docusaurus style-isolation: <tbody><ExampleRow><h1>title</h1></ExampleRow>
+    // renders a row at runtime. Emitting the h1 in the row's place put it inside
+    // <tbody>, where the parser foster-parents element and text out separately —
+    // which reported an empty <h1>, an empty <button>, and a nameless link, none
+    // of them true.
+    const result = audit(`
+      export default function Page() {
+        return (
+          <table>
+            <tbody>
+              <ExampleRow name="h1">
+                <h1>title</h1>
+              </ExampleRow>
+              <ExampleRow name="a">
+                <a href="https://example.com">link</a>
+              </ExampleRow>
+            </tbody>
+          </table>
+        );
+      }
+    `);
+    expect(result.findings).toEqual([]);
+  });
+
+  it("does not let one root rearrange another", () => {
+    // The docusaurus style-isolation page: a row-rendering component sits above a
+    // page component, and concatenating them flattened every element after the
+    // row, which reported an empty <h1>, an empty <button> and a nameless link.
+    const result = audit(`
+      const Row = ({ name, children }) => (
+        <tr>
+          <td>{name}</td>
+          <td>{children}</td>
+        </tr>
+      );
+
+      export default function Page() {
+        return (
+          <div>
+            <h1>Heading</h1>
+            <a href="https://example.com">link</a>
+            <button>button</button>
+          </div>
+        );
+      }
+    `);
+    expect(ruleIds(result)).not.toContain("navigable/empty-heading");
+    expect(ruleIds(result)).not.toContain("navigable/link-name");
+    expect(ruleIds(result)).not.toContain("labels-and-names/button-name");
+  });
+
+  it("never asks whether a div with tabindex is a scroll container", () => {
+    const result = audit(`
+      export const Scroller = () => (
+        <div tabIndex={0} style={{ overflowY: "auto", height: "600px" }}>
+          <p>Content</p>
+        </div>
+      );
+    `);
+    expect(ruleIds(result)).not.toContain("keyboard-accessible/focus-order");
   });
 });
 

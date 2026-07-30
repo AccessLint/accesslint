@@ -2,12 +2,14 @@ import { clearAllCaches, getRuleById, runAudit, type AuditOptions } from "@acces
 import type { Violation } from "@accesslint/core";
 import { MARKER_ATTRIBUTE, type NodeMeta } from "./emit";
 import { renderJsx } from "./jsx";
-import type { SourceRender } from "./render";
+import { wrapped, type SourceTree } from "./render";
+import { nonDomRenderer, testFile } from "./scope";
 import {
   attributeDependencies,
   CHILD_DEPENDENT_RULES,
   CONTAINER_MEMBER_RULES,
   DEPENDS_ON_ANY_UNKNOWN,
+  DIRECT_CHILD_RULES,
   DOC_ORDER_DEPENDENT_RULES,
   FRAGMENT_DISABLED_RULES,
   HTML_ELEMENT_RULE,
@@ -40,14 +42,16 @@ export function detectDialect(filename?: string): Dialect | null {
 export function auditSource(options: AuditSourceOptions): SourceAuditResult {
   // No filename and no dialect: parse as TSX, the superset that also reads JSX.
   const dialect = options.dialect ?? detectDialect(options.filename) ?? "tsx";
+
+  const skipped = outOfScope(options);
+  if (skipped) {
+    return { findings: [], candidates: [], dialect, parsed: true, html: "", skipped };
+  }
+
   const render = renderJsx(options.source, { typescript: dialect === "tsx" });
   if (!render) {
     return { findings: [], candidates: [], dialect, parsed: false, html: "" };
   }
-
-  const doc = options.document;
-  const metaByElement = install(doc, render);
-  const html = doc.documentElement.innerHTML;
 
   const disabled = new Set<string>([
     ...SOURCE_MODE_DISABLED_RULES,
@@ -60,98 +64,152 @@ export function auditSource(options: AuditSourceOptions): SourceAuditResult {
     componentMode: true,
   };
 
-  clearAllCaches();
-  const violations = [...runAudit(doc, auditOptions).violations];
-
-  // The lone page-level carve-out: a file with a literal intrinsic `<html>` can
-  // honestly be asked whether it set a lang. componentMode dropped the rule, so
-  // it runs on its own.
-  if (render.htmlNodeIndex !== null && !disabled.has(HTML_ELEMENT_RULE)) {
-    const rule = getRuleById(HTML_ELEMENT_RULE);
-    if (rule) violations.push(...rule.run(doc));
-  }
-
+  const doc = options.document;
   const findings: SourceFinding[] = [];
   const candidates: SourceCandidate[] = [];
+  const documents: string[] = [];
 
-  for (const violation of violations) {
-    const element = elementFor(doc, violation);
-    if (!element) continue;
+  // One document per root. See SourceTree for why they cannot share one.
+  for (const tree of render.trees) {
+    const installed = install(doc, tree, render.nodes);
+    const { metaByElement } = installed;
+    documents.push(clean(doc.documentElement.innerHTML));
 
-    const own = metaByElement.get(element);
-    const anchor = own ?? nearestMeta(element, metaByElement);
-    // Nothing this package emitted: not a claim about the source, so not ours
-    // to report. Same posture as the ERB path dropping a violation it cannot
-    // place on a line.
-    if (!anchor) continue;
+    clearAllCaches();
+    const violations = [...runAudit(doc, auditOptions).violations];
 
-    const finding: SourceFinding = {
-      ruleId: violation.ruleId,
-      impact: violation.impact,
-      message: violation.message,
-      context: violation.context,
-      html: violation.html,
-      selector: violation.selector,
-      line: anchor.line,
-      column: anchor.column,
-      file: options.filename,
-    };
+    // The lone page-level carve-out: a file with a literal intrinsic `<html>` can
+    // honestly be asked whether it set a lang. componentMode dropped the rule, so
+    // it runs on its own.
+    if (tree.htmlNodeIndex !== null && !disabled.has(HTML_ELEMENT_RULE)) {
+      const rule = getRuleById(HTML_ELEMENT_RULE);
+      if (rule) violations.push(...rule.run(doc));
+    }
 
-    const unknown = unprovable(violation, element, own ?? anchor, doc, metaByElement, render);
-    if (unknown) candidates.push({ ...finding, unknown });
-    else findings.push(finding);
+    for (const violation of violations) {
+      const element = locate(doc, violation, installed);
+      if (!element) continue;
+
+      const own = metaByElement.get(element);
+      const anchor = own ?? nearestMeta(element, metaByElement);
+      // Nothing this package emitted: not a claim about the source, so not ours
+      // to report. Same posture as the ERB path dropping a violation it cannot
+      // place on a line.
+      if (!anchor) continue;
+
+      const finding: SourceFinding = {
+        ruleId: violation.ruleId,
+        impact: violation.impact,
+        message: clean(violation.message),
+        context: violation.context ? clean(violation.context) : undefined,
+        html: clean(violation.html),
+        selector: violation.selector,
+        line: anchor.line,
+        column: anchor.column,
+        file: options.filename,
+      };
+
+      const unknown = unprovable(violation, element, own ?? anchor, doc, metaByElement, tree);
+      if (unknown) candidates.push({ ...finding, unknown });
+      else findings.push(finding);
+    }
   }
 
   findings.sort(byPosition);
   candidates.sort(byPosition);
+  const html = documents.join("\n");
 
   return { findings, candidates, dialect, parsed: true, html };
+}
+
+/**
+ * Why this file has nothing to answer for, or null when it does. Both reasons
+ * are about the file as a whole, so they are decided before it is even parsed.
+ */
+function outOfScope(options: AuditSourceOptions): SourceAuditResult["skipped"] {
+  if (nonDomRenderer(options.source, options.filename)) return "non-dom-renderer";
+  if (!options.includeTestFiles && testFile(options.filename)) return "test-file";
+  return undefined;
 }
 
 function byPosition(a: SourceFinding, b: SourceFinding): number {
   return a.line - b.line || a.column - b.column || a.ruleId.localeCompare(b.ruleId);
 }
 
+interface Installed {
+  metaByElement: Map<Element, NodeMeta>;
+  elementByIndex: Map<number, Element>;
+}
+
 /**
- * Write the synthetic document, then read the node table out of the marker
- * attributes and remove them. The engine — and every HTML snippet it quotes
- * back into a review comment — sees a document with nothing of ours in it.
+ * Write the synthetic document and read the node table out of the marker
+ * attributes.
+ *
+ * The markers stay on the elements through the audit, and that is deliberate: a
+ * rule that reports by CSS selector can hand back a selector that matches more
+ * than one element — `<a href={blog}>` and `<a href={docs}>` both render
+ * `href="unknown"`, so both get the same selector and the first one wins. Every
+ * finding then lands on the wrong line. The marker is exact, and it comes back in
+ * the violation's own HTML snippet. `clean` strips it from everything a caller
+ * ever reads.
  */
-function install(doc: Document, render: SourceRender): Map<Element, NodeMeta> {
+function install(doc: Document, tree: SourceTree, nodes: NodeMeta[]): Installed {
   const root = doc.documentElement;
   for (const name of root.getAttributeNames()) root.removeAttribute(name);
-  root.innerHTML = `<head>${render.headHtml}</head><body>${render.bodyHtml}</body>`;
+  root.innerHTML = `<head>${tree.headHtml}</head><body>${wrapped(tree)}</body>`;
 
-  for (const [name, value] of render.htmlAttributes) {
+  for (const [name, value] of tree.htmlAttributes) {
     try {
       root.setAttribute(name, value);
     } catch {
       // An expression-named attribute is not a name the DOM accepts; skip it.
     }
   }
-  if (render.htmlNodeIndex !== null) {
-    root.setAttribute(MARKER_ATTRIBUTE, String(render.htmlNodeIndex));
+  if (tree.htmlNodeIndex !== null) {
+    root.setAttribute(MARKER_ATTRIBUTE, String(tree.htmlNodeIndex));
   }
 
   // Walked rather than queried: a plain tree walk asks nothing of the host's
   // selector engine, which not every DOM implementation gets right for attribute
   // selectors.
   const metaByElement = new Map<Element, NodeMeta>();
+  const elementByIndex = new Map<number, Element>();
   const visit = (element: Element): void => {
     const marker = element.getAttribute(MARKER_ATTRIBUTE);
     if (marker !== null) {
-      element.removeAttribute(MARKER_ATTRIBUTE);
-      const meta = render.nodes[Number(marker)];
-      if (meta) metaByElement.set(element, meta);
+      const index = Number(marker);
+      const meta = nodes[index];
+      if (meta) {
+        metaByElement.set(element, meta);
+        elementByIndex.set(index, element);
+      }
     }
     for (const child of element.children) visit(child);
   };
   visit(root);
-  return metaByElement;
+  return { metaByElement, elementByIndex };
 }
 
-/** Rules report an element directly or by selector; either way we need it. */
-function elementFor(doc: Document, violation: Violation): Element | null {
+/** The marker as it appears at the front of an element's own HTML snippet. */
+const MARKED_SNIPPET = new RegExp(`^<[a-z][a-z0-9-]*\\s+${MARKER_ATTRIBUTE}="(\\d+)"`);
+const MARKER_PATTERN = new RegExp(`\\s?${MARKER_ATTRIBUTE}="\\d+"`, "g");
+
+/** Everything a caller reads comes back with nothing of ours in it. */
+function clean(text: string): string {
+  return text.replace(MARKER_PATTERN, "");
+}
+
+/**
+ * The element a violation is about. Its marker comes first: the snippet a rule
+ * quotes is the element's own HTML, so the marker in it is proof of identity,
+ * where a selector is only a guess that happens to be unique most of the time.
+ */
+function locate(doc: Document, violation: Violation, installed: Installed): Element | null {
+  const marked = MARKED_SNIPPET.exec(violation.html);
+  if (marked) {
+    const element = installed.elementByIndex.get(Number(marked[1]));
+    if (element) return element;
+  }
   if (violation.element) return violation.element;
   try {
     return doc.querySelector(violation.selector);
@@ -220,16 +278,25 @@ function attributeUnknown(meta: NodeMeta, ruleId: string): SourceUnknown | null 
   return null;
 }
 
-/** Where the container is, for a rule that reports one of its members. */
-function containerFor(
-  ruleId: string,
-  element: Element,
-  metaByElement: Map<Element, NodeMeta>,
-): NodeMeta | undefined {
-  const location = CONTAINER_MEMBER_RULES[ruleId];
-  if (!location) return metaByElement.get(element);
-  const container = location === "parent" ? element.parentElement : element.closest("table");
-  return container ? metaByElement.get(container) : undefined;
+/** Which element a rule reads the contents of: the subject, or its container. */
+function containerFor(ruleId: string, element: Element): Element | null {
+  const member = CONTAINER_MEMBER_RULES[ruleId];
+  if (!member) return element;
+
+  // The bare-text branch reports the container itself, and the only way to tell
+  // that apart from a member report is the text: a container is the subject when
+  // it holds text of its own.
+  const tag = element.tagName.toLowerCase();
+  if (member.containerTags.includes(tag) && hasDirectText(element)) return element;
+
+  return member.ancestor === "parent" ? element.parentElement : element.closest("table");
+}
+
+function hasDirectText(element: Element): boolean {
+  for (const node of element.childNodes) {
+    if (node.nodeType === 3 && node.textContent && node.textContent.trim()) return true;
+  }
+  return false;
 }
 
 /**
@@ -242,7 +309,7 @@ function unprovable(
   meta: NodeMeta,
   doc: Document,
   metaByElement: Map<Element, NodeMeta>,
-  render: SourceRender,
+  tree: SourceTree,
 ): SourceUnknown | null {
   // An element whose own hiding is unknown may not be in the accessibility tree
   // at all, and neither may anything under it.
@@ -265,13 +332,24 @@ function unprovable(
     // Most of these rules report the container itself; the container-member
     // rules report the offending child, and then it is the container's unknowns
     // that decide.
-    const container = containerFor(violation.ruleId, element, metaByElement) ?? meta;
-    if (container.unknowableChild) {
+    const containerElement = containerFor(violation.ruleId, element);
+    const container = containerElement ? metaByElement.get(containerElement) : undefined;
+    if (!container) {
+      // No container of the author's: either the fragment's parent is in the file
+      // that renders it, or it is the `<table>` we invented to make a lone `<tr>`
+      // parseable. Either way the question belongs to another file.
       return {
-        kind: container.unknowableChild.kind,
-        expression: container.unknowableChild.expression,
-        detail: container.unknowableChild.detail,
+        kind: "external-container",
+        detail: `the ${containerElement ? containerElement.tagName.toLowerCase() : "container"} this rule reads is not in this file`,
       };
+    }
+    // Container integrity reads one level down; everything else — every
+    // accessible name, every table's cells — reads the whole subtree.
+    const unknown = DIRECT_CHILD_RULES.has(violation.ruleId)
+      ? container.unknowableChild
+      : container.unknownContent;
+    if (unknown) {
+      return { kind: unknown.kind, expression: unknown.expression, detail: unknown.detail };
     }
     const containerAttributes = attributeUnknown(container, violation.ruleId);
     if (containerAttributes) return containerAttributes;
@@ -292,17 +370,13 @@ function unprovable(
     }
   }
 
-  // Both arms of a conditional are emitted, and so is every component in the
-  // file, so document order here is not an order any user ever sees.
-  if (
-    DOC_ORDER_DEPENDENT_RULES.has(violation.ruleId) &&
-    (render.hasBranch || render.rootCount > 1)
-  ) {
+  // Both arms of a conditional are emitted, so document order inside this
+  // component is not an order any user ever sees. (Order *between* components
+  // never arises: each root is audited on its own.)
+  if (DOC_ORDER_DEPENDENT_RULES.has(violation.ruleId) && tree.hasBranch) {
     return {
       kind: "exclusive-branches",
-      detail: render.hasBranch
-        ? "this file emits exclusive branches, so document order is not a real order"
-        : "this file defines several independent trees, so document order is not a real order",
+      detail: "this component emits exclusive branches, so document order is not a real order",
     };
   }
 

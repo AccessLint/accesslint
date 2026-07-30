@@ -77,8 +77,16 @@ Rendering-dependent rules (contrast, spacing, focus visibility) and cross-elemen
 `idref` rules are off in source mode. `SOURCE_MODE_DISABLED_RULES` is exported if
 you want to see the list.
 
+Two kinds of file are skipped outright, both because a finding in one could not be
+a defect a user hits: JSX rendered by something that is not a DOM (satori,
+`@vercel/og`, Next's image modules), and test files and fixtures, whose markup is
+written to be wrong. `includeTestFiles` turns the second one back on.
+
 ## Coverage today
 
-JSX and TSX. Vue and Svelte map onto the same semantics and are next; the
-per-dialect gate is a hand-triaged run over real repositories at zero confirmed
-false positives.
+JSX and TSX, measured against ten popular React repositories — 12,557 files, 109
+findings, zero confirmed false positives after hand-triaging every one. What the
+first run got wrong lives on as the "what the corpus taught" tests in
+`src/audit.test.ts`.
+
+Vue and Svelte map onto the same semantics and are next, each behind the same gate.
