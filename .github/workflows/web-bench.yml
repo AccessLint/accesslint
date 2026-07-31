@@ -59,7 +59,9 @@ jobs:
       - name: Build @accesslint/core (needed for IIFE injection)
         run: npx turbo run build --filter=@accesslint/core
 
-      - run: bunx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        working-directory: bench
+        run: bunx playwright install --with-deps chromium
 
       - name: Run web benchmark (shard ${{ matrix.shard }}/20)
         working-directory: bench
