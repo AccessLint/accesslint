@@ -30,6 +30,28 @@ jobs:
 
       - run: npx turbo run build --filter=@accesslint/source
 
+      # `npm publish` ships the manifest as written, and bun's `workspace:*` is
+      # not a range npm can resolve — a consumer running `npm install` gets
+      # EUNSUPPORTEDPROTOCOL and cannot install the package at all. Same step,
+      # and same reason, as publish-playwright.yml and publish-mcp.yml.
+      - name: Replace workspace:* with published versions
+        working-directory: source
+        run: |
+          node -e "
+          const fs = require('fs'), path = require('path');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          for (const sec of ['dependencies', 'devDependencies', 'peerDependencies']) {
+            for (const [name, ver] of Object.entries(pkg[sec] ?? {})) {
+              if (ver === 'workspace:*') {
+                const dir = name.split('/')[1];
+                const dep = JSON.parse(fs.readFileSync(path.join('..', dir, 'package.json'), 'utf8'));
+                pkg[sec][name] = dep.version;
+              }
+            }
+          }
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
       - run: npm publish --provenance --access public
         working-directory: source
 
