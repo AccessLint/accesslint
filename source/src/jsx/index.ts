@@ -707,29 +707,38 @@ function memberName(name: t.JSXMemberExpression): string {
   return `${object}.${name.property.name}`;
 }
 
+/**
+ * Depth-first walk over anything Babel hands back, skipping bookkeeping keys.
+ * `enter` sees every typed node; returning "stop" keeps the walk out of that
+ * node's children.
+ */
+function walkAst(node: unknown, enter: (node: t.Node) => "stop" | undefined): void {
+  if (!node || typeof node !== "object") return;
+  if (Array.isArray(node)) {
+    for (const item of node) walkAst(item, enter);
+    return;
+  }
+  if (!(node as { type?: string }).type) return;
+  if (enter(node as t.Node) === "stop") return;
+  for (const [key, value] of Object.entries(node)) {
+    if (SKIPPED_AST_KEYS.has(key)) continue;
+    walkAst(value, enter);
+  }
+}
+
 /** Return statements in a function body, not descending into nested functions. */
 function returnedExpressions(body: t.BlockStatement): t.Expression[] {
   const found: t.Expression[] = [];
-  const visit = (node: unknown): void => {
-    if (!node || typeof node !== "object") return;
-    if (Array.isArray(node)) {
-      node.forEach(visit);
-      return;
+  walkAst(body.body, (node) => {
+    if (node.type.endsWith("FunctionExpression") || node.type === "FunctionDeclaration") {
+      return "stop";
     }
-    const type = (node as { type?: string }).type;
-    if (!type) return;
-    if (type.endsWith("FunctionExpression") || type === "FunctionDeclaration") return;
-    if (type === "ReturnStatement") {
-      const argument = (node as t.ReturnStatement).argument;
-      if (argument) found.push(argument);
-      return;
+    if (node.type === "ReturnStatement") {
+      if (node.argument) found.push(node.argument);
+      return "stop";
     }
-    for (const [key, value] of Object.entries(node)) {
-      if (SKIPPED_AST_KEYS.has(key)) continue;
-      visit(value);
-    }
-  };
-  visit(body.body);
+    return undefined;
+  });
   return found;
 }
 
@@ -754,23 +763,12 @@ const SKIPPED_AST_KEYS = new Set([
  */
 function findJsxRoots(ast: t.File): (t.JSXElement | t.JSXFragment)[] {
   const roots: (t.JSXElement | t.JSXFragment)[] = [];
-  const visit = (node: unknown): void => {
-    if (!node || typeof node !== "object") return;
-    if (Array.isArray(node)) {
-      node.forEach(visit);
-      return;
+  walkAst(ast.program.body, (node) => {
+    if (node.type === "JSXElement" || node.type === "JSXFragment") {
+      roots.push(node);
+      return "stop";
     }
-    const type = (node as { type?: string }).type;
-    if (!type) return;
-    if (type === "JSXElement" || type === "JSXFragment") {
-      roots.push(node as t.JSXElement | t.JSXFragment);
-      return;
-    }
-    for (const [key, value] of Object.entries(node)) {
-      if (SKIPPED_AST_KEYS.has(key)) continue;
-      visit(value);
-    }
-  };
-  visit(ast.program.body);
+    return undefined;
+  });
   return roots;
 }

@@ -13,6 +13,7 @@ Accessibility testing tools for modern web development.
 | [`@accesslint/jest`](./jest)                       | Jest matchers — `toBeAccessible()`                | [![npm](https://img.shields.io/npm/v/@accesslint/jest)](https://www.npmjs.com/package/@accesslint/jest)                       |
 | [`@accesslint/mcp`](./mcp)                         | MCP server for AI-assisted accessibility auditing | [![npm](https://img.shields.io/npm/v/@accesslint/mcp)](https://www.npmjs.com/package/@accesslint/mcp)                         |
 | [`@accesslint/playwright`](./playwright)           | Playwright matchers — `toBeAccessible()`          | [![npm](https://img.shields.io/npm/v/@accesslint/playwright)](https://www.npmjs.com/package/@accesslint/playwright)           |
+| [`@accesslint/source`](./source)                   | Audit JSX/TSX component source without running it | [![npm](https://img.shields.io/npm/v/@accesslint/source)](https://www.npmjs.com/package/@accesslint/source)                   |
 | [`@accesslint/storybook-addon`](./storybook-addon) | Storybook addon for accessibility auditing        | [![npm](https://img.shields.io/npm/v/@accesslint/storybook-addon)](https://www.npmjs.com/package/@accesslint/storybook-addon) |
 | [`@accesslint/vitest`](./vitest)                   | Vitest matchers — `toBeAccessible()`              | [![npm](https://img.shields.io/npm/v/@accesslint/vitest)](https://www.npmjs.com/package/@accesslint/vitest)                   |
 

@@ -7,4 +7,6 @@ export default defineConfig({
   fixedExtension: false,
   dts: true,
   treeshake: true,
+  publint: true,
+  attw: true,
 });

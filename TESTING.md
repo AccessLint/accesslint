@@ -45,6 +45,14 @@ The turbo pipeline has three stages: `act:fixtures` (download + process), `act:t
 - `@accesslint/cli` has smoke tests for `audit.ts` and `inline-css.ts`. `ssrf-guard` and `safe-fetch` are covered transitively by `mcp/tests/security.test.ts` (which imports them directly from `@accesslint/cli/ssrf-guard` and `@accesslint/cli/safe-fetch`), so don't duplicate.
 - `@accesslint/mcp` has tests in `mcp/tests/` covering tools, security, and output formatting.
 
+## Source audits — `@accesslint/source`
+
+**Location:** `source/src/**/*.test.ts`
+**Runs via:** `bun run --filter=@accesslint/source test`
+**Environment:** Node with happy-dom installed by hand: `source/src/test-dom.ts` copies a shared `Window`'s properties onto `globalThis` and hands out fresh `Document`s, because the package's own API takes a `document` rather than assuming a global one.
+
+Three suites: `audit.test.ts` holds the worked cases and the corpus regressions (one named test per false-positive class found by hand-triage, under "what the corpus taught"); `jsx/render.test.ts` covers JSX-to-HTML rendering; `invariants.test.ts` states the zero-false-positive contract as properties over component shapes crossed with mutations that introduce unknowns. A new "source never guesses" behavior belongs in `audit.test.ts`; rule behavior still belongs in core.
+
 ## Quick reference
 
 | Task                                       | Command                                           |

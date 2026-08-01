@@ -87,7 +87,7 @@ export function auditSource(options: AuditSourceOptions): SourceAuditResult {
     }
 
     for (const violation of violations) {
-      const element = locate(doc, violation, installed);
+      const element = locate(violation, installed);
       if (!element) continue;
 
       const own = metaByElement.get(element);
@@ -109,7 +109,7 @@ export function auditSource(options: AuditSourceOptions): SourceAuditResult {
         file: options.filename,
       };
 
-      const unknown = unprovable(violation, element, own ?? anchor, doc, metaByElement, tree);
+      const unknown = unprovable(violation, element, own ?? anchor, installed);
       if (unknown) candidates.push({ ...finding, unknown });
       else findings.push(finding);
     }
@@ -137,6 +137,8 @@ function byPosition(a: SourceFinding, b: SourceFinding): number {
 }
 
 interface Installed {
+  doc: Document;
+  tree: SourceTree;
   metaByElement: Map<Element, NodeMeta>;
   elementByIndex: Map<number, Element>;
 }
@@ -187,7 +189,7 @@ function install(doc: Document, tree: SourceTree, nodes: NodeMeta[]): Installed 
     for (const child of element.children) visit(child);
   };
   visit(root);
-  return { metaByElement, elementByIndex };
+  return { doc, tree, metaByElement, elementByIndex };
 }
 
 /** The marker as it appears at the front of an element's own HTML snippet. */
@@ -204,7 +206,7 @@ function clean(text: string): string {
  * quotes is the element's own HTML, so the marker in it is proof of identity,
  * where a selector is only a guess that happens to be unique most of the time.
  */
-function locate(doc: Document, violation: Violation, installed: Installed): Element | null {
+function locate(violation: Violation, installed: Installed): Element | null {
   const marked = MARKED_SNIPPET.exec(violation.html);
   if (marked) {
     const element = installed.elementByIndex.get(Number(marked[1]));
@@ -212,7 +214,7 @@ function locate(doc: Document, violation: Violation, installed: Installed): Elem
   }
   if (violation.element) return violation.element;
   try {
-    return doc.querySelector(violation.selector);
+    return installed.doc.querySelector(violation.selector);
   } catch {
     return null;
   }
@@ -307,10 +309,9 @@ function unprovable(
   violation: Violation,
   element: Element,
   meta: NodeMeta,
-  doc: Document,
-  metaByElement: Map<Element, NodeMeta>,
-  tree: SourceTree,
+  installed: Installed,
 ): SourceUnknown | null {
+  const { doc, tree, metaByElement } = installed;
   // An element whose own hiding is unknown may not be in the accessibility tree
   // at all, and neither may anything under it.
   for (let node: Element | null = element; node; node = node.parentElement) {

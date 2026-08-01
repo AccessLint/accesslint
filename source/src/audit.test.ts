@@ -110,6 +110,12 @@ describe("components and spreads", () => {
     const candidate = result.candidates.find((c) => c.ruleId === "keyboard-accessible/tabindex");
     expect(candidate?.unknown.kind).toBe("spread");
   });
+
+  it("treats an empty alt after a spread as provably empty, not unknown", () => {
+    const result = audit(`export const Icon = (props) => <img {...props} alt="" />;`);
+    expect(ruleIds(result)).not.toContain("text-alternatives/img-alt");
+    expect(candidateIds(result)).not.toContain("text-alternatives/img-alt");
+  });
 });
 
 describe("expressions", () => {
