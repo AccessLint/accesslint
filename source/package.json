@@ -1,0 +1,74 @@
+{
+  "name": "@accesslint/source",
+  "version": "0.1.0",
+  "description": "Audit component source (JSX/TSX) for accessibility from a real parse — synthetic HTML into @accesslint/core, with source lines and no guesses.",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "source"
+  },
+  "bugs": {
+    "url": "https://github.com/AccessLint/accesslint/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/**/*",
+    "*.d.ts"
+  ],
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
+    },
+    "./jsx": {
+      "import": {
+        "types": "./dist/jsx/index.d.ts",
+        "default": "./dist/jsx/index.js"
+      },
+      "require": {
+        "types": "./dist/jsx/index.d.cts",
+        "default": "./dist/jsx/index.cjs"
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "@accesslint/core": "workspace:*",
+    "@babel/parser": "^7.26.0"
+  },
+  "devDependencies": {
+    "@babel/types": "^7.26.0",
+    "happy-dom": "^20.9.0",
+    "tsdown": "^0.21.9",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "keywords": [
+    "accessibility",
+    "a11y",
+    "wcag",
+    "jsx",
+    "tsx",
+    "react",
+    "static-analysis",
+    "accesslint"
+  ]
+}

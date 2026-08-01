@@ -23,12 +23,18 @@ function visibleTextMatches(accessibleName: string, visibleText: string): boolea
   // Accept if most significant words of the visible text appear in the
   // accessible name.  This handles cases like "Parks By State" (aria-label)
   // vs "By State..." (visible text after icons/prefixes are stripped).
-  // Strip trailing punctuation from words before comparing.
+  //
+  // Decorative characters are stripped from both ends of each word, and a single
+  // significant word counts. `<a aria-label="Deploy on Vercel"><span>\u25b2</span>
+  // <span>Deploy</span></a>` reads as a mismatch otherwise: adjacent spans
+  // contribute no whitespace, so the glyph arrives glued to the word as
+  // "\u25b2Deploy", while the label a voice-control user speaks \u2014 "Deploy" \u2014 is in
+  // the name.
   const visibleWords = normVisible
     .split(/\s+/)
-    .map((w) => w.replace(/[.,;:!?\u2026]+$/g, ""))
+    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
     .filter((w) => w.length > 2);
-  if (visibleWords.length >= 2) {
+  if (visibleWords.length >= 1) {
     const matchingWords = visibleWords.filter((w) => normAccessible.includes(w));
     if (matchingWords.length / visibleWords.length > 0.5) return true;
   }

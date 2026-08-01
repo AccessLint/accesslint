@@ -122,4 +122,23 @@ describe(RULE_ID, () => {
       '<button aria-label="Close"><svg aria-hidden="true"></svg></button>',
     );
   });
+
+  it("accepts a lone significant word next to a decorative glyph", () => {
+    expectNoViolations(
+      labelContentMismatch,
+      `
+      <a href="/deploy" aria-label="Deploy on Vercel">
+        <span>▲</span>
+        <span>Deploy</span>
+      </a>
+    `,
+    );
+  });
+
+  it("still reports a lone word the name does not contain", () => {
+    expectViolations(labelContentMismatch, '<button aria-label="Save changes">Cancel</button>', {
+      count: 1,
+      ruleId: RULE_ID,
+    });
+  });
 });

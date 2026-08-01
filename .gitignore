@@ -8,3 +8,4 @@ results/
 .env
 .turbo/
 .worktrees/
+scratch/
