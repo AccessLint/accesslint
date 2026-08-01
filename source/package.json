@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/source",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Audit component source (JSX/TSX) for accessibility from a real parse — synthetic HTML into @accesslint/core, with source lines and no guesses.",
   "license": "MIT",
   "type": "module",
