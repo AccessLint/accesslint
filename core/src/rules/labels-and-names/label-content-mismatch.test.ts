@@ -141,4 +141,67 @@ describe(RULE_ID, () => {
       ruleId: RULE_ID,
     });
   });
+
+  it("ignores punctuation the name trails the visible text with", () => {
+    expectNoViolations(labelContentMismatch, '<button aria-label="Submit,">Submit now</button>');
+  });
+
+  it("treats a hyphen and a space as the same separator", () => {
+    expectNoViolations(
+      labelContentMismatch,
+      '<a href="/" aria-label="Sign-in, please">Sign in</a>',
+    );
+  });
+
+  // A card link wraps its title alongside author, date, and category tags. The
+  // title is the label a voice-control user speaks; the rest is not.
+  const card = (title: string, label: string, tags: string[]) => `
+    <a href="/post" aria-label="${label}">
+      <div class="card">
+        <h3>${title}</h3>
+        <div><span>Field Notes</span> <span>May 29, 2026</span></div>
+        <div>${tags.map((t) => `<span>${t}</span>`).join(" ")}</div>
+      </div>
+      <svg aria-hidden="true"><path d="M0 256a256"/></svg>
+    </a>
+  `;
+
+  it("passes a card whose name is the title plus a stray comma", () => {
+    expectNoViolations(
+      labelContentMismatch,
+      card("The Shape of Quiet Rivers", "The Shape of Quiet Rivers, ", [
+        "Essays",
+        "Talks",
+        "Video",
+      ]),
+    );
+  });
+
+  it("judges identical cards the same however much metadata they carry", () => {
+    expectNoViolations(
+      labelContentMismatch,
+      card("Where Do Migrating Swifts Sleep?", "Where Do Migrating Swifts Sleep?, ", ["Essays"]) +
+        card("The Shape of Quiet Rivers", "The Shape of Quiet Rivers, ", [
+          "Essays",
+          "Talks",
+          "Video",
+          "Interviews",
+          "Field guides",
+        ]),
+    );
+  });
+
+  it("passes a card whose name wraps the title in extra words", () => {
+    expectNoViolations(
+      labelContentMismatch,
+      card("Widget Review", "Read more: Widget Review", ["Essays", "Reviews"]),
+    );
+  });
+
+  it("still reports a card whose name drops the title", () => {
+    expectViolations(labelContentMismatch, card("Widget Review", "Read more", ["Essays"]), {
+      count: 1,
+      ruleId: RULE_ID,
+    });
+  });
 });

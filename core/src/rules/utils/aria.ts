@@ -1,3 +1,6 @@
+import { getCachedComputedStyle } from "./color";
+import { getWindow } from "./dom";
+
 // ---------------------------------------------------------------------------
 // Focusable element selector
 // ---------------------------------------------------------------------------
@@ -507,11 +510,25 @@ export function getAccessibleTextContent(el: Element): string {
 // ---------------------------------------------------------------------------
 
 /**
+ * True when CSS keeps this element off the screen. Inline styles answer on a
+ * parsed-only DOM; a class that hides the element needs a computed style, and
+ * that only exists once the document has a view. Popup and tooltip duplicates
+ * are hidden by class far more often than by an inline style, and counting
+ * their text as visible makes a control look like it says something twice.
+ */
+function isStyleHidden(el: Element): boolean {
+  if (el instanceof HTMLElement && el.style.display === "none") return true;
+  if (!getWindow(el)) return false;
+  const style = getCachedComputedStyle(el);
+  return style.display === "none" || style.visibility === "hidden";
+}
+
+/**
  * Extract truly visible text from an element, excluding:
  * - Non-rendered elements (style, script, SVG)
  * - Elements with role="img" or role="presentation"
  * - aria-hidden subtrees
- * - Elements hidden via inline display:none
+ * - Elements CSS hides with display:none or visibility:hidden
  */
 export function getVisibleText(el: Element): string {
   let text = "";
@@ -525,7 +542,7 @@ export function getVisibleText(el: Element): string {
       if (tag === "style" || tag === "script" || tag === "svg") continue;
       // Skip elements removed from the accessibility tree
       if (child.getAttribute("aria-hidden") === "true") continue;
-      if (child instanceof HTMLElement && child.style.display === "none") continue;
+      if (isStyleHidden(child)) continue;
       // Skip role=img and role=presentation (icon wrappers)
       const role = child.getAttribute("role");
       if (role === "img" || role === "presentation" || role === "none") continue;
