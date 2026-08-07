@@ -2,8 +2,19 @@ import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
 import { getAccessibleName, isAriaHidden, getVisibleText } from "../utils/aria";
 
+// ACT rule 2ee8b8's label-in-name algorithm: case fold, apply compatibility
+// normalization, then replace every character that is not a letter or a digit
+// with a space. Punctuation therefore never decides a match — a theme that
+// appends ", " to every card's aria-label reads as the title it already is.
+// (The algorithm specifies NFKD; NFKC folds the same compatibility variants
+// without splitting accented letters into a base and a floating mark, which
+// the replace step below would turn into a word break.)
 function normalizeText(text: string): string {
-  return text.toLowerCase().replace(/\s+/g, " ").trim();
+  return text
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^\p{L}\p{N}\p{M}]+/gu, " ")
+    .trim();
 }
 
 function visibleTextMatches(accessibleName: string, visibleText: string): boolean {
@@ -24,22 +35,32 @@ function visibleTextMatches(accessibleName: string, visibleText: string): boolea
   // accessible name.  This handles cases like "Parks By State" (aria-label)
   // vs "By State..." (visible text after icons/prefixes are stripped).
   //
-  // Decorative characters are stripped from both ends of each word, and a single
-  // significant word counts. `<a aria-label="Deploy on Vercel"><span>\u25b2</span>
-  // <span>Deploy</span></a>` reads as a mismatch otherwise: adjacent spans
-  // contribute no whitespace, so the glyph arrives glued to the word as
-  // "\u25b2Deploy", while the label a voice-control user speaks \u2014 "Deploy" \u2014 is in
-  // the name.
-  const visibleWords = normVisible
-    .split(/\s+/)
-    .map((w) => w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, ""))
-    .filter((w) => w.length > 2);
+  // A single significant word counts. `<a aria-label="Deploy on Vercel">
+  // <span>\u25b2</span><span>Deploy</span></a>` reads as a mismatch otherwise:
+  // adjacent spans contribute no whitespace, so the glyph arrives glued to the
+  // word as "\u25b2Deploy", while the label a voice-control user speaks \u2014 "Deploy"
+  // \u2014 is in the name.
+  const visibleWords = normVisible.split(" ").filter((w) => w.length > 2);
   if (visibleWords.length >= 1) {
     const matchingWords = visibleWords.filter((w) => normAccessible.includes(w));
     if (matchingWords.length / visibleWords.length > 0.5) return true;
   }
 
   return false;
+}
+
+/**
+ * The text inside `el` that reads as its label, when the control holds more
+ * than a label. A card link wraps a title heading alongside an author, a date,
+ * and category tags: the title is what a voice-control user speaks, and it is
+ * the only part the accessible name has to carry. Comparing against the whole
+ * flattened card instead makes the verdict turn on how many tags that card
+ * happens to have, so ten cards built from one template disagree.
+ */
+function getLabelHeadingText(el: Element): string {
+  const heading = el.querySelector('h1, h2, h3, h4, h5, h6, [role="heading"]');
+  if (!heading || isAriaHidden(heading)) return "";
+  return getVisibleText(heading);
 }
 
 export const labelContentMismatch: Rule = {
@@ -88,20 +109,27 @@ export const labelContentMismatch: Rule = {
 
       if (!hasAriaLabel && !hasAriaLabelledby) continue;
 
-      if (!visibleTextMatches(accessibleName, visibleText)) {
-        violations.push({
-          ruleId: "labels-and-names/label-content-mismatch",
-          selector: getSelector(el),
-          html: getHtmlSnippet(el),
-          impact: "serious" as const,
-          message: `Accessible name "${accessibleName}" does not contain visible text "${visibleText.trim()}".`,
-          fix: {
-            type: "suggest",
-            suggestion:
-              "Update aria-label to include the visible text content so voice control users can activate this element by speaking its label",
-          } as const,
-        });
+      if (visibleTextMatches(accessibleName, visibleText)) continue;
+
+      // A control that holds a heading passes on the heading alone, so the
+      // metadata printed next to it cannot swing the verdict.
+      const headingText = getLabelHeadingText(el).trim();
+      if (headingText && normalizeText(accessibleName).includes(normalizeText(headingText))) {
+        continue;
       }
+
+      violations.push({
+        ruleId: "labels-and-names/label-content-mismatch",
+        selector: getSelector(el),
+        html: getHtmlSnippet(el),
+        impact: "serious" as const,
+        message: `Accessible name "${accessibleName}" does not contain visible text "${visibleText.trim()}".`,
+        fix: {
+          type: "suggest",
+          suggestion:
+            "Update aria-label to include the visible text content so voice control users can activate this element by speaking its label",
+        } as const,
+      });
     }
 
     // Check labeled form fields
