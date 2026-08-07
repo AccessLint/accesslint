@@ -1,6 +1,6 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { isAriaHidden, getComputedRole, FOCUSABLE_SELECTOR } from "../utils/aria";
+import { isAriaHidden, isComputedHidden, getComputedRole, FOCUSABLE_SELECTOR } from "../utils/aria";
 
 /**
  * Roles with the "children presentational" trait per ARIA 1.2.
@@ -57,6 +57,11 @@ export const presentationalChildrenFocusable: Rule = {
         // Skip elements with tabindex="-1" — they are not keyboard-focusable
         // (they can receive programmatic focus, but are not reachable via Tab)
         if (child.getAttribute("tabindex") === "-1") continue;
+        // Skip hidden descendants — display:none / visibility:hidden elements are
+        // never in the tab order, so they cannot strand a keyboard user. The check
+        // must be computed, not inline: collapsed popups and disclosure panels are
+        // typically hidden by a stylesheet class.
+        if (isComputedHidden(child)) continue;
 
         violations.push({
           ruleId: "aria/presentational-children-focusable",
