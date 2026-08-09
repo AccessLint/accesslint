@@ -1,5 +1,6 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
+import { isComputedHidden } from "../utils/aria";
 
 const NON_INTERACTIVE_TAGS = new Set([
   "div",
@@ -46,6 +47,7 @@ export const focusOrder: Rule = {
     for (const el of doc.querySelectorAll('[tabindex="0"]')) {
       const tag = el.tagName.toLowerCase();
       if (!NON_INTERACTIVE_TAGS.has(tag)) continue;
+      if (isComputedHidden(el)) continue;
       const role = el.getAttribute("role");
       if (!role) {
         violations.push({

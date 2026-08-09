@@ -43,6 +43,30 @@ describe(RULE_ID, () => {
     );
   });
 
+  it("ignores content in a display:none subtree", () => {
+    expectNoViolations(
+      region,
+      `
+      <html><body>
+        <main>Content</main>
+        <div style="display: none">Untriggered popup</div>
+      </body></html>
+    `,
+    );
+  });
+
+  it("ignores content in an aria-hidden subtree", () => {
+    expectNoViolations(
+      region,
+      `
+      <html><body>
+        <main>Content</main>
+        <div aria-hidden="true">Untriggered popup</div>
+      </body></html>
+    `,
+    );
+  });
+
   it("allows wrapper divs containing landmarks", () => {
     expectNoViolations(
       region,

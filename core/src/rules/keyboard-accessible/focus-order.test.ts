@@ -20,4 +20,22 @@ describe(RULE_ID, () => {
   it("passes interactive elements with tabindex=0", () => {
     expectNoViolations(focusOrder, '<button tabindex="0">Button</button>');
   });
+
+  it("passes elements inside a display:none subtree", () => {
+    expectNoViolations(
+      focusOrder,
+      '<div style="display: none"><div tabindex="0">Popup close</div></div>',
+    );
+  });
+
+  it("passes elements inside a hidden subtree", () => {
+    expectNoViolations(focusOrder, '<div hidden><div tabindex="0">Popup close</div></div>');
+  });
+
+  it("passes elements inside an aria-hidden subtree", () => {
+    expectNoViolations(
+      focusOrder,
+      '<div aria-hidden="true"><div tabindex="0">Popup close</div></div>',
+    );
+  });
 });

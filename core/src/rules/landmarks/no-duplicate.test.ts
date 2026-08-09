@@ -20,6 +20,18 @@ const cases: NoDuplicateCase[] = [
         label: "headers inside sectioning elements are ignored",
         body: "<header>Site</header><article><header>Article</header></article>",
       },
+      {
+        label: "a display:none alternate header",
+        body: '<header>Site</header><header style="display: none">Mobile</header>',
+      },
+      {
+        label: "a hidden alternate header",
+        body: "<header>Site</header><header hidden>Mobile</header>",
+      },
+      {
+        label: "an aria-hidden alternate header",
+        body: '<header>Site</header><header aria-hidden="true">Mobile</header>',
+      },
     ],
     violates: [
       { label: "duplicate top-level headers", body: "<header>One</header><header>Two</header>" },

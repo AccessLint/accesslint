@@ -15,7 +15,13 @@ interface LandmarkCase {
 const cases: LandmarkCase[] = [
   {
     rule: bannerIsTopLevel,
-    passes: [{ label: "top-level banner", body: '<div role="banner">Header</div>' }],
+    passes: [
+      { label: "top-level banner", body: '<div role="banner">Header</div>' },
+      {
+        label: "nested banner in a display:none subtree",
+        body: '<main><div style="display: none"><div role="banner">Popup</div></div></main>',
+      },
+    ],
     violates: [
       { label: "nested role=banner", body: '<main><div role="banner">Nested</div></main>' },
     ],

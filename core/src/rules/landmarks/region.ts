@@ -1,6 +1,6 @@
 import type { Rule, Violation } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { isAriaHidden } from "../utils/aria";
+import { isComputedHidden } from "../utils/aria";
 import { LANDMARK_SELECTOR } from "./constants";
 
 export const region: Rule = {
@@ -20,10 +20,9 @@ export const region: Rule = {
 
     // Walk through direct children of body
     for (const child of body.children) {
-      if (isAriaHidden(child)) continue;
+      if (isComputedHidden(child)) continue;
       if (child instanceof HTMLScriptElement || child instanceof HTMLStyleElement) continue;
       if (child.tagName === "NOSCRIPT") continue;
-      if (child instanceof HTMLElement && child.hidden) continue;
 
       // Skip links are allowed outside landmarks
       if (child.matches('a[href^="#"]')) continue;
