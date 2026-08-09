@@ -28,29 +28,77 @@ import {
 } from "../utils/visibility";
 import { hasUnreliableVisualEffects } from "../utils/filters";
 
-/** Find the nearest ancestor (or self) with a CSS gradient background. */
-function findAncestorGradient(el: Element): { bgImage: string; gradientEl: Element } | null {
+interface BackgroundLayer {
+  color: [number, number, number];
+  alpha: number;
+}
+
+interface GradientBackground {
+  bgImage: string;
+  /** Opaque color painted behind the gradient, for translucent stops. */
+  behind: [number, number, number];
+  /** Translucent layers painted over the gradient, innermost first. */
+  overlays: BackgroundLayer[];
+}
+
+/** Resolve the opaque color painted behind a gradient element. */
+function colorBehindGradient(gradientEl: Element): [number, number, number] {
+  const parent = gradientEl.parentElement;
+  const base = (parent && getEffectiveBackgroundColor(parent)) || [255, 255, 255];
+  const bg = getCachedComputedStyle(gradientEl).backgroundColor;
+  const own = parseColor(bg);
+  if (!own) return base;
+  const alpha = parseColorAlpha(bg);
+  if (alpha <= 0) return base;
+  return alpha >= 1 ? own : compositeColors(own, base, alpha);
+}
+
+/**
+ * Find the nearest ancestor (or self) with a CSS gradient background, along
+ * with any translucent background layers between it and the text.
+ */
+function findAncestorGradient(el: Element): GradientBackground | null {
+  const overlays: BackgroundLayer[] = [];
   let current: Element | null = el;
   while (current) {
     const style = getCachedComputedStyle(current);
     const bgImg = style.backgroundImage;
     if (bgImg && bgImg !== "none" && bgImg !== "initial") {
-      return bgImg.includes("gradient(") ? { bgImage: bgImg, gradientEl: current } : null;
+      if (!bgImg.includes("gradient(")) return null;
+      return { bgImage: bgImg, behind: colorBehindGradient(current), overlays };
     }
     const bg = style.backgroundColor;
     if (!bg || bg === "transparent" || bg === "rgba(0, 0, 0, 0)" || bg === "rgba(0 0 0 / 0)") {
       current = current.parentElement;
       continue;
     }
+    const alpha = parseColorAlpha(bg);
     // Nearly transparent — keep looking
-    if (parseColorAlpha(bg) < 0.01) {
+    if (alpha < 0.01) {
       current = current.parentElement;
       continue;
     }
-    // Solid background found — no gradient shows through
-    return null;
+    const color = parseColor(bg);
+    if (!color) return null;
+    // Opaque background found — no gradient shows through
+    if (alpha >= 1) return null;
+    // Translucent layer — the gradient still shows through it
+    overlays.push({ color, alpha });
+    current = current.parentElement;
   }
   return null;
+}
+
+/** Paint the translucent layers (innermost first) over a gradient stop. */
+function applyOverlays(
+  stop: [number, number, number],
+  overlays: BackgroundLayer[],
+): [number, number, number] {
+  let result = stop;
+  for (let i = overlays.length - 1; i >= 0; i--) {
+    result = compositeColors(overlays[i].color, result, overlays[i].alpha);
+  }
+  return result;
 }
 
 /** Check gradient background contrast and return a violation if insufficient. */
@@ -62,10 +110,11 @@ function checkGradientContrast(
   threshold: number,
   ruleId: string,
   level: "AA" | "AAA",
-  gradientBg: string,
-  transparentFallback: [number, number, number],
+  gradient: GradientBackground,
 ) {
-  const stops = parseGradientStops(gradientBg, transparentFallback);
+  const stops = parseGradientStops(gradient.bgImage, gradient.behind).map((stop) =>
+    applyOverlays(stop, gradient.overlays),
+  );
   if (stops.length === 0) return null;
 
   // Use the gradient stop that gives the BEST contrast with fg.
@@ -179,7 +228,7 @@ export function checkContrast(doc: Document, ruleId: string, level: "AA" | "AAA"
 
     const threshold = level === "AAA" ? (isLargeText(el) ? 4.5 : 7) : isLargeText(el) ? 3 : 4.5;
 
-    let bg = getEffectiveBackgroundColor(el);
+    const bg = getEffectiveBackgroundColor(el);
 
     // If no solid background found, check ancestor chain for gradient backgrounds
     if (!bg) {
@@ -187,9 +236,6 @@ export function checkContrast(doc: Document, ruleId: string, level: "AA" | "AAA"
       if (parsedShadows) continue;
       const gradientInfo = findAncestorGradient(el);
       if (gradientInfo) {
-        const parentBg = gradientInfo.gradientEl.parentElement
-          ? getEffectiveBackgroundColor(gradientInfo.gradientEl.parentElement)
-          : null;
         const violation = checkGradientContrast(
           el,
           fg,
@@ -198,8 +244,7 @@ export function checkContrast(doc: Document, ruleId: string, level: "AA" | "AAA"
           threshold,
           ruleId,
           level,
-          gradientInfo.bgImage,
-          parentBg ?? [255, 255, 255],
+          gradientInfo,
         );
         if (violation) violations.push(violation);
       }
