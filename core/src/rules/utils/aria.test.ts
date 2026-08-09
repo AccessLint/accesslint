@@ -383,6 +383,16 @@ describe("isComputedHidden", () => {
     expect(isComputedHidden(doc.querySelector("div")!)).toBe(true);
   });
 
+  it("returns true for element with inline display:none", () => {
+    const doc = makeDoc(`<div style="display: none">Hidden</div>`);
+    expect(isComputedHidden(doc.querySelector("div")!)).toBe(true);
+  });
+
+  it("returns true for child of a display:none parent", () => {
+    const doc = makeDoc(`<div style="display: none"><span>Child</span></div>`);
+    expect(isComputedHidden(doc.querySelector("span")!)).toBe(true);
+  });
+
   it("returns true for child of aria-hidden parent", () => {
     const doc = makeDoc(`<div aria-hidden="true"><span>Child</span></div>`);
     expect(isComputedHidden(doc.querySelector("span")!)).toBe(true);

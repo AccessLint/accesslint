@@ -8,44 +8,57 @@ import { setContent, resetDocument } from "./vitest-browser-helpers";
 
 afterEach(resetDocument);
 
-// The popup-plugin shape from the field report: markup is present in the DOM
-// from page load, hidden by a stylesheet class until the popup is triggered.
-const POPUP = `
-  <style>.popup { display: none }</style>
-  <main>
-    <h1>Marketing page</h1>
-    <h2>Features</h2>
-  </main>
-  <div class="popup">
-    <h4>Join the list</h4>
-    <div tabindex="0">Close</div>
-    <p>Sign up for weekly updates.</p>
-  </div>
-`;
+function popup(display: string): string {
+  return `
+    <style>.popup { display: ${display} }</style>
+    <main>
+      <h1>Marketing page</h1>
+      <h2>Features</h2>
+    </main>
+    <div class="popup">
+      <h4>Join the list</h4>
+      <div tabindex="0">Close</div>
+      <p>Sign up for weekly updates.</p>
+    </div>
+  `;
+}
+
+function wrappedPopup(display: string): string {
+  return `
+    <style>.popup { display: ${display} }</style>
+    <main>Content</main>
+    <div class="wrapper">
+      <div class="popup">
+        <p>Sign up for weekly updates.</p>
+      </div>
+    </div>
+  `;
+}
+
+function alternateHeader(display: string): string {
+  return `
+    <style>.mobile-header { display: ${display} }</style>
+    <header>Site header</header>
+    <header class="mobile-header">Mobile header</header>
+    <main>Content</main>
+  `;
+}
+
+const POPUP_RULES = [focusOrder, headingOrder, region];
 
 describe("content hidden by a stylesheet", () => {
-  it("keyboard-accessible/focus-order ignores tabbable-looking elements in the subtree", () => {
-    setContent(POPUP);
-    expect(focusOrder.run(document)).toHaveLength(0);
+  it.each(POPUP_RULES)("$id ignores the subtree", (rule) => {
+    setContent(popup("none"));
+    expect(rule.run(document)).toHaveLength(0);
   });
 
-  it("navigable/heading-order ignores headings in the subtree", () => {
-    setContent(POPUP);
-    expect(headingOrder.run(document)).toHaveLength(0);
-  });
-
-  it("landmarks/region ignores the subtree", () => {
-    setContent(POPUP);
+  it("landmarks/region ignores a hidden popup inside a visible wrapper", () => {
+    setContent(wrappedPopup("none"));
     expect(region.run(document)).toHaveLength(0);
   });
 
   it("landmarks/no-duplicate-banner ignores a hidden alternate header", () => {
-    setContent(`
-      <style>.mobile-header { display: none }</style>
-      <header>Site header</header>
-      <header class="mobile-header">Mobile header</header>
-      <main>Content</main>
-    `);
+    setContent(alternateHeader("none"));
     expect(noDuplicateBanner.run(document)).toHaveLength(0);
   });
 
@@ -61,20 +74,18 @@ describe("content hidden by a stylesheet", () => {
 });
 
 describe("visible content is still reported under a real cascade", () => {
-  it("reports the same popup markup once the subtree is shown", () => {
-    setContent(POPUP.replace(".popup { display: none }", ".popup { display: block }"));
-    expect(focusOrder.run(document)).toHaveLength(1);
-    expect(headingOrder.run(document)).toHaveLength(1);
+  it.each(POPUP_RULES)("$id reports the same markup once shown", (rule) => {
+    setContent(popup("block"));
+    expect(rule.run(document)).toHaveLength(1);
+  });
+
+  it("landmarks/region reports a shown popup inside a visible wrapper", () => {
+    setContent(wrappedPopup("block"));
     expect(region.run(document)).toHaveLength(1);
   });
 
-  it("reports an alternate header that the cascade leaves visible", () => {
-    setContent(`
-      <style>.mobile-header { display: block }</style>
-      <header>Site header</header>
-      <header class="mobile-header">Mobile header</header>
-      <main>Content</main>
-    `);
+  it("landmarks/no-duplicate-banner reports a shown alternate header", () => {
+    setContent(alternateHeader("block"));
     expect(noDuplicateBanner.run(document)).toHaveLength(1);
   });
 

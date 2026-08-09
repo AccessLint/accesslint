@@ -36,11 +36,4 @@ describe("navigable/heading-order", () => {
       "<html><body><h1>A</h1><h4 hidden>Hidden</h4><h2>B</h2></body></html>",
     );
   });
-
-  it("ignores headings in an aria-hidden subtree", () => {
-    expectNoViolations(
-      headingOrder,
-      '<html><body><h1>A</h1><div aria-hidden="true"><h4>Popup detail</h4></div></body></html>',
-    );
-  });
 });

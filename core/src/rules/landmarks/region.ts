@@ -1,6 +1,6 @@
 import type { Rule, Violation } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { isComputedHidden } from "../utils/aria";
+import { isComputedHidden, getAccessibleTextContent } from "../utils/aria";
 import { LANDMARK_SELECTOR } from "./constants";
 
 export const region: Rule = {
@@ -34,7 +34,7 @@ export const region: Rule = {
       if (!isLandmark && containsContent) {
         // Check if this element contains landmarks (wrapper divs are ok)
         const hasLandmarkChild = child.querySelector(LANDMARK_SELECTOR);
-        if (!hasLandmarkChild) {
+        if (!hasLandmarkChild && getAccessibleTextContent(child).trim()) {
           violations.push({
             ruleId: "landmarks/region",
             selector: getSelector(child),
