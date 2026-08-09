@@ -55,7 +55,10 @@ describe("the cases the extensions were removed over", () => {
 
     expect(ruleIds(result)).toContain("adaptable/list-children");
     const finding = result.findings.find((f) => f.ruleId === "adaptable/list-children");
-    expect(finding?.line).toBe(6);
+    // The finding lands on the <ul> that owns the list semantics, not on the
+    // stray <div> at line 6; the message names the offending child.
+    expect(finding?.line).toBe(4);
+    expect(finding?.message).toContain("<div>");
   });
 });
 
