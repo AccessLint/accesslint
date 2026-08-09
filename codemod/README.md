@@ -23,25 +23,28 @@ npx @accesslint/codemod jest-axe --dry --print 'src/**/*.test.tsx'
 
 ## Subcommands
 
-| Subcommand    | Source              | Target                 |
-| ------------- | ------------------- | ---------------------- |
-| `jest-axe`    | `jest-axe`          | `@accesslint/jest`     |
-| `vitest-axe`  | `vitest-axe`        | `@accesslint/vitest`   |
-| `jasmine-axe` | `jasmine-axe`       | `@accesslint/jest`     |
-| `auto`        | _detected from package.json_ | _per-plugin_  |
+| Subcommand    | Source                       | Target               |
+| ------------- | ---------------------------- | -------------------- |
+| `jest-axe`    | `jest-axe`                   | `@accesslint/jest`   |
+| `vitest-axe`  | `vitest-axe`                 | `@accesslint/vitest` |
+| `jasmine-axe` | `jasmine-axe`                | `@accesslint/jest`   |
+| `auto`        | _detected from package.json_ | _per-plugin_         |
 
 ## What's transformed
 
 1. **Imports** are rewritten to a side-effect import of the target package:
+
    ```diff
    - import { axe, toHaveNoViolations } from "jest-axe";
    + import "@accesslint/jest";
    ```
+
    Named, aliased, namespace, and CJS `require()` forms are all recognized.
 
 2. **`expect.extend(toHaveNoViolations)`** is removed — the side-effect import auto-registers the `toBeAccessible()` matcher. Identifier, object (`{ toHaveNoViolations }`), and spread (`{ ...toHaveNoViolations }`) forms are all handled.
 
 3. **Two-statement pattern** is collapsed:
+
    ```diff
    - const results = await axe(container);
    - expect(results).toHaveNoViolations();
@@ -64,13 +67,13 @@ npx @accesslint/codemod jest-axe --dry --print 'src/**/*.test.tsx'
 
 ## Flags
 
-| Flag                     | Default             | Meaning |
-| ------------------------ | ------------------- | ------- |
-| `--dry`                  | `false`             | Don't write files; report what would change |
-| `--print`                | `false`             | Print transformed source to stdout (use with `--dry`) |
-| `--parser=<name>`        | `tsx`               | jscodeshift parser: `babel`, `babylon`, `flow`, `ts`, `tsx` |
-| `--extensions=<csv>`     | `js,jsx,ts,tsx`     | Comma-separated list of file extensions to process |
-| `--verbose=<0\|1\|2>`    | `0`                 | Verbosity level |
+| Flag                  | Default         | Meaning                                                     |
+| --------------------- | --------------- | ----------------------------------------------------------- |
+| `--dry`               | `false`         | Don't write files; report what would change                 |
+| `--print`             | `false`         | Print transformed source to stdout (use with `--dry`)       |
+| `--parser=<name>`     | `tsx`           | jscodeshift parser: `babel`, `babylon`, `flow`, `ts`, `tsx` |
+| `--extensions=<csv>`  | `js,jsx,ts,tsx` | Comma-separated list of file extensions to process          |
+| `--verbose=<0\|1\|2>` | `0`             | Verbosity level                                             |
 
 ## After running
 

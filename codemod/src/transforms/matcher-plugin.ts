@@ -122,37 +122,31 @@ const transform = (file: FileInfo, api: API, options: Options): string | null | 
   return root.toSource({ quote: "double" });
 };
 
-const collectImportedNames = (
-  j: JSCodeshift,
-  root: Collection,
-  opts: ResolvedOptions,
-): Names => {
+const collectImportedNames = (j: JSCodeshift, root: Collection, opts: ResolvedOptions): Names => {
   const names: Names = { axe: null, matcher: null, config: null };
 
-  root
-    .find(j.ImportDeclaration, { source: { value: opts.sourceModule } })
-    .forEach((path) => {
-      const specifiers = path.node.specifiers ?? [];
-      for (const spec of specifiers) {
-        if (spec.type === "ImportSpecifier") {
-          const imported = asString(spec.imported.name);
-          const local = asString(spec.local?.name) ?? imported;
-          if (!imported || !local) continue;
-          if (imported === opts.axeName) names.axe = local;
-          else if (imported === opts.matcherName) names.matcher = local;
-          else if (imported === opts.configName) names.config = local;
-        } else if (
-          spec.type === "ImportDefaultSpecifier" ||
-          spec.type === "ImportNamespaceSpecifier"
-        ) {
-          const local = asString(spec.local?.name);
-          if (local) {
-            names.axe = names.axe ?? `${local}.${opts.axeName}`;
-            names.matcher = names.matcher ?? `${local}.${opts.matcherName}`;
-          }
+  root.find(j.ImportDeclaration, { source: { value: opts.sourceModule } }).forEach((path) => {
+    const specifiers = path.node.specifiers ?? [];
+    for (const spec of specifiers) {
+      if (spec.type === "ImportSpecifier") {
+        const imported = asString(spec.imported.name);
+        const local = asString(spec.local?.name) ?? imported;
+        if (!imported || !local) continue;
+        if (imported === opts.axeName) names.axe = local;
+        else if (imported === opts.matcherName) names.matcher = local;
+        else if (imported === opts.configName) names.config = local;
+      } else if (
+        spec.type === "ImportDefaultSpecifier" ||
+        spec.type === "ImportNamespaceSpecifier"
+      ) {
+        const local = asString(spec.local?.name);
+        if (local) {
+          names.axe = names.axe ?? `${local}.${opts.axeName}`;
+          names.matcher = names.matcher ?? `${local}.${opts.matcherName}`;
         }
       }
-    });
+    }
+  });
 
   root
     .find(j.VariableDeclarator)
@@ -177,11 +171,7 @@ const collectImportedNames = (
   return names;
 };
 
-const removeExpectExtend = (
-  j: JSCodeshift,
-  root: Collection,
-  matcherLocal: string,
-): boolean => {
+const removeExpectExtend = (j: JSCodeshift, root: Collection, matcherLocal: string): boolean => {
   const calls = root.find(j.ExpressionStatement, {
     expression: {
       type: "CallExpression",
@@ -305,11 +295,7 @@ const collapseInlineAxeAssert = (
   return changed;
 };
 
-const matchesMatcherCall = (
-  node: Node,
-  resultVar: string,
-  matcherLocal: string,
-): boolean => {
+const matchesMatcherCall = (node: Node, resultVar: string, matcherLocal: string): boolean => {
   if (node.type !== "ExpressionStatement") return false;
   const expr = (node as ExpressionStatement).expression;
   if (expr.type !== "CallExpression") return false;
@@ -350,10 +336,7 @@ const buildTargetCall = (
   targetMatcher: string,
 ): CallExpression => {
   const expectCall = j.callExpression(j.identifier("expect"), [target]);
-  const call = j.callExpression(
-    j.memberExpression(expectCall, j.identifier(targetMatcher)),
-    [],
-  );
+  const call = j.callExpression(j.memberExpression(expectCall, j.identifier(targetMatcher)), []);
   if (hadExtraArgs) {
     const comment = j.commentLine(
       ` ${TODO_PREFIX} original axe() options not auto-migrated; re-apply via ${targetMatcher}({ disabledRules, failOn, ... })`,
@@ -390,24 +373,22 @@ const rewriteImports = (
   let changed = false;
   const hasConfig = Boolean(names.config);
 
-  root
-    .find(j.ImportDeclaration, { source: { value: opts.sourceModule } })
-    .forEach((path) => {
-      const node = path.node;
-      if (hasConfig) {
-        const kept = (node.specifiers ?? []).filter((spec) => {
-          if (spec.type !== "ImportSpecifier") return false;
-          return spec.imported.name === opts.configName;
-        });
-        if (kept.length === (node.specifiers?.length ?? 0)) return;
-        node.specifiers = kept;
-        changed = true;
-      } else {
-        const sideEffect = j.importDeclaration([], j.literal(opts.targetModule));
-        j(path).replaceWith(sideEffect);
-        changed = true;
-      }
-    });
+  root.find(j.ImportDeclaration, { source: { value: opts.sourceModule } }).forEach((path) => {
+    const node = path.node;
+    if (hasConfig) {
+      const kept = (node.specifiers ?? []).filter((spec) => {
+        if (spec.type !== "ImportSpecifier") return false;
+        return spec.imported.name === opts.configName;
+      });
+      if (kept.length === (node.specifiers?.length ?? 0)) return;
+      node.specifiers = kept;
+      changed = true;
+    } else {
+      const sideEffect = j.importDeclaration([], j.literal(opts.targetModule));
+      j(path).replaceWith(sideEffect);
+      changed = true;
+    }
+  });
 
   if (hasConfig) {
     const anySource = root.find(j.ImportDeclaration, { source: { value: opts.sourceModule } });

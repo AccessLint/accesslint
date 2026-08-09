@@ -39,7 +39,8 @@ export const es: LocaleMap = {
     },
   },
   "labels-and-names/frame-focusable-content": {
-    description: "Los iframes con contenido interactivo no deben excluirse del orden de tabulación.",
+    description:
+      "Los iframes con contenido interactivo no deben excluirse del orden de tabulación.",
     guidance:
       'Un <iframe> con tabindex="-1" elimina el marco del orden de tabulación, pero los elementos enfocables dentro permanecen accesibles con teclas de flecha en algunos navegadores y son inaccesibles en otros. Elimine tabindex="-1" del iframe, o agregue tabindex="-1" a cada elemento enfocable dentro de él. Si el marco es decorativo, agregue aria-hidden="true" en su lugar.',
     messages: {

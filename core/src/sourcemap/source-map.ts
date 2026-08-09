@@ -199,7 +199,7 @@ function resolveFlat(m: FlatMap, line: number, column: number): OriginalPosition
     source,
     line: seg[2] + 1,
     column: seg[3],
-    name: seg.length === 5 ? m.names[seg[4]] ?? null : null,
+    name: seg.length === 5 ? (m.names[seg[4]] ?? null) : null,
   };
 }
 
@@ -219,10 +219,7 @@ export function originalPositionFor(
     const queryLine0 = line - 1;
     let chosen: SectionedMap["sections"][number] | null = null;
     for (const s of m.sections) {
-      if (
-        s.offsetLine < queryLine0 ||
-        (s.offsetLine === queryLine0 && s.offsetCol <= column)
-      ) {
+      if (s.offsetLine < queryLine0 || (s.offsetLine === queryLine0 && s.offsetCol <= column)) {
         chosen = s;
       } else {
         break;
@@ -232,8 +229,7 @@ export function originalPositionFor(
     // Inner map's local line/column = query minus section offset. The first
     // line of the section is also the only one where the column offset applies.
     const localLine = queryLine0 - chosen.offsetLine + 1; // 1-based
-    const localCol =
-      queryLine0 === chosen.offsetLine ? column - chosen.offsetCol : column;
+    const localCol = queryLine0 === chosen.offsetLine ? column - chosen.offsetCol : column;
     return resolveFlat(chosen.map, localLine, localCol);
   }
   return resolveFlat(m, line, column);

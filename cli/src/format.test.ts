@@ -33,9 +33,33 @@ describe("formatSARIF", () => {
     const { rules, results } = parse(
       formatSARIF(
         makeResult([
-          { ruleId: "a/x", selector: "#one", html: "<i>", impact: "critical", message: "m1", wcag: ["1.1.1"], level: "A" },
-          { ruleId: "a/x", selector: "#two", html: "<i>", impact: "critical", message: "m1", wcag: ["1.1.1"], level: "A" },
-          { ruleId: "b/y", selector: "#three", html: "<i>", impact: "minor", message: "m2", wcag: ["2.4.4"], level: "A" },
+          {
+            ruleId: "a/x",
+            selector: "#one",
+            html: "<i>",
+            impact: "critical",
+            message: "m1",
+            wcag: ["1.1.1"],
+            level: "A",
+          },
+          {
+            ruleId: "a/x",
+            selector: "#two",
+            html: "<i>",
+            impact: "critical",
+            message: "m1",
+            wcag: ["1.1.1"],
+            level: "A",
+          },
+          {
+            ruleId: "b/y",
+            selector: "#three",
+            html: "<i>",
+            impact: "minor",
+            message: "m2",
+            wcag: ["2.4.4"],
+            level: "A",
+          },
         ]),
         "1.0.0",
       ),
@@ -69,7 +93,15 @@ describe("formatSARIF", () => {
     const { rules } = parse(
       formatSARIF(
         makeResult([
-          { ruleId: "wcag/rule", selector: "a", html: "<i>", impact: "serious", message: "m", wcag: ["2.4.4"], level: "AA" },
+          {
+            ruleId: "wcag/rule",
+            selector: "a",
+            html: "<i>",
+            impact: "serious",
+            message: "m",
+            wcag: ["2.4.4"],
+            level: "AA",
+          },
           { ruleId: "bp/rule", selector: "b", html: "<i>", impact: "moderate", message: "m" },
         ]),
         "1.0.0",

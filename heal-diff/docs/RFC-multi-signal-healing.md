@@ -4,7 +4,7 @@ Status: implemented in this PR. Package: `@accesslint/heal-diff`. Consumers: `@a
 
 ## Problem
 
-Snapshot baselines identify accessibility violations by `ruleId + selector`. Under jsdom / happy-dom the selector is a tag-path like `html > body > div:nth-of-type(2) > img`. Any DOM refactor (wrapping an element, reordering siblings, renaming an ancestor) breaks the selector even when the violation is unchanged. The matcher then reports it as one *fixed* baseline entry plus one *new* violation. Healing is automatic only when no new violation appears, and the developer pays a mental tax distinguishing "same issue, different selector" from "genuinely new issue". At scale a single shared-component change can ripple as N new violations across N snapshots with no indication they share a root cause.
+Snapshot baselines identify accessibility violations by `ruleId + selector`. Under jsdom / happy-dom the selector is a tag-path like `html > body > div:nth-of-type(2) > img`. Any DOM refactor (wrapping an element, reordering siblings, renaming an ancestor) breaks the selector even when the violation is unchanged. The matcher then reports it as one _fixed_ baseline entry plus one _new_ violation. Healing is automatic only when no new violation appears, and the developer pays a mental tax distinguishing "same issue, different selector" from "genuinely new issue". At scale a single shared-component change can ripple as N new violations across N snapshots with no indication they share a root cause.
 
 ## Non-goals
 
@@ -18,14 +18,14 @@ Snapshot baselines identify accessibility violations by `ruleId + selector`. Und
 
 Each violation is fingerprinted with a bag of orthogonal signals. No single signal is authoritative; each survives a different kind of change.
 
-| Signal              | Survives...                                      | Cost to compute |
-|---------------------|--------------------------------------------------|-----------------|
-| `selector`          | nothing below — baseline assumption              | near zero       |
-| `anchor`            | DOM restructure (as long as the attr stays)      | O(1) per elem   |
-| `role`              | tag swap with same ARIA role + name              | O(depth) ARIA   |
-| `visualFingerprint` | CSS + DOM churn that doesn't move pixels         | screenshot + hash |
-| `htmlFingerprint`   | move, rename ancestors, attribute churn (class/style/id dropped) | O(200) hash |
-| `relativeLocation`  | wrapper insertion, class churn                   | O(depth) walk   |
+| Signal              | Survives...                                                      | Cost to compute   |
+| ------------------- | ---------------------------------------------------------------- | ----------------- |
+| `selector`          | nothing below — baseline assumption                              | near zero         |
+| `anchor`            | DOM restructure (as long as the attr stays)                      | O(1) per elem     |
+| `role`              | tag swap with same ARIA role + name                              | O(depth) ARIA     |
+| `visualFingerprint` | CSS + DOM churn that doesn't move pixels                         | screenshot + hash |
+| `htmlFingerprint`   | move, rename ancestors, attribute churn (class/style/id dropped) | O(200) hash       |
+| `relativeLocation`  | wrapper insertion, class churn                                   | O(depth) walk     |
 
 `anchor` uses the project's existing priority list (`data-testid` → `id` → `name` → `href` → `for` → `aria-label`). `role` joins `getComputedRole(el)` with `getAccessibleName(el)` to avoid two same-role elements collapsing. `htmlFingerprint` hashes a normalized HTML snippet (drop `class`/`style`/generated ids, lowercase tags, sort attributes, truncate text, SHA-1, keep 12 hex chars). `relativeLocation` walks to the nearest landmark ancestor and adds a short sibling-text anchor.
 
@@ -54,7 +54,7 @@ When tiers 2–6 match, the baseline entry is replaced in memory with the curren
 
 T1 carries `verifiedBy: htmlFingerprint`: when both items have a fingerprint and the values disagree, the pair is refused and both items are released to the tiers below (refuse-and-release). Release alone is not enough. `data-testid` is both the `anchor` signal and — since it is Playwright's default `testIdAttribute` — the `selector`, so for any element carrying one the anchor tier keys on exactly the information T1 just rejected, and re-pairs the impostor unverified one tier later. That is a silent false heal on the most common anchor attribute in the wild.
 
-So a refusal is remembered for the run: **these two items are not the same element**, which stays true at every weaker tier, and no later tier may pair them. The alternatives were both worse. Sending a refused *item* straight to `new` breaks the swapped-elements case, where two elements are refused at T1 and must still heal to their true partners at T5 — the refusal is a fact about the pair, not about either item. Adding `verifiedBy` tier by tier is whack-a-mole that terminates only when every tier verifies, which is a global fingerprint gate: it would refuse the legitimate "anchored element moved *and* its markup churned" case, precisely what the anchor tier exists to survive.
+So a refusal is remembered for the run: **these two items are not the same element**, which stays true at every weaker tier, and no later tier may pair them. The alternatives were both worse. Sending a refused _item_ straight to `new` breaks the swapped-elements case, where two elements are refused at T1 and must still heal to their true partners at T5 — the refusal is a fact about the pair, not about either item. Adding `verifiedBy` tier by tier is whack-a-mole that terminates only when every tier verifies, which is a global fingerprint gate: it would refuse the legitimate "anchored element moved _and_ its markup churned" case, precisely what the anchor tier exists to survive.
 
 Refusal memory is keyed on object identity, not signal values — matching is count-based, so two items with identical signals are distinct items and value-keying would refuse both when only one was refused. The uniqueness gate keeps counting raw bucket length, refusals included, which preserves the invariant that **a refusal can only ever subtract a heal, never create one**. Pairs still unresolved at the end of the run surface as `DiffResult.refused` with the disagreeing signal name, and the matcher renders them in place of the "likely moved" hint (§4).
 
@@ -99,7 +99,7 @@ export function evaluateSnapshot(
 
 ## Validation strategy
 
-Cheapest first. The risk we bound is *silent false heal* (accepting a real regression as "same issue moved").
+Cheapest first. The risk we bound is _silent false heal_ (accepting a real regression as "same issue moved").
 
 1. Synthetic fixture corpus: ~30 `(before, after, expected)` DOM pairs covering wrapper insertion, sibling reorder, ancestor rename, anchor swap, text change, genuine new. Unit-test level.
 2. Property tests (fast-check): `htmlFingerprint` invariant under whitespace + attr-reorder, `relativeLocation` invariant under wrapper insertion, `extractAnchor` priority order.
@@ -116,7 +116,7 @@ Cheapest first. The risk we bound is *silent false heal* (accepting a real regre
 
 ## Known limitation: an impostor that reuses a non-selector anchor
 
-Refusals originate at T1, so the hole closes only where the pair actually meets there. For `data-testid` that is always, since the selector *is* the test id. For an anchor the selector doesn't encode, it isn't:
+Refusals originate at T1, so the hole closes only where the pair actually meets there. For `data-testid` that is always, since the selector _is_ the test id. For an anchor the selector doesn't encode, it isn't:
 
 ```
 baseline: getByRole('img').first()  anchor data-id=hero  fp aaa
