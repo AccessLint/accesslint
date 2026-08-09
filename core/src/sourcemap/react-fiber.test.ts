@@ -70,7 +70,9 @@ function makeViolation(element?: Element): Violation {
 
 function attachFiber(node: Element, fiber: unknown): void {
   // Mirror React's internal naming: __reactFiber$<random>
-  (node as unknown as Record<string, unknown>)[`__reactFiber$${Math.random().toString(36).slice(2)}`] = fiber;
+  (node as unknown as Record<string, unknown>)[
+    `__reactFiber$${Math.random().toString(36).slice(2)}`
+  ] = fiber;
 }
 
 /**
@@ -159,7 +161,11 @@ describe("attachReactFiberSource", () => {
     (Component as unknown as { displayName: string }).displayName = "ProductCard";
     attachFiber(el, {
       type: Component,
-      _debugSource: { fileName: "/src/components/ProductCard.tsx", lineNumber: 42, columnNumber: 7 },
+      _debugSource: {
+        fileName: "/src/components/ProductCard.tsx",
+        lineNumber: 42,
+        columnNumber: 7,
+      },
     });
 
     const v = makeViolation(el);
@@ -381,7 +387,9 @@ describe("attachReactFiberSource", () => {
         "fetch",
         vi.fn(async (url: string | URL) => {
           if (String(url) === chunkUrl) {
-            return new Response("(function(){})();\n//# sourceMappingURL=app.js.map\n", { status: 200 });
+            return new Response("(function(){})();\n//# sourceMappingURL=app.js.map\n", {
+              status: 200,
+            });
           }
           if (String(url) === mapUrl) {
             return new Response(map, { status: 200 });
@@ -455,7 +463,9 @@ describe("attachReactFiberSource", () => {
         "fetch",
         vi.fn(async (url: string | URL) => {
           if (String(url) === chunkUrl) {
-            return new Response(`(function(){})();\n//# sourceMappingURL=${dataUrl}\n`, { status: 200 });
+            return new Response(`(function(){})();\n//# sourceMappingURL=${dataUrl}\n`, {
+              status: 200,
+            });
           }
           return new Response("", { status: 404 });
         }),

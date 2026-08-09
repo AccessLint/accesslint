@@ -1,11 +1,6 @@
 import { describe, it, expect, afterEach } from "vitest";
 import { isGeneratedId, isStableId } from "./generated-id";
-import {
-  getSelector,
-  extractAnchor,
-  buildRelativeLocation,
-  clearSelectorCache,
-} from "./selector";
+import { getSelector, extractAnchor, buildRelativeLocation, clearSelectorCache } from "./selector";
 import { makeDoc } from "../../test-helpers";
 
 afterEach(() => clearSelectorCache());

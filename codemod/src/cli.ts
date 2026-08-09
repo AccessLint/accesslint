@@ -134,9 +134,7 @@ const detectInstalledPlugins = async (): Promise<PluginKey[]> => {
   const pkg = await findNearestPackageJson(process.cwd());
   if (!pkg) return [];
   const all = { ...(pkg.dependencies ?? {}), ...(pkg.devDependencies ?? {}) };
-  return (Object.keys(plugins) as PluginKey[]).filter(
-    (key) => plugins[key].sourceModule in all,
-  );
+  return (Object.keys(plugins) as PluginKey[]).filter((key) => plugins[key].sourceModule in all);
 };
 
 type PkgJson = {

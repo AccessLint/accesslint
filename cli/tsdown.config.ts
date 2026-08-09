@@ -18,7 +18,9 @@ export default defineConfig([
   },
   {
     entry: ["./src/cdp-audit.ts", "./src/ssrf-guard.ts", "./src/safe-fetch.ts"],
-    deps: { neverBundle: ["@accesslint/core", "@accesslint/heal-diff", "@accesslint/matchers-internal"] },
+    deps: {
+      neverBundle: ["@accesslint/core", "@accesslint/heal-diff", "@accesslint/matchers-internal"],
+    },
     dts: true,
     publint: true,
     attw: { profile: "esm-only" },

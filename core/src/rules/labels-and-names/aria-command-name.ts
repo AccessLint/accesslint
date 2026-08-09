@@ -13,9 +13,8 @@ export const ariaCommandName: Rule = {
   guidance:
     "Interactive ARIA command roles (button, link, menuitem) must have accessible names so users know what action they perform. Add visible text content, aria-label, or aria-labelledby to provide a name.",
   applicable: (doc) =>
-    doc.querySelector(
-      '[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]',
-    ) !== null,
+    doc.querySelector('[role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"]') !==
+    null,
   run(doc) {
     const violations = [];
 

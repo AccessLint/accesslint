@@ -250,10 +250,7 @@ async function locationFor(
   return null;
 }
 
-async function resolveFromFiber(
-  fiber: FiberLike,
-  cache: ResolverCache,
-): Promise<SourceLocation[]> {
+async function resolveFromFiber(fiber: FiberLike, cache: ResolverCache): Promise<SourceLocation[]> {
   const out: SourceLocation[] = [];
 
   const self = await locationFor(fiber, 0, cache);

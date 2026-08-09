@@ -40,9 +40,7 @@ describe("buildRelativeLocation", () => {
   });
 
   it("picks the intermediate crumb closest to the element", () => {
-    mount(
-      `<main><div id="outer"><div id="inner"><div><img></div></div></div></main>`,
-    );
+    mount(`<main><div id="outer"><div id="inner"><div><img></div></div></div></main>`);
     const img = find(document.body, "img");
     const out = buildRelativeLocation(img);
     expect(out).toContain("div#inner");

@@ -73,7 +73,9 @@ export function resolveDownload(opts: EnsureOptions = {}): boolean {
 /** The only signal that means "the CLI can drive this Chrome." */
 async function discovery(port: number): Promise<DiscoveryInfo | null> {
   try {
-    const res = await fetch(`http://${HOST}:${port}/json/version`, { signal: AbortSignal.timeout(1000) });
+    const res = await fetch(`http://${HOST}:${port}/json/version`, {
+      signal: AbortSignal.timeout(1000),
+    });
     return res.ok ? ((await res.json()) as DiscoveryInfo) : null;
   } catch {
     return null;
@@ -127,7 +129,15 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
   const download = resolveDownload(opts);
 
   const existing = await discovery(port);
-  if (existing) return { ok: true, mode: "attached", host: HOST, port, browser: existing.Browser, managed: false };
+  if (existing)
+    return {
+      ok: true,
+      mode: "attached",
+      host: HOST,
+      port,
+      browser: existing.Browser,
+      managed: false,
+    };
 
   if (pinned) {
     if (await tcpOpen(port)) {
@@ -143,7 +153,15 @@ export async function ensure(opts: EnsureOptions = {}): Promise<EnsureResult> {
   const reuse = await managedAlive();
   if (reuse) {
     const { state, info } = reuse;
-    return { ok: true, mode: "attached", host: HOST, port: state.port, browser: info.Browser, pid: state.pid, managed: true };
+    return {
+      ok: true,
+      mode: "attached",
+      host: HOST,
+      port: state.port,
+      browser: info.Browser,
+      pid: state.pid,
+      managed: true,
+    };
   }
 
   return launchOn(await freePort(port), opts.headed, download);
@@ -173,16 +191,30 @@ async function launchOn(port: number, headed = false, download = false): Promise
   if (!info) {
     killTree(pid);
     rmSync(userDataDir, { recursive: true, force: true });
-    throw new Error(`Launched Chrome (pid ${pid}) but discovery never answered on ${HOST}:${port}.`);
+    throw new Error(
+      `Launched Chrome (pid ${pid}) but discovery never answered on ${HOST}:${port}.`,
+    );
   }
 
   writeState({ pid, port, userDataDir, startedAt: new Date().toISOString() });
-  return { ok: true, mode: "launched", host: HOST, port, browser: info.Browser, pid, managed: true };
+  return {
+    ok: true,
+    mode: "launched",
+    host: HOST,
+    port,
+    browser: info.Browser,
+    pid,
+    managed: true,
+  };
 }
 
 /** Tear down instances we launched (one port, or `all`), cleaning up profiles. */
-export async function stop(opts: { port?: number; all?: boolean } = {}): Promise<StoppedInstance[]> {
-  const targets = opts.all ? listStates() : [readState(resolvePort(opts))].filter((s): s is ChromeState => s !== null);
+export async function stop(
+  opts: { port?: number; all?: boolean } = {},
+): Promise<StoppedInstance[]> {
+  const targets = opts.all
+    ? listStates()
+    : [readState(resolvePort(opts))].filter((s): s is ChromeState => s !== null);
 
   const stopped: StoppedInstance[] = [];
   for (const state of targets) {
@@ -218,15 +250,25 @@ function chromeCacheDir(): string {
 async function downloadChrome(): Promise<string> {
   const browsers = await import("@puppeteer/browsers");
   const platform = browsers.detectBrowserPlatform();
-  if (!platform) throw new Error("Could not detect a platform to download Chrome for. Set CHROME_PATH instead.");
+  if (!platform)
+    throw new Error("Could not detect a platform to download Chrome for. Set CHROME_PATH instead.");
   const cacheDir = chromeCacheDir();
 
-  const cached = (await browsers.getInstalledBrowsers({ cacheDir })).find((b) => b.browser === browsers.Browser.CHROME);
+  const cached = (await browsers.getInstalledBrowsers({ cacheDir })).find(
+    (b) => b.browser === browsers.Browser.CHROME,
+  );
   if (cached) return cached.executablePath;
 
   const buildId = await browsers.resolveBuildId(browsers.Browser.CHROME, platform, "stable");
-  process.stderr.write(`@accesslint/chrome: downloading Chrome for Testing ${buildId} to ${cacheDir} (one time, ~170MB)...\n`);
-  const installed = await browsers.install({ browser: browsers.Browser.CHROME, platform, buildId, cacheDir });
+  process.stderr.write(
+    `@accesslint/chrome: downloading Chrome for Testing ${buildId} to ${cacheDir} (one time, ~170MB)...\n`,
+  );
+  const installed = await browsers.install({
+    browser: browsers.Browser.CHROME,
+    platform,
+    buildId,
+    cacheDir,
+  });
   process.stderr.write(`@accesslint/chrome: Chrome ready at ${installed.executablePath}\n`);
   return installed.executablePath;
 }

@@ -18,7 +18,7 @@ export const frameFocusableContent: Rule = {
   fixability: "mechanical",
   description: "Iframes with interactive content must not be excluded from the tab order.",
   guidance:
-    "An <iframe> with tabindex=\"-1\" removes the frame itself from the tab order, but focusable elements inside remain reachable with arrow keys on some browsers and are unreachable on others. Remove tabindex=\"-1\" from the iframe, or add tabindex=\"-1\" to every focusable element inside it. If the frame is decorative, add aria-hidden=\"true\" instead.",
+    'An <iframe> with tabindex="-1" removes the frame itself from the tab order, but focusable elements inside remain reachable with arrow keys on some browsers and are unreachable on others. Remove tabindex="-1" from the iframe, or add tabindex="-1" to every focusable element inside it. If the frame is decorative, add aria-hidden="true" instead.',
   applicable: (doc) => doc.querySelector('iframe[tabindex="-1"]') !== null,
   run(doc) {
     const violations = [];

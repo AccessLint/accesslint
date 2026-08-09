@@ -46,11 +46,7 @@ function encodeMappings(decoded: number[][][]): string {
     .join(";");
 }
 
-function flatMap(opts: {
-  sources: string[];
-  names?: string[];
-  segments: number[][][];
-}): string {
+function flatMap(opts: { sources: string[]; names?: string[]; segments: number[][][] }): string {
   return JSON.stringify({
     version: 3,
     sources: opts.sources,
@@ -147,7 +143,9 @@ describe("parseSourceMap + originalPositionFor", () => {
   });
 
   describe("sectioned (indexed) maps", () => {
-    function sectionedMap(sections: { offset: { line: number; column: number }; map: object }[]): string {
+    function sectionedMap(
+      sections: { offset: { line: number; column: number }; map: object }[],
+    ): string {
       return JSON.stringify({ version: 3, sections });
     }
 
@@ -241,9 +239,7 @@ describe("parseSourceMap + originalPositionFor", () => {
 
     it("returns null on malformed VLQ", () => {
       expect(
-        parseSourceMap(
-          JSON.stringify({ version: 3, sources: ["x"], names: [], mappings: "@@@@" }),
-        ),
+        parseSourceMap(JSON.stringify({ version: 3, sources: ["x"], names: [], mappings: "@@@@" })),
       ).toBeNull();
     });
   });
