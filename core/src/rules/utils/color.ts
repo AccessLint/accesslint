@@ -1,4 +1,5 @@
 import { getWindow } from "./dom";
+import { parseColorFunction } from "./color-spaces";
 
 let _computedStyleCache = new WeakMap<Element, CSSStyleDeclaration>();
 let _effectiveBgCache = new WeakMap<Element, [number, number, number] | null>();
@@ -102,7 +103,10 @@ export function parseColor(color: string): [number, number, number] | null {
   if (space) {
     return [parseInt(space[1]), parseInt(space[2]), parseInt(space[3])];
   }
-  return null;
+
+  // oklch() / oklab() / lab() / lch() / color() — Chromium leaves these
+  // unconverted in computed styles.
+  return parseColorFunction(trimmed)?.rgb ?? null;
 }
 
 /**
@@ -119,7 +123,8 @@ export function parseColorAlpha(color: string): number {
     const val = modern[1];
     return val.endsWith("%") ? parseFloat(val) / 100 : parseFloat(val);
   }
-  return 1.0;
+  // oklch(l c h / a), color(srgb r g b / a), and friends
+  return parseColorFunction(color.trim().toLowerCase())?.alpha ?? 1.0;
 }
 
 /**

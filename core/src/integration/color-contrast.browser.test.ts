@@ -438,3 +438,81 @@ describe("gradient backgrounds", () => {
     expectNoViolations(run());
   });
 });
+
+describe("modern color syntax", () => {
+  it("passes: white text on a dark oklch() background", () => {
+    // Regression for #23: an unparseable background-color was skipped, and the
+    // ancestor walk continued to the white root default.
+    setContent(`
+      <style>
+        body { background: #fff }
+        .panel { background-color: oklch(0.2 0.03 280); padding: 40px }
+        .panel h1 { color: #fff }
+      </style>
+      <div class="panel"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("fails: near-white oklch() text on white is no longer silently skipped", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        p { color: oklch(0.95 0.01 250) }
+      </style>
+      <p>Barely visible</p>
+    `);
+    expectViolation(run(), "p");
+  });
+
+  it("fails: white text on a light oklch() gradient", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-image: linear-gradient(oklch(0.95 0.01 250), oklch(0.98 0.01 250));
+          padding: 40px;
+        }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectViolation(run(), "h1");
+  });
+
+  it("passes: white text on a dark color(display-p3) background", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .panel { background-color: color(display-p3 0.08 0.08 0.15); padding: 40px }
+        .panel h1 { color: #fff }
+      </style>
+      <div class="panel"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("passes: white text on a dark lab() background", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .panel { background-color: lab(12 3 -14); padding: 40px }
+        .panel h1 { color: #fff }
+      </style>
+      <div class="panel"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("composites a translucent oklch() layer over what sits behind it", () => {
+    setContent(`
+      <style>
+        body { background: #000 }
+        .scrim { background-color: oklch(1 0 0 / 0.04); padding: 40px }
+        .scrim h1 { color: #fff }
+      </style>
+      <div class="scrim"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+});
