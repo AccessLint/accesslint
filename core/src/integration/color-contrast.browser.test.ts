@@ -284,3 +284,157 @@ describe("visual edge cases", () => {
     expectNoViolations(run());
   });
 });
+
+describe("gradient backgrounds", () => {
+  it("passes: white hero text over a dark gradient painted on a white background-color", () => {
+    // Regression for #21: the gradient paints over background-color, so the
+    // white fallback color is not what shows behind the text.
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-color: #fff;
+          background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80));
+          padding: 40px;
+        }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("passes: white text over a dark gradient with a white body behind it", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero { background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80)); padding: 40px }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("passes: white text over an angled multi-stop dark gradient", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-color: #fff;
+          background-image: linear-gradient(
+            135deg,
+            rgb(19, 19, 39) 0%,
+            rgb(30, 30, 60) 50%,
+            rgb(10, 10, 20) 100%
+          );
+          padding: 40px;
+        }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("passes: white text nested below a wrapper inside the gradient element", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-color: #fff;
+          background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80));
+          padding: 40px;
+        }
+        h1 { color: #fff }
+      </style>
+      <div class="hero"><div class="inner"><h1>Ship accessible software</h1></div></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("passes: white text under a translucent white scrim over a dark gradient", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero { background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80)); padding: 40px }
+        h1 { color: #fff; background-color: rgba(255, 255, 255, 0.08) }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("fails: dark text over a dark gradient, even at the best-contrast stop", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-color: #fff;
+          background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80));
+          padding: 40px;
+        }
+        .hero h1 { color: #333 }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    const violations = run();
+    expectViolation(violations, "h1");
+    expect(violations[0].context).toMatch(/background: gradient/);
+  });
+
+  it("fails: white text over a light gradient painted on a black background-color", () => {
+    setContent(`
+      <style>
+        .hero {
+          background-color: #000;
+          background-image: linear-gradient(rgb(240, 240, 240), rgb(255, 255, 255));
+          padding: 40px;
+        }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectViolation(run(), "h1");
+  });
+
+  it("passes: fully transparent gradient stops fall back to the color behind the gradient", () => {
+    setContent(`
+      <style>
+        body { background: #101020 }
+        .hero { background-image: linear-gradient(transparent, transparent); padding: 40px }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectNoViolations(run());
+  });
+
+  it("fails: a translucent dark gradient over white stays too light for white text", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero {
+          background-image: linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.15));
+          padding: 40px;
+        }
+        .hero h1 { color: #fff }
+      </style>
+      <div class="hero"><h1>Ship accessible software</h1></div>
+    `);
+    expectViolation(run(), "h1");
+  });
+
+  it("skips: gradient behind a non-gradient background image is not second-guessed", () => {
+    setContent(`
+      <style>
+        body { background: #fff }
+        .hero { background-image: linear-gradient(rgb(19, 19, 39), rgb(40, 40, 80)); padding: 40px }
+        .photo { background-image: url(data:image/gif;base64,R0lGODlhAQABAAAAACw=); padding: 20px }
+        h1 { color: #fff }
+      </style>
+      <div class="hero"><div class="photo"><h1>Ship accessible software</h1></div></div>
+    `);
+    expectNoViolations(run());
+  });
+});

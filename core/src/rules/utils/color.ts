@@ -170,6 +170,10 @@ function _computeEffectiveBg(el: Element): [number, number, number] | null {
     const style = getCachedComputedStyle(current);
     const bgImg = style.backgroundImage;
     if (bgImg && bgImg !== "none" && bgImg !== "initial") {
+      // A gradient paints on top of the element's own backgroundColor, so that
+      // color is not what shows behind the text. Return null so the caller
+      // evaluates the gradient stops instead.
+      if (bgImg.includes("gradient(")) return null;
       // Background image found — composite accumulated layers over
       // the solid backgroundColor if available, otherwise return null.
       const bg = style.backgroundColor;
@@ -232,9 +236,26 @@ export function splitByComma(content: string): string[] {
 }
 
 /**
+ * Isolate the color from a gradient stop segment, dropping any trailing
+ * position. Parenthesis-aware so that `rgba(0, 0, 0, 0.5) 25%` and
+ * `color-mix(in srgb, red 50%, blue) 3em` split at the right place.
+ */
+function gradientStopColor(segment: string): string {
+  const fn = segment.match(/^[a-z-]+\(/i);
+  if (!fn) return segment.split(/\s+/)[0];
+  let depth = 0;
+  for (let i = fn[0].length - 1; i < segment.length; i++) {
+    if (segment[i] === "(") depth++;
+    else if (segment[i] === ")" && --depth === 0) return segment.slice(0, i + 1);
+  }
+  return segment;
+}
+
+/**
  * Extract color stops from a CSS gradient value.
  * Returns parsed RGB colors for each stop, skipping positions/angles.
- * For "transparent", uses the provided fallback color (defaults to white).
+ * Semi-transparent stops (including "transparent") are composited over the
+ * provided fallback, which is the color painted behind the gradient.
  */
 export function parseGradientStops(
   bgImage: string,
@@ -261,17 +282,19 @@ export function parseGradientStops(
     // Skip direction tokens like "to right", "90deg", etc.
     if (/^(to\s|[\d.]+deg|[\d.]+turn|[\d.]+rad)/i.test(trimmed)) continue;
 
+    const colorPart = gradientStopColor(trimmed);
+
     // Handle "transparent" keyword
-    if (trimmed === "transparent" || trimmed.startsWith("transparent ")) {
+    if (colorPart === "transparent") {
       colors.push(transparentFallback);
       continue;
     }
 
-    // Try parsing the full segment as a color (for simple colors like "black")
-    // or just the color part (before position like "3.3em" or "50%")
-    const colorPart = trimmed.replace(/\s+[\d.]+(%|em|px|rem|vh|vw).*$/i, "").trim();
     const parsed = parseColor(colorPart);
-    if (parsed) colors.push(parsed);
+    if (!parsed) continue;
+    const alpha = parseColorAlpha(colorPart);
+    // A translucent stop shows the color painted behind the gradient
+    colors.push(alpha < 1 ? compositeColors(parsed, transparentFallback, alpha) : parsed);
   }
   return colors;
 }
