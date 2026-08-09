@@ -99,7 +99,7 @@ async function waitForExpression(
   waitFor: string,
   timeoutMs: number,
 ): Promise<void> {
-  const looksLikeSelector = /^[#.\[\]:>~+*\-_a-zA-Z0-9 ]+$/.test(waitFor) && !/\s\s/.test(waitFor);
+  const looksLikeSelector = /^[#.[\]:>~+*\-_a-zA-Z0-9 ]+$/.test(waitFor) && !/\s\s/.test(waitFor);
   const probe = looksLikeSelector
     ? `Boolean(document.querySelector(${JSON.stringify(waitFor)}))`
     : `document.body && document.body.innerText && document.body.innerText.includes(${JSON.stringify(waitFor)})`;

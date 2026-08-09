@@ -34,6 +34,13 @@ export default [
     },
   },
   {
+    // Published node10 resolution shims. @accesslint/report is "type": "module",
+    // but node10 consumers reach these paths directly and `require()` them.
+    files: ["report/aggregate.js", "report/history.js"],
+    languageOptions: { sourceType: "commonjs" },
+    rules: { "@typescript-eslint/no-require-imports": "off" },
+  },
+  {
     files: ["**/*.test.ts", "**/*.spec.ts", "**/test-helpers.ts", "**/test-setup.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
