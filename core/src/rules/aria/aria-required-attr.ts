@@ -17,6 +17,25 @@ const REQUIRED_ATTRS: Record<string, string[]> = {
   switch: ["aria-checked"],
 };
 
+/**
+ * Host-language state that maps to an ARIA attribute in the accessibility tree
+ * per HTML-AAM, so an explicit ARIA attribute is not required.
+ * https://www.w3.org/TR/html-aam-1.0/#html-attribute-state-and-property-mappings
+ */
+const NATIVE_STATE: Record<string, (el: Element) => boolean> = {
+  "aria-checked": (el) =>
+    el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio"),
+  "aria-level": (el) => /^h[1-6]$/i.test(el.tagName),
+  "aria-selected": (el) => el instanceof HTMLOptionElement,
+  "aria-valuenow": (el) =>
+    (el instanceof HTMLInputElement && (el.type === "range" || el.type === "number")) ||
+    ["progress", "meter"].includes(el.tagName.toLowerCase()),
+};
+
+function hasNativeState(el: Element, attr: string): boolean {
+  return NATIVE_STATE[attr]?.(el) ?? false;
+}
+
 export const ariaRequiredAttr: Rule = {
   id: "aria/aria-required-attr",
   category: "aria",
@@ -37,23 +56,14 @@ export const ariaRequiredAttr: Rule = {
       const required = REQUIRED_ATTRS[role];
       if (!required) continue;
 
-      // Skip native elements that implicitly provide the state
-      if (role === "checkbox" && el instanceof HTMLInputElement && el.type === "checkbox") continue;
-      if (role === "radio" && el instanceof HTMLInputElement && el.type === "radio") continue;
-      if (role === "option" && el instanceof HTMLOptionElement) continue;
-      if (role === "heading" && /^h[1-6]$/i.test(el.tagName)) continue;
-
       // separator only requires aria-valuenow when focusable (interactive separator)
       if (role === "separator") {
         const tabindex = el.getAttribute("tabindex");
         if (!tabindex || tabindex === "-1") continue;
       }
 
-      // Native <hr> elements have implicit separator role — skip
-      if (el.tagName.toLowerCase() === "hr" && !el.hasAttribute("role")) continue;
-
       for (const attr of required) {
-        if (!el.hasAttribute(attr)) {
+        if (!el.hasAttribute(attr) && !hasNativeState(el, attr)) {
           violations.push({
             ruleId: "aria/aria-required-attr",
             selector: getSelector(el),
