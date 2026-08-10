@@ -46,30 +46,83 @@ export function extractAnchor(el: Element): string | null {
   return null;
 }
 
-/** Build a CSS segment for one element using stable attributes when available. */
-function buildSegment(el: Element): string {
+/** 1-based `:nth-of-type()` index of `el`, or null when it is the only one of its tag. */
+function nthOfTypeIndex(el: Element): number | null {
+  const parent = el.parentElement;
+  if (!parent) return null;
+  let count = 0;
+  let index = 0;
+  for (let i = 0; i < parent.children.length; i++) {
+    if (parent.children[i].tagName === el.tagName) {
+      count++;
+      if (parent.children[i] === el) index = count;
+    }
+  }
+  return count > 1 ? index : null;
+}
+
+/**
+ * Build a CSS segment for one element using stable attributes when available.
+ * `positional` also pins an anchor-attribute segment to its `:nth-of-type()`
+ * index, for the second pass over elements whose siblings share the value.
+ */
+function buildSegment(el: Element, positional: boolean): string {
   const tag = el.tagName.toLowerCase();
   for (const attr of ANCHOR_ATTRS) {
     const val = el.getAttribute(attr);
     if (val != null && val.length > 0 && val.length < 100) {
-      return `${tag}[${attr}="${escapeAttrVal(val)}"]`;
+      const segment = `${tag}[${attr}="${escapeAttrVal(val)}"]`;
+      const index = positional ? nthOfTypeIndex(el) : null;
+      return index === null ? segment : `${segment}:nth-of-type(${index})`;
     }
   }
-  const parent = el.parentElement;
-  if (parent) {
-    let count = 0;
-    let index = 0;
-    for (let i = 0; i < parent.children.length; i++) {
-      if (parent.children[i].tagName === el.tagName) {
-        count++;
-        if (parent.children[i] === el) index = count;
-      }
-    }
-    if (count > 1) {
-      return `${tag}:nth-of-type(${index})`;
-    }
+  const index = nthOfTypeIndex(el);
+  return index === null ? tag : `${tag}:nth-of-type(${index})`;
+}
+
+function resolvesTo(root: Document | ShadowRoot, selector: string, el: Element): boolean {
+  try {
+    const matches = root.querySelectorAll(selector);
+    return matches.length === 1 && matches[0] === el;
+  } catch {
+    return false; // invalid selector
   }
-  return tag;
+}
+
+/**
+ * Walk from `el` up to `docEl` accumulating segments, stopping as soon as the
+ * accumulated path resolves to `el` alone. `unique` reports whether it does —
+ * a path that reaches the top still ambiguous comes back false.
+ */
+function buildPath(
+  el: Element,
+  root: Document | ShadowRoot,
+  docEl: Element | null,
+  positional: boolean,
+): { selector: string; unique: boolean } {
+  const parts: string[] = [];
+  let current: Element | null = el;
+
+  while (current && current !== docEl) {
+    // Anchor to nearest ancestor with a stable ID
+    if (current !== el && isStableId(current.id)) {
+      parts.unshift(`#${CSS.escape(current.id)}`);
+      break;
+    }
+
+    parts.unshift(buildSegment(current, positional));
+
+    // Stop early when the selector already uniquely identifies the target
+    if (parts.length >= 2) {
+      const candidate = parts.join(" > ");
+      if (resolvesTo(root, candidate, el)) return { selector: candidate, unique: true };
+    }
+
+    current = current.parentElement;
+  }
+
+  const selector = parts.join(" > ");
+  return { selector, unique: resolvesTo(root, selector, el) };
 }
 
 /** Build a selector within a single root (document or shadow root). */
@@ -82,33 +135,14 @@ function buildSelectorWithinRoot(el: Element): string {
   // The document element itself — just use its tag name (unique by definition)
   if (el === docEl) return el.tagName.toLowerCase();
 
-  const parts: string[] = [];
-  let current: Element | null = el;
+  const attrPath = buildPath(el, root, docEl, false);
+  if (attrPath.unique) return attrPath.selector;
 
-  while (current && current !== docEl) {
-    // Anchor to nearest ancestor with a stable ID
-    if (current !== el && isStableId(current.id)) {
-      parts.unshift(`#${CSS.escape(current.id)}`);
-      break;
-    }
-
-    parts.unshift(buildSegment(current));
-
-    // Stop early when the selector already uniquely identifies the target
-    if (parts.length >= 2) {
-      const candidate = parts.join(" > ");
-      try {
-        const matches = root.querySelectorAll(candidate);
-        if (matches.length === 1 && matches[0] === el) return candidate;
-      } catch {
-        /* invalid selector, keep building */
-      }
-    }
-
-    current = current.parentElement;
-  }
-
-  return parts.join(" > ");
+  // Siblings share an anchor value (a radio group's `name`, repeated
+  // `aria-label`s), so the attribute path names more than one element. Retry
+  // pinning those segments positionally. Only paths that were already broken
+  // reach here, which keeps stable paths off the brittle positional form.
+  return buildPath(el, root, docEl, true).selector;
 }
 
 /**
