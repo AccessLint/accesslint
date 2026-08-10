@@ -482,6 +482,29 @@ describe("getVisibleText", () => {
     const doc = makeDoc(`<p>Text <span role="img">🌟</span></p>`);
     expect(getVisibleText(doc.querySelector("p")!).trim()).toBe("Text");
   });
+
+  it("excludes <svg> content", () => {
+    const doc = makeDoc(`<button>Close<svg><title>Close icon</title></svg></button>`);
+    expect(getVisibleText(doc.querySelector("button")!)).toBe("Close");
+  });
+
+  it("separates text that renders in different boxes", () => {
+    const doc = makeDoc(`<div><span>Senior Product Manager</span><p>A long quote.</p></div>`);
+    expect(getVisibleText(doc.querySelector("div")!)).toBe("Senior Product Manager A long quote.");
+  });
+
+  it("separates adjacent inline elements", () => {
+    const doc = makeDoc(`<a href="/deploy"><span>▲</span><span>Deploy</span></a>`);
+    expect(getVisibleText(doc.querySelector("a")!)).toBe("▲ Deploy");
+  });
+
+  it("collapses the whitespace the markup was indented with", () => {
+    const doc = makeDoc(`<div>
+        Jane Doe
+        <p>Senior   Product Manager</p>
+      </div>`);
+    expect(getVisibleText(doc.querySelector("div")!)).toBe("Jane Doe Senior Product Manager");
+  });
 });
 
 // ---------------------------------------------------------------------------

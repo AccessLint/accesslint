@@ -17,6 +17,38 @@ function normalizeText(text: string): string {
     .trim();
 }
 
+/** Quote strings as the page reads them, not as the markup happens to indent. */
+function collapseWhitespace(text: string): string {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+/** Above this many words the visible text is a card's contents, not a label. */
+const CARD_WORD_COUNT = 8;
+
+/**
+ * True when the accessible name carries the words the visible text opens with.
+ *
+ * A card link holds more text than any label: a title, a byline, and a body
+ * quote, all flattened into one string. WCAG 2.5.3 asks about the text that
+ * reads as the label, which on a card is the title, the first thing rendered.
+ * So "Jane Doe's testimonial" is judged against "Jane Doe" and not against the
+ * paragraph beneath it. A name that carries none of the opening words still
+ * fails, so a card whose label drops its title is still reported.
+ */
+function containsLeadingWords(normAccessible: string, normVisible: string): boolean {
+  const words = normVisible.split(" ");
+  if (words.length <= CARD_WORD_COUNT) return false;
+
+  let run = "";
+  for (const word of words) {
+    const extended = run ? `${run} ${word}` : word;
+    if (!normAccessible.includes(extended)) break;
+    run = extended;
+  }
+  // One incidental short word ("the", "our") is not a title.
+  return run.split(" ").some((word) => word.length > 3);
+}
+
 function visibleTextMatches(accessibleName: string, visibleText: string): boolean {
   const normAccessible = normalizeText(accessibleName);
   const normVisible = normalizeText(visibleText);
@@ -34,17 +66,18 @@ function visibleTextMatches(accessibleName: string, visibleText: string): boolea
   // Accept if most significant words of the visible text appear in the
   // accessible name.  This handles cases like "Parks By State" (aria-label)
   // vs "By State..." (visible text after icons/prefixes are stripped).
-  //
-  // A single significant word counts. `<a aria-label="Deploy on Vercel">
-  // <span>\u25b2</span><span>Deploy</span></a>` reads as a mismatch otherwise:
-  // adjacent spans contribute no whitespace, so the glyph arrives glued to the
-  // word as "\u25b2Deploy", while the label a voice-control user speaks \u2014 "Deploy"
-  // \u2014 is in the name.
+  // A control whose visible text is a single significant word beside
+  // decorative glyphs passes on that word alone, as in
+  // `<a aria-label="Deploy on Vercel"><span>\u25b2</span><span>Deploy</span></a>`.
   const visibleWords = normVisible.split(" ").filter((w) => w.length > 2);
   if (visibleWords.length >= 1) {
     const matchingWords = visibleWords.filter((w) => normAccessible.includes(w));
     if (matchingWords.length / visibleWords.length > 0.5) return true;
   }
+
+  // The overlap ratio inverts on text-rich controls: the longer the card, the
+  // smaller the share its title can hold, so judge those on the title alone.
+  if (containsLeadingWords(normAccessible, normVisible)) return true;
 
   return false;
 }
@@ -123,7 +156,7 @@ export const labelContentMismatch: Rule = {
         selector: getSelector(el),
         html: getHtmlSnippet(el),
         impact: "serious" as const,
-        message: `Accessible name "${accessibleName}" does not contain visible text "${visibleText.trim()}".`,
+        message: `Accessible name "${collapseWhitespace(accessibleName)}" does not contain visible text "${collapseWhitespace(visibleText)}".`,
         fix: {
           type: "suggest",
           suggestion:
@@ -166,7 +199,7 @@ export const labelContentMismatch: Rule = {
           selector: getSelector(el),
           html: getHtmlSnippet(el),
           impact: "serious" as const,
-          message: `Accessible name "${accessibleName}" does not contain visible label "${visibleLabel.trim()}".`,
+          message: `Accessible name "${collapseWhitespace(accessibleName)}" does not contain visible label "${collapseWhitespace(visibleLabel)}".`,
           fix: {
             type: "suggest",
             suggestion:
