@@ -21,8 +21,6 @@ export const region: Rule = {
     // Walk through direct children of body
     for (const child of body.children) {
       if (isComputedHidden(child)) continue;
-      if (child instanceof HTMLScriptElement || child instanceof HTMLStyleElement) continue;
-      if (child.tagName === "NOSCRIPT") continue;
 
       // Skip links are allowed outside landmarks
       if (child.matches('a[href^="#"]')) continue;
