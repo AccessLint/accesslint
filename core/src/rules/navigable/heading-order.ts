@@ -1,6 +1,6 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { isAriaHidden } from "../utils/aria";
+import { isComputedHidden } from "../utils/aria";
 
 export const headingOrder: Rule = {
   id: "navigable/heading-order",
@@ -21,7 +21,7 @@ export const headingOrder: Rule = {
     let lastLevel = 0;
     let lastHeading: Element | null = null;
     for (const heading of headings) {
-      if (isAriaHidden(heading)) continue;
+      if (isComputedHidden(heading)) continue;
       let level: number;
       if (heading.hasAttribute("aria-level")) {
         level = parseInt(heading.getAttribute("aria-level")!, 10);

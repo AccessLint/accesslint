@@ -22,4 +22,18 @@ describe("navigable/heading-order", () => {
   it("allows going back to lower level", () => {
     expectNoViolations(headingOrder, "<html><body><h1>A</h1><h2>B</h2><h1>C</h1></body></html>");
   });
+
+  it("ignores headings in a display:none subtree", () => {
+    expectNoViolations(
+      headingOrder,
+      '<html><body><h1>A</h1><h2>B</h2><div style="display: none"><h2>Popup</h2><h4>Popup detail</h4></div></body></html>',
+    );
+  });
+
+  it("does not let a hidden heading set the expected level", () => {
+    expectNoViolations(
+      headingOrder,
+      "<html><body><h1>A</h1><h4 hidden>Hidden</h4><h2>B</h2></body></html>",
+    );
+  });
 });

@@ -1,5 +1,6 @@
 import type { Rule, Violation } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
+import { isComputedHidden } from "../utils/aria";
 
 /** True when an iframe/frame is hidden and not exposed to assistive technology. */
 export function isHiddenFrame(frame: Element): boolean {
@@ -67,6 +68,7 @@ export function makeNestedLandmarkRule(opts: {
     run(doc) {
       const violations: Violation[] = [];
       for (const el of doc.querySelectorAll(opts.selector)) {
+        if (isComputedHidden(el)) continue;
         if (el.closest(SECTIONING_SELECTOR)) {
           violations.push({
             ruleId: opts.id,
@@ -105,10 +107,12 @@ export function makeNoDuplicateLandmarkRule(opts: {
     guidance: opts.guidance,
     run(doc) {
       const violations: Violation[] = [];
-      const els = doc.querySelectorAll(opts.selector);
+      const els = Array.from(doc.querySelectorAll(opts.selector)).filter(
+        (el) => !isComputedHidden(el),
+      );
       const candidates = opts.filterTopLevel
-        ? Array.from(els).filter((el) => !el.closest(SECTIONING_SELECTOR))
-        : Array.from(els);
+        ? els.filter((el) => !el.closest(SECTIONING_SELECTOR))
+        : els;
 
       if (candidates.length > 1) {
         candidates.slice(1).forEach((el) =>

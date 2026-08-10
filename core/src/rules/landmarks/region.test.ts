@@ -43,6 +43,47 @@ describe(RULE_ID, () => {
     );
   });
 
+  it("ignores content in a display:none subtree", () => {
+    expectNoViolations(
+      region,
+      `
+      <html><body>
+        <main>Content</main>
+        <div style="display: none">Untriggered popup</div>
+      </body></html>
+    `,
+    );
+  });
+
+  it("ignores a hidden popup inside a visible wrapper", () => {
+    expectNoViolations(
+      region,
+      `
+      <html><body>
+        <main>Content</main>
+        <div class="wrapper">
+          <div style="display: none">Untriggered popup</div>
+        </div>
+      </body></html>
+    `,
+    );
+  });
+
+  it("reports a visible popup inside a wrapper", () => {
+    expectViolations(
+      region,
+      `
+      <html><body>
+        <main>Content</main>
+        <div class="wrapper">
+          <div>Triggered popup</div>
+        </div>
+      </body></html>
+    `,
+      { count: 1, ruleId: RULE_ID },
+    );
+  });
+
   it("allows wrapper divs containing landmarks", () => {
     expectNoViolations(
       region,
