@@ -25,7 +25,9 @@ if (!existsSync(bundlePath)) {
  * a size increase is justified — surprise regressions fail CI.
  */
 const SIZE_BUDGETS: Record<string, { raw: number; gzip: number }> = {
-  "index.iife.js": { raw: 185_000, gzip: 50_000 },
+  // gzip bumped 50_000 → 52_000 for CSS Color 4 conversion (oklch/oklab/lab/
+  // lch/color), measured at +1296 bytes gzipped over the prior 48_803.
+  "index.iife.js": { raw: 185_000, gzip: 52_000 },
   "index.cjs": { raw: 410_000, gzip: 100_000 },
   "index.js": { raw: 410_000, gzip: 100_000 },
   "index.d.ts": { raw: 15_500, gzip: 5_500 },
