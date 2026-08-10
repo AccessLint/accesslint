@@ -523,14 +523,7 @@ function isStyleHidden(el: Element): boolean {
   return style.display === "none" || style.visibility === "hidden";
 }
 
-/**
- * Extract truly visible text from an element, excluding:
- * - Non-rendered elements (style, script, SVG)
- * - Elements with role="img" or role="presentation"
- * - aria-hidden subtrees
- * - Elements CSS hides with display:none or visibility:hidden
- */
-export function getVisibleText(el: Element): string {
+function collectVisibleText(el: Element): string {
   let text = "";
   for (const node of el.childNodes) {
     if (node.nodeType === 3 /* TEXT_NODE */) {
@@ -546,10 +539,28 @@ export function getVisibleText(el: Element): string {
       // Skip role=img and role=presentation (icon wrappers)
       const role = child.getAttribute("role");
       if (role === "img" || role === "presentation" || role === "none") continue;
-      text += getVisibleText(child);
+      // accname step 2I pads each traversed node with a space. Without it,
+      // words that render in separate boxes arrive glued: a title followed by
+      // a paragraph reads as "ManagerLong", a word no one can search for and
+      // one that matches nothing in the accessible name.
+      text += ` ${collectVisibleText(child)} `;
     }
   }
   return text;
+}
+
+/**
+ * Extract truly visible text from an element, excluding:
+ * - Non-rendered elements (style, script, SVG)
+ * - Elements with role="img" or role="presentation"
+ * - aria-hidden subtrees
+ * - Elements CSS hides with display:none or visibility:hidden
+ *
+ * Element boundaries contribute a space and whitespace runs collapse, so the
+ * result reads as the page does however the markup is indented.
+ */
+export function getVisibleText(el: Element): string {
+  return collectVisibleText(el).replace(/\s+/g, " ").trim();
 }
 
 // ---------------------------------------------------------------------------
