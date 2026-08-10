@@ -49,7 +49,24 @@ jobs:
       - run: npm publish --provenance --access public
         working-directory: chrome
 
+      # The release commit body explains why behavior moved; --generate-notes
+      # alone lists PR titles and drops it. Prepend the body when there is one,
+      # so the prose leads and the generated PR list still follows.
       - name: Create GitHub release
-        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/chrome v${GITHUB_REF_NAME#chrome/v}"
+        run: |
+          # $(...) strips the trailing newline %b emits, so a subject-only
+          # commit tests as empty rather than as a one-byte file.
+          NOTES="$(git log -1 --format=%b "$GITHUB_SHA")"
+          printf '%s\n' "$NOTES" > /tmp/release-notes.md
+          if [ -n "$NOTES" ]; then
+            gh release create "$GITHUB_REF_NAME" \
+              --title "@accesslint/chrome v${GITHUB_REF_NAME#chrome/v}" \
+              --notes-file /tmp/release-notes.md \
+              --generate-notes
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              --title "@accesslint/chrome v${GITHUB_REF_NAME#chrome/v}" \
+              --generate-notes
+          fi
         env:
           GH_TOKEN: ${{ github.token }}
