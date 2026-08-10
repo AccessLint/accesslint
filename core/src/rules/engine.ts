@@ -285,14 +285,16 @@ export function compileDeclarativeRule(spec: DeclarativeRule): Rule {
               if (childRole && allowedRoleSet?.has(childRole)) continue;
               // Allow role="presentation" / role="none" children (pass-through containers)
               if (childRole === "presentation" || childRole === "none") continue;
+              // Anchor to the container — it owns the semantics being violated.
+              // The message names the offending child via {{tag}}.
               violations.push({
                 ruleId: spec.id,
-                selector: getSelector(child),
-                html: getHtmlSnippet(child),
+                selector: getSelector(el),
+                html: getHtmlSnippet(el),
                 impact: spec.impact,
                 message: applyTemplate(spec.message, child, spec.check),
                 fix: spec.fix,
-                element: child,
+                element: el,
               });
               break; // one violation per parent
             }

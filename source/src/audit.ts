@@ -7,7 +7,6 @@ import { nonDomRenderer, testFile } from "./scope";
 import {
   attributeDependencies,
   CHILD_DEPENDENT_RULES,
-  CONTAINER_MEMBER_RULES,
   DEPENDS_ON_ANY_UNKNOWN,
   DIRECT_CHILD_RULES,
   DOC_ORDER_DEPENDENT_RULES,
@@ -15,6 +14,7 @@ import {
   HTML_ELEMENT_RULE,
   NAME_FAMILY_RULES,
   SOURCE_MODE_DISABLED_RULES,
+  TABLE_CONTAINER_RULES,
 } from "./semantics";
 import type {
   AuditSourceOptions,
@@ -282,23 +282,9 @@ function attributeUnknown(meta: NodeMeta, ruleId: string): SourceUnknown | null 
 
 /** Which element a rule reads the contents of: the subject, or its container. */
 function containerFor(ruleId: string, element: Element): Element | null {
-  const member = CONTAINER_MEMBER_RULES[ruleId];
-  if (!member) return element;
-
-  // The bare-text branch reports the container itself, and the only way to tell
-  // that apart from a member report is the text: a container is the subject when
-  // it holds text of its own.
-  const tag = element.tagName.toLowerCase();
-  if (member.containerTags.includes(tag) && hasDirectText(element)) return element;
-
-  return member.ancestor === "parent" ? element.parentElement : element.closest("table");
-}
-
-function hasDirectText(element: Element): boolean {
-  for (const node of element.childNodes) {
-    if (node.nodeType === 3 && node.textContent && node.textContent.trim()) return true;
-  }
-  return false;
+  // Container integrity rules report the container itself. Only the table rules
+  // report a cell and read the table around it.
+  return TABLE_CONTAINER_RULES.has(ruleId) ? element.closest("table") : element;
 }
 
 /**
@@ -330,9 +316,8 @@ function unprovable(
   if (attributes) return attributes;
 
   if (CHILD_DEPENDENT_RULES.has(violation.ruleId)) {
-    // Most of these rules report the container itself; the container-member
-    // rules report the offending child, and then it is the container's unknowns
-    // that decide.
+    // Most of these rules report the container itself; the table rules report a
+    // cell, and then it is the surrounding table's unknowns that decide.
     const containerElement = containerFor(violation.ruleId, element);
     const container = containerElement ? metaByElement.get(containerElement) : undefined;
     if (!container) {

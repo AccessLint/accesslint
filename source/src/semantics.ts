@@ -115,25 +115,15 @@ export const CHILD_DEPENDENT_RULES = new Set([
 ]);
 
 /**
- * The child-dependent rules that report the offending *member* rather than the
- * container, and where the container is. `list-children` reports the stray
- * `<div>`, not the `<ul>` that holds it, so it is the `<ul>`'s unknowns that
- * decide whether the finding stands.
+ * The child-dependent rules that report a *cell* rather than the container whose
+ * contents decide the verdict. `td-has-header` reports the `<td>`, but it is the
+ * surrounding `<table>`'s unknowns that decide whether the finding stands.
  *
- * `containerTags` is the other half. These rules have a second branch that
- * reports the container itself — for bare text directly inside a list — and then
- * the element in hand already *is* the container. `<ol><Link>Text</Link></ol>`
- * lands there: the text came from a component, so the container's own unknowns
- * are the ones that matter.
+ * The container integrity rules (`list-children`, `definition-list`) are not
+ * here: they report the `<ul>`/`<dl>` itself, so the element in hand already is
+ * the container.
  */
-export const CONTAINER_MEMBER_RULES: Record<
-  string,
-  { ancestor: "parent" | "table"; containerTags: string[] }
-> = {
-  "adaptable/list-children": { ancestor: "parent", containerTags: ["ul", "ol"] },
-  "adaptable/definition-list": { ancestor: "parent", containerTags: ["dl"] },
-  "adaptable/td-has-header": { ancestor: "table", containerTags: ["table"] },
-};
+export const TABLE_CONTAINER_RULES = new Set(["adaptable/td-has-header"]);
 
 /** Rules that resolve an accessible name, which any descendant can supply. */
 function nameFromContentRules(): string[] {
