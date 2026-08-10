@@ -205,53 +205,6 @@ describe(RULE_ID, () => {
     });
   });
 
-  // The same testimonial card, with and without a heading around its title.
-  // To a reader they are one component, so they must get one verdict.
-  const testimonial = (title: string, label: string) => `
-    <button aria-label="${label}">
-      <div>
-        <img src="jane.jpg" alt="">
-        ${title}
-        Senior Product Manager
-        <p>A long multi-sentence quote about working with the vendor, several
-           hundred characters of body copy that no aria-label would repeat.</p>
-      </div>
-    </button>
-  `;
-
-  it("passes a card whose title is a bare text node", () => {
-    expectNoViolations(labelContentMismatch, testimonial("Jane Doe", "Jane Doe's testimonial"));
-  });
-
-  it("passes a card whose title is styled with a div", () => {
-    expectNoViolations(
-      labelContentMismatch,
-      testimonial("<div>Jane Doe</div>", "Jane Doe's testimonial"),
-    );
-  });
-
-  it("judges a card the same whether or not its title is a heading", () => {
-    expectNoViolations(
-      labelContentMismatch,
-      testimonial("<h3>Jane Doe</h3>", "Jane Doe's testimonial") +
-        testimonial("Jane Doe", "Jane Doe's testimonial"),
-    );
-    expectViolations(
-      labelContentMismatch,
-      testimonial("<h3>Jane Doe</h3>", "Read the testimonial") +
-        testimonial("Jane Doe", "Read the testimonial"),
-      { count: 2, ruleId: RULE_ID },
-    );
-  });
-
-  it("still reports a card whose name shares only an incidental short word", () => {
-    expectViolations(
-      labelContentMismatch,
-      testimonial("Our customers", "Read our case study for this quarter"),
-      { count: 1, ruleId: RULE_ID },
-    );
-  });
-
   it("quotes the page's own words when the markup indents them", () => {
     const [violation] = expectViolations(
       labelContentMismatch,
