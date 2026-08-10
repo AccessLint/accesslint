@@ -49,6 +49,70 @@ describe("visible text under a real cascade", () => {
     expect(violations[0].ruleId).toBe("labels-and-names/label-content-mismatch");
   });
 
+  it("passes: a card link in a class-hidden carousel slide", () => {
+    setContent(`
+      <style>.slide { display: none } .slide.current { display: block }</style>
+      <div class="carousel">
+        <div class="slide current">
+          <a href="/post-1" aria-label="The Shape of Quiet Rivers">
+            <h3>The Shape of Quiet Rivers</h3>
+          </a>
+        </div>
+        <div class="slide">
+          <a href="/post-2" aria-label="Read more">
+            <h3>A Longer Way Around</h3>
+            <p>Body prose that nobody on this page can see.</p>
+          </a>
+        </div>
+      </div>
+    `);
+    expect(run()).toHaveLength(0);
+  });
+
+  it("still reports the on-screen slide when a hidden sibling would also mismatch", () => {
+    setContent(`
+      <style>.slide { display: none } .slide.current { display: block }</style>
+      <div class="carousel">
+        <div class="slide current">
+          <a href="/post-1" aria-label="Read more">
+            <h3>The Shape of Quiet Rivers</h3>
+            <p>Body prose that is on screen.</p>
+          </a>
+        </div>
+        <div class="slide">
+          <a href="/post-2" aria-label="Read more">
+            <h3>A Longer Way Around</h3>
+            <p>Body prose that nobody can see.</p>
+          </a>
+        </div>
+      </div>
+    `);
+    const violations = run();
+    expect(violations).toHaveLength(1);
+    expect(violations[0].selector).toContain("/post-1");
+  });
+
+  it("passes: a control under a visibility:hidden ancestor", () => {
+    setContent(`
+      <style>.offstage { visibility: hidden }</style>
+      <div class="offstage">
+        <button aria-label="Send email">Submit</button>
+      </div>
+    `);
+    expect(run()).toHaveLength(0);
+  });
+
+  it("passes: a labelled field in a class-hidden step of a form", () => {
+    setContent(`
+      <style>.step { display: none }</style>
+      <div class="step">
+        <label for="ship">Shipping address</label>
+        <input id="ship" aria-label="Billing address">
+      </div>
+    `);
+    expect(run()).toHaveLength(0);
+  });
+
   it("passes: a card link whose name is its title plus a stray comma", () => {
     setContent(`
       <style>.tags span { display: inline-block }</style>

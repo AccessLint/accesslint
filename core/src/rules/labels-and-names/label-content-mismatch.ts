@@ -1,6 +1,6 @@
 import type { Rule } from "../types";
 import { getSelector, getHtmlSnippet } from "../utils/selector";
-import { getAccessibleName, isAriaHidden, getVisibleText } from "../utils/aria";
+import { getAccessibleName, isAriaHidden, isComputedHidden, getVisibleText } from "../utils/aria";
 
 // ACT rule 2ee8b8's label-in-name algorithm: case fold, apply compatibility
 // normalization, then replace every character that is not a letter or a digit
@@ -87,6 +87,7 @@ export const labelContentMismatch: Rule = {
       'button, [role="button"], a[href], input[type="submit"], input[type="button"]',
     )) {
       if (isAriaHidden(el)) continue;
+      if (isComputedHidden(el)) continue;
 
       const accessibleName = getAccessibleName(el);
       if (!accessibleName) continue; // No name - different violation
@@ -137,6 +138,7 @@ export const labelContentMismatch: Rule = {
     // Check labeled form fields
     for (const el of doc.querySelectorAll("input, select, textarea")) {
       if (isAriaHidden(el)) continue;
+      if (isComputedHidden(el)) continue;
       if (
         el instanceof HTMLInputElement &&
         ["hidden", "submit", "button", "image"].includes(el.type)
