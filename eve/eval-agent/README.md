@@ -20,8 +20,12 @@ You need a model credential, since the whole point is to drive a real model.
 eve defaults to Vercel AI Gateway: run `eve link` from this directory, or set
 `AI_GATEWAY_API_KEY`. Without one every eval fails with "Unauthenticated
 request to AI Gateway" — the harness itself is fine, it just has no model.
-`EVAL_MODEL` picks the model under test and `EVAL_JUDGE_MODEL` the grader;
-both default to `anthropic/claude-fable-5`.
+`EVAL_MODEL` picks the model under test and `EVAL_JUDGE_MODEL` the grader; both
+default to `anthropic/claude-sonnet-5`. They are separate knobs on purpose: the
+same model grading its own reply is the cheap default, not the rigorous one, so
+reach for a different `EVAL_JUDGE_MODEL` before trusting a marginal score.
+Changing `EVAL_MODEL` is also how you ask the question these evals exist for —
+whether the extension's guidance still holds on a smaller or newer model.
 
 Reading a failed run: a credential-less run reports two passing gates. Those
 are the negative assertions (`notCalledTool`, `count: 0`), which pass
