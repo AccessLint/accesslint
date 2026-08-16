@@ -1,6 +1,6 @@
 {
   "name": "@accesslint/eve",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Accessibility for eve agents — WCAG scans, monitored user journeys, and violation triage, over AccessLint's MCP connector",
   "keywords": [
     "eve",
