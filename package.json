@@ -8,6 +8,7 @@
     "chrome",
     "bench",
     "codemod",
+    "eve",
     "heal-diff",
     "jest",
     "matchers-internal",
