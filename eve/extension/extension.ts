@@ -1,9 +1,6 @@
 import { defineExtension } from "eve/extension";
 import { z } from "zod";
 
-/** AccessLint's hosted MCP connector. Override only to point at staging. */
-export const DEFAULT_URL = "https://mcp.accesslint.com/mcp";
-
 export default defineExtension({
   config: z.object({
     /**
@@ -16,23 +13,13 @@ export default defineExtension({
      * The key's own scopes are the real permission boundary, and they are
      * enforced server-side on every call. An agent that should never spend the
      * account's run budget gets a `read`-only key, not a client-side allowlist.
+     *
+     * This is the only setting, because it is the only one read lazily. eve
+     * evaluates connection modules while it builds, before any mount has bound
+     * config, so anything a connection needs at definition time has to come
+     * from somewhere else: see the endpoint in `connections/accesslint.ts`, and
+     * the README on overriding the connection to add an approval gate.
      */
     apiKey: z.string().min(1),
-
-    /** The connector's endpoint. Defaults to production. */
-    url: z.url().default(DEFAULT_URL),
-
-    /**
-     * Whether a person signs off before the agent calls AccessLint.
-     *
-     * `never` matches eve's own default for connection tool calls and suits a
-     * developer driving the agent directly. Prefer `once` for an agent that
-     * runs unattended: scans and flow runs spend the account's budget and reach
-     * out to third-party sites, so the first call in a session is worth seeing.
-     *
-     * No setting here can start monitoring — that gate is human-only and lives
-     * in the AccessLint web app.
-     */
-    approval: z.enum(["never", "once", "always"]).default("never"),
   }),
 });

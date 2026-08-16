@@ -29,6 +29,10 @@
     "./tools": {
       "types": "./dist/tools/index.d.ts",
       "default": "./dist/tools/index.mjs"
+    },
+    "./connections/api": {
+      "types": "./dist/extension/connections/api.d.ts",
+      "default": "./dist/extension/connections/api.mjs"
     }
   },
   "scripts": {

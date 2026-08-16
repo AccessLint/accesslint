@@ -1,9 +1,15 @@
 {
-  "extends": "../tsconfig.base.json",
+  "//": "Standalone on purpose, unlike its sibling packages. A consumer bundles this extension's source, and its bundler reads whatever tsconfig sits next to the module it is loading. Through a symlink (a file: install, or eve's workspace mount) an `extends` of ../tsconfig.base.json resolves against node_modules and fails the consumer's build, so the base config is inlined here.",
   "compilerOptions": {
+    "target": "ES2022",
     "module": "esnext",
     "moduleResolution": "bundler",
     "types": ["node"],
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
     "noEmit": true
   },
   "include": ["extension/**/*.ts", "test/**/*.ts"]

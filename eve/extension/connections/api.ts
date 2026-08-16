@@ -1,8 +1,7 @@
 import { defineMcpClientConnection } from "eve/connections";
-import { always, never, once } from "eve/tools/approval";
 import extension from "../extension.js";
 
-// The whole extension, really: AccessLint's hosted MCP connector, mounted with
+// The whole extension, really: AccessLint's hosted MCP connector, reached with
 // the account's own API key.
 //
 // This is a thin manifest over a stable remote server on purpose. The browser,
@@ -10,10 +9,17 @@ import extension from "../extension.js";
 // them, so an eve release cannot break an audit and a rule change ships without
 // republishing this package.
 
-const POLICIES = { never, once, always };
+/** AccessLint's hosted MCP connector. */
+export const DEFAULT_URL = "https://mcp.accesslint.com/mcp";
+
+// Read from the environment rather than from mount config, because eve
+// evaluates this module while it builds the consumer's agent, and config is
+// bound only at the mount. Reading `extension.config` here would throw during
+// their build. Only AccessLint's own staging needs this; customers never set it.
+const url = process.env.ACCESSLINT_MCP_URL ?? DEFAULT_URL;
 
 export default defineMcpClientConnection({
-  url: extension.config.url,
+  url,
 
   // What the model reads when deciding whether this connection is the right
   // instrument. It names both tiers, because picking the wrong one is the
@@ -26,10 +32,13 @@ export default defineMcpClientConnection({
     "person to approve. Reports each violation with the DOM selector that carries it and " +
     "a screenshot of the step it was found on.",
 
-  // The key is the credential. The connector verifies it against the AccessLint
-  // API and resolves the account from it, so there is no tenant to select here
-  // and nothing to pass but the token.
+  // The key is the whole credential: no client secret, no tenant selector. The
+  // connector resolves the account from the token itself. Read inside the
+  // callback, which is what makes mount config usable here at all.
   auth: { getToken: async () => ({ token: extension.config.apiKey }) },
 
-  approval: POLICIES[extension.config.approval](),
+  // No approval gate by default, matching eve's own default for connection tool
+  // calls. A consumer who wants one overrides this connection from a directory
+  // mount; the README shows the shape. Nothing here can start monitoring in any
+  // case: that gate is human-only and lives in the AccessLint web app.
 });

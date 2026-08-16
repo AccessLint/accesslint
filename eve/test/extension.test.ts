@@ -1,5 +1,5 @@
-import { readFileSync } from "node:fs";
-import { describe, expect, it, vi } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 // eve's bundler shim hands each mounted extension a config scope, and
 // `defineExtension` captures it when the module is evaluated. Without one a
@@ -8,48 +8,36 @@ import { describe, expect, it, vi } from "vitest";
 // the real mount path rather than a half-initialised handle — which is also
 // why nothing below imports the extension statically.
 const CONFIG_SCOPE = Symbol.for("eve.ext-config-scope");
+const CONFIG_REGISTRY = Symbol.for("eve.extension-config-registry");
 
-interface Config {
-  apiKey: string;
-  url?: string;
-  approval?: "never" | "once" | "always";
-}
+type Globals = Record<symbol, unknown>;
 
 async function load() {
   vi.resetModules();
-  (globalThis as unknown as Record<symbol, string>)[CONFIG_SCOPE] = "accesslint-test";
+  (globalThis as unknown as Globals)[CONFIG_SCOPE] = "accesslint-test";
 
   return import("../extension/extension.js");
 }
 
 // Mounts, then imports the connection the way the runtime does: after config
 // is bound, in the same module generation.
-async function mount(values: Config) {
-  const { default: extension, DEFAULT_URL } = await load();
+async function mount(values: { apiKey: string }) {
+  const { default: extension } = await load();
   extension(values);
-  const { default: connection } = await import("../extension/connections/accesslint.js");
+  const connection = await import("../extension/connections/api.js");
 
-  return { extension, connection, DEFAULT_URL };
+  return { extension, connection: connection.default, DEFAULT_URL: connection.DEFAULT_URL };
 }
 
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe("config", () => {
-  it("binds the key and defaults to the production connector, unattended", async () => {
-    const { extension, DEFAULT_URL } = await mount({ apiKey: "alk_live" });
+  it("binds the key at the mount site", async () => {
+    const { extension } = await mount({ apiKey: "alk_live" });
 
-    expect(extension.config).toMatchObject({
-      apiKey: "alk_live",
-      url: DEFAULT_URL,
-      approval: "never",
-    });
-  });
-
-  it("takes a url override, for staging", async () => {
-    const { extension } = await mount({
-      apiKey: "alk_live",
-      url: "https://mcp-staging.accesslint.test/mcp",
-    });
-
-    expect(extension.config.url).toBe("https://mcp-staging.accesslint.test/mcp");
+    expect(extension.config).toMatchObject({ apiKey: "alk_live" });
   });
 
   // Failing at the mount site beats failing three turns into a conversation.
@@ -58,35 +46,36 @@ describe("config", () => {
 
     expect(() => extension({ apiKey: "" })).toThrow(/apiKey/);
   });
-
-  it("refuses a url that is not one", async () => {
-    const { default: extension } = await load();
-
-    expect(() => extension({ apiKey: "alk_live", url: "mcp.accesslint.com" })).toThrow(/url/);
-  });
-
-  it("refuses an approval policy eve does not have", async () => {
-    const { default: extension } = await load();
-
-    // @ts-expect-error the schema is the guard under test
-    expect(() => extension({ apiKey: "alk_live", approval: "sometimes" })).toThrow(/approval/);
-  });
 });
 
 describe("the connection", () => {
-  it("points at the configured connector", async () => {
-    const { connection, DEFAULT_URL } = await mount({ apiKey: "alk_live" });
+  // The regression that matters most. eve evaluates connection modules while it
+  // builds the consuming agent, which happens before any mount binds config, so
+  // a `extension.config` read at module scope throws during someone else's
+  // build. Loading with no scope and no registry is that moment exactly.
+  it("defines itself with no mount at all, the way a consumer's build evaluates it", async () => {
+    vi.resetModules();
+    delete (globalThis as unknown as Globals)[CONFIG_SCOPE];
+    delete (globalThis as unknown as Globals)[CONFIG_REGISTRY];
+
+    const { default: connection, DEFAULT_URL } = await import("../extension/connections/api.js");
 
     expect(connection.url).toBe(DEFAULT_URL);
   });
 
-  it("follows a url override, so a staging mount does not talk to production", async () => {
-    const { connection } = await mount({
-      apiKey: "alk_live",
-      url: "https://mcp-staging.accesslint.test/mcp",
-    });
+  it("points at the production connector", async () => {
+    const { connection, DEFAULT_URL } = await mount({ apiKey: "alk_live" });
 
-    expect(connection.url).toBe("https://mcp-staging.accesslint.test/mcp");
+    expect(connection.url).toBe(DEFAULT_URL);
+    expect(DEFAULT_URL).toBe("https://mcp.accesslint.com/mcp");
+  });
+
+  it("takes an endpoint override from the environment, for staging", async () => {
+    vi.stubEnv("ACCESSLINT_MCP_URL", "https://mcp-staging.accesslint.com/mcp");
+
+    const { connection } = await mount({ apiKey: "alk_live" });
+
+    expect(connection.url).toBe("https://mcp-staging.accesslint.com/mcp");
   });
 
   // The key is the whole credential: no client secret, no tenant selector. The
@@ -113,12 +102,23 @@ describe("the connection", () => {
     expect(connection.description).toContain("scan_page");
     expect(connection.description).toContain("generate_flows");
   });
+});
 
-  it("gates on approval only when asked to", async () => {
-    const open = await mount({ apiKey: "alk_live" });
-    const gated = await mount({ apiKey: "alk_live", approval: "always" });
+// The README tells consumers to import the connection and re-define it with an
+// approval gate. That subpath is hand-declared rather than generated, so a
+// rename here is a break out there. Runs after `build`, per turbo's task graph.
+describe("package exports", () => {
+  const root = new URL("../", import.meta.url);
+  const pkg = JSON.parse(readFileSync(new URL("package.json", root), "utf8")) as {
+    exports: Record<string, { types: string; default: string }>;
+  };
 
-    expect(open.connection.approval).not.toEqual(gated.connection.approval);
+  it("exposes the connection, so an approval gate can be added by overriding it", () => {
+    const entry = pkg.exports["./connections/api"];
+
+    expect(entry).toBeDefined();
+    expect(existsSync(new URL(entry.default, root))).toBe(true);
+    expect(existsSync(new URL(entry.types, root))).toBe(true);
   });
 });
 
@@ -132,7 +132,7 @@ describe("instructions", () => {
     "utf8",
   ).replace(/\s+/g, " ");
 
-  it("says approval belongs to a person", () => {
+  it("says approval belongs to a person, in the web app", () => {
     expect(instructions).toMatch(/approv/i);
     expect(instructions).toContain("AccessLint web app");
   });

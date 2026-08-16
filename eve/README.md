@@ -25,29 +25,23 @@ import accesslint from "@accesslint/eve";
 export default accesslint({ apiKey: process.env.ACCESSLINT_API_KEY! });
 ```
 
-Tools arrive under the mount's name, so the file above gives you
-`accesslint__scan_page`, `accesslint__generate_flows`, and the rest.
+Set `ACCESSLINT_API_KEY` in your agent's environment, such as `.env.local`.
 
-## Configuration
+`apiKey` is the only setting. Everything else is either fixed or overridden the
+way eve overrides any contribution, which is described below.
 
-| Option     | Default                          | What it does                                        |
-| ---------- | -------------------------------- | --------------------------------------------------- |
-| `apiKey`   | required                         | An AccessLint API key (`alk_…`).                    |
-| `url`      | `https://mcp.accesslint.com/mcp` | The connector endpoint. Override only for staging.  |
-| `approval` | `"never"`                        | `"never"`, `"once"` or `"always"` for a human gate. |
+## What ships in the box
 
-`approval` maps to eve's own approval helpers. The default matches eve's
-default for connection tool calls and suits a developer driving the agent
-directly. For an agent that runs unattended, `"once"` is the better setting:
-scans and flow runs spend your account's budget and reach out to third-party
-sites, so the first call of a session is worth a look.
+- **A connection** to AccessLint's MCP connector, authenticated with your key.
+- **An instruction fragment**, always in context, carrying the two rules below.
+- **Two skills**, loaded on demand: triaging findings into a ranked set of
+  fixes, and setting up monitoring for a user journey.
 
-```ts
-export default accesslint({
-  apiKey: process.env.ACCESSLINT_API_KEY!,
-  approval: "once",
-});
-```
+The mount name is the namespace. Mounted from `agent/extensions/accesslint.ts`
+as above, the connection registers as `accesslint__api`, and the model calls its
+tools by their qualified names, `accesslint__api__scan_page`,
+`accesslint__api__generate_flows`, and the rest. It finds them through eve's
+built-in `connection_search`.
 
 ## Limiting what the agent can do
 
@@ -60,15 +54,34 @@ something else:
 - add `execute` to let it scan pages and run flows, which spends budget.
 - add `draft` to let it propose flows and add domains.
 
-A key with a scope it needs is a one-line fix on the API keys page; a key
-without one produces a clear refusal naming the missing scope.
+A key missing a scope produces a clear refusal naming the one it needs.
 
-## What ships in the box
+## Asking a person before it calls
 
-- **A connection** to AccessLint's MCP connector, authenticated with your key.
-- **An instruction fragment**, always in context, carrying the two rules below.
-- **Two skills**, loaded on demand: triaging findings into a ranked set of
-  fixes, and setting up monitoring for a user journey.
+There is no approval gate by default, matching eve's own default for connection
+tool calls. For an agent that runs unattended, one is worth adding: scans and
+flow runs spend your account's budget and reach out to third-party sites.
+
+Add it the way eve overrides any contribution, with a directory mount:
+
+```ts
+// agent/extensions/accesslint/extension.ts
+import accesslint from "@accesslint/eve";
+
+export default accesslint({ apiKey: process.env.ACCESSLINT_API_KEY! });
+```
+
+```ts
+// agent/extensions/accesslint/connections/api.ts
+import { defineMcpClientConnection } from "eve/connections";
+import { once } from "eve/tools/approval";
+import api from "@accesslint/eve/connections/api";
+
+export default defineMcpClientConnection({ ...api, approval: once() });
+```
+
+No setting here can start monitoring in any case. That gate is human-only and
+lives in the AccessLint web app.
 
 ## Two rules this package keeps
 
