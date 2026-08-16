@@ -1,0 +1,24 @@
+{
+  "name": "@accesslint/eve-eval-agent",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Not published. A throwaway eve agent that mounts @accesslint/eve so its skills and instructions can be graded by eve evals.",
+  "type": "module",
+  "scripts": {
+    "eval": "node scripts/run-evals.mjs",
+    "eval:list": "node scripts/run-evals.mjs --list",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@accesslint/eve": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "eve": "0.38.3",
+    "express": "^5.2.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0"
+  }
+}

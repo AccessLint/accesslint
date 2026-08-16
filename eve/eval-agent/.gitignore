@@ -1,0 +1,6 @@
+# eve's build and dev-runtime artifacts, plus eval run artifacts under .eve/evals/.
+.eve
+.output
+.nitro
+.vercel
+.env*
