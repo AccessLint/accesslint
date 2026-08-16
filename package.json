@@ -9,6 +9,7 @@
     "bench",
     "codemod",
     "eve",
+    "eve/eval-agent",
     "heal-diff",
     "jest",
     "matchers-internal",

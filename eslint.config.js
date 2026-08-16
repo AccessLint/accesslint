@@ -11,6 +11,10 @@ export default [
       "**/.turbo/**",
       "**/act-fixtures/**",
       "**/test-results/**",
+      // eve writes compiled agent bundles and dev-runtime snapshots here.
+      // Generated, gitignored, and 60-odd lint errors if left in scope.
+      "**/.eve/**",
+      "**/.output/**",
     ],
   },
   js.configs.recommended,
