@@ -1,0 +1,69 @@
+{
+  "name": "@accesslint/eve",
+  "version": "0.1.0",
+  "description": "Accessibility for eve agents — WCAG scans, monitored user journeys, and violation triage, over AccessLint's MCP connector",
+  "keywords": [
+    "eve",
+    "eve-extension",
+    "accessibility",
+    "a11y",
+    "wcag",
+    "mcp",
+    "agent"
+  ],
+  "type": "module",
+  "eve": {
+    "extension": {
+      "source": "./extension",
+      "dist": "./dist/extension"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.mjs"
+    },
+    "./tools": {
+      "types": "./dist/tools/index.d.ts",
+      "default": "./dist/tools/index.mjs"
+    },
+    "./connections/api": {
+      "types": "./dist/extension/connections/api.d.ts",
+      "default": "./dist/extension/connections/api.mjs"
+    }
+  },
+  "scripts": {
+    "build": "eve extension build",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "prepublishOnly": "bun run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AccessLint/accesslint.git",
+    "directory": "eve"
+  },
+  "homepage": "https://accesslint.com",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "eve": "0.38.3",
+    "typescript": "^5.7.0",
+    "vitest": "^3.0.0"
+  },
+  "peerDependencies": {
+    "eve": "*"
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

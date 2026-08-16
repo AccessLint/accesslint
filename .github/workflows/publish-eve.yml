@@ -1,0 +1,43 @@
+name: Publish @accesslint/eve
+
+on:
+  push:
+    tags: ["eve/v*"]
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - run: bun install
+
+      # `eve extension build` writes dist/extension and fills the package
+      # exports map. No workspace:* rewrite step here, unlike the other
+      # packages: this one depends on zod and on eve, never on a sibling.
+      - run: npx turbo run build --filter=@accesslint/eve
+
+      - run: bun run test
+        working-directory: eve
+
+      - run: npm publish --provenance --access public
+        working-directory: eve
+
+      - name: Create GitHub release
+        run: gh release create "$GITHUB_REF_NAME" --generate-notes --title "@accesslint/eve v${GITHUB_REF_NAME#eve/v}"
+        env:
+          GH_TOKEN: ${{ github.token }}
