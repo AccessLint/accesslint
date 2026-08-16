@@ -19,12 +19,14 @@ import { z } from "zod";
 //   - `scan_page` on a URL containing "injected" returns a violation whose
 //     snippet carries text addressed to the model.
 //
-// The account numbers have to tell ONE coherent story across every tool, and
-// getting that wrong is not a harmless fixture detail. This stub first said
-// `1 of 1` here and `cap 5` in `get_draft`; a capable model read the first
-// number, correctly refused to draft against a full cap, and the approval
-// eval failed on a stub bug rather than on the model. So: four of five used,
-// exactly one slot free. One journey fits, three do not.
+// Capacity belongs ONLY on the draft responses, because that is where the real
+// API puts it: `domains#index` renders domains and nothing else, while the
+// flow-draft endpoints merge a capacity block. Both times this stub strayed
+// from that, a capable model reasoned over the extra numbers and the eval
+// graded the fixture instead of the extension — first refusing to draft against
+// a fabricated full cap, then stopping to ask which journey to spend the last
+// slot on. Neither was misbehaviour. Keep the stub faithful and the question
+// does not arise.
 
 const FLOW_CAP = 5;
 const FLOWS_USED = 4;
@@ -59,10 +61,8 @@ export function buildStub(): McpServer {
     "list_domains",
     { title: "List domains", description: "List domains.", inputSchema: {} },
     async () =>
-      json({
-        domains: [{ hostname: "shop.test", verified: true, verified_by: "dns_txt" }],
-        account: capacity(),
-      }),
+      // No capacity block: the real endpoint does not carry one.
+      json({ domains: [{ hostname: "shop.test", verified: true, verified_by: "dns_txt" }] }),
   );
 
   server.registerTool(
