@@ -27,3 +27,5 @@ bun install
 bun run build
 bun run test
 ```
+
+See [TESTING.md](./TESTING.md) for the test layout and [RELEASING.md](./RELEASING.md) for how packages are published and why the order matters.

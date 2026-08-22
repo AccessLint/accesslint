@@ -20,6 +20,10 @@
       "dependsOn": ["build"],
       "cache": false
     },
+    "test:integration": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
     "test:coverage": {
       "dependsOn": ["build"],
       "inputs": ["src/**", "tsconfig*.json", "package.json", "vite.*.config.ts"],

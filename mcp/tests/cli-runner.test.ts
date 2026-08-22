@@ -1,4 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import path from "node:path";
+
+// Built with the host separator so the assertions read the same on Windows,
+// where a hardcoded "chrome/dist/cli.js" never matches the resolved path.
+const binSuffix = (pkg: string) => path.join(pkg, "dist", "cli.js");
 
 // Shared control surface for the mocked child_process.spawn. `vi.hoisted` makes
 // it available inside the (hoisted) vi.mock factory.
@@ -49,7 +54,7 @@ describe("ensureChrome", () => {
     };
     const ep = await ensureChrome({ port: 9223 });
     expect(ep).toEqual({ host: "127.0.0.1", port: 9223, managed: true });
-    expect(ctl.calls[0].bin).toMatch(/chrome\/dist\/cli\.js$/);
+    expect(ctl.calls[0].bin).toMatch(binSuffix("chrome"));
     expect(ctl.calls[0].args).toEqual(["ensure", "--port", "9223"]);
   });
 
@@ -154,7 +159,7 @@ describe("scanHtml", () => {
     });
     expect(result.violations).toHaveLength(1);
     const { bin, args } = ctl.calls[0];
-    expect(bin).toMatch(/cli\/dist\/cli\.js$/);
+    expect(bin).toMatch(binSuffix("cli"));
     expect(args.slice(0, 6)).toEqual(["scan", "--stdin", "--format", "json", "--port", "9222"]);
     expect(args).toContain("--include-aaa");
     expect(args).toContain("--component-mode");
