@@ -1,0 +1,41 @@
+name: Test @accesslint/cli
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+  TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
+
+jobs:
+  # Issue #4 and AccessLint/skills#8 were the same Windows path-separator bug
+  # reported twice, six weeks apart, because every job here used to be
+  # ubuntu-only. The unit tests cover the path arithmetic with an injected
+  # `path.win32`; only the smoke job runs the binary against real
+  # `require.resolve` output on a real Windows filesystem.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - run: bun install
+
+      - run: npx turbo run build --filter=...@accesslint/cli
+
+      - run: bun run test
+        working-directory: cli
+
+      - name: Smoke test the real audit path
+        run: node scripts/smoke-scan.mjs

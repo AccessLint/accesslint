@@ -14,8 +14,17 @@ env:
   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
 
 jobs:
+  # The unit suite mocks `node:child_process`, so it proves the argv the MCP
+  # builds and nothing about whether the binaries run. AccessLint/skills#8 was
+  # a total failure of every audit tool on Windows that this suite could not
+  # have caught; the integration project spawns the real CLI and Chrome, and
+  # the Windows leg is the one that would have caught it.
   test:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v5
 
@@ -26,4 +35,7 @@ jobs:
       - run: npx turbo run build --filter=...@accesslint/mcp
 
       - run: bun run test
+        working-directory: mcp
+
+      - run: bun run test:integration
         working-directory: mcp

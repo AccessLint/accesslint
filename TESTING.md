@@ -43,7 +43,16 @@ The turbo pipeline has three stages: `act:fixtures` (download + process), `act:t
 ## CLI and MCP
 
 - `@accesslint/cli` has smoke tests for `audit.ts` and `inline-css.ts`. `ssrf-guard` and `safe-fetch` are covered transitively by `mcp/tests/security.test.ts` (which imports them directly from `@accesslint/cli/ssrf-guard` and `@accesslint/cli/safe-fetch`), so don't duplicate.
-- `@accesslint/mcp` has tests in `mcp/tests/` covering tools, security, and output formatting.
+- `@accesslint/mcp` has tests in `mcp/tests/` covering tools, security, and output formatting. They run as the `unit` vitest project and mock `node:child_process`, so they check the argv the MCP builds and nothing about whether the binaries run.
+
+### Tests that spawn real processes
+
+Two failures shipped from the gap between "the argv is right" and "the binaries work": issue #4 and AccessLint/skills#8, the same Windows path-separator bug six weeks apart. Both needed a process to reproduce, and neither unit suite starts one.
+
+- `scripts/smoke-scan.mjs` launches a managed Chrome, pipes HTML through `accesslint scan --stdin`, and asserts the engine loaded and reported the expected violation. Run it with `node scripts/smoke-scan.mjs` after a build.
+- `mcp/tests/cli-runner.integration.test.ts` runs the MCP's own `ensureChrome` and `scanHtml` against the real CLI and Chrome binaries. It is the `integration` vitest project, kept out of `bun run test` because it needs built dists and a browser.
+
+Both run on `ubuntu-latest` **and** `windows-latest` in CI. Keep the Windows leg: the win32 coverage in `cli/src/iife-source.test.ts` injects `path.win32` against a hand-written string, which is why it passed all through the bug it was meant to catch.
 
 ## Source audits — `@accesslint/source`
 
@@ -55,13 +64,15 @@ Three suites: `audit.test.ts` holds the worked cases and the corpus regressions 
 
 ## Quick reference
 
-| Task                                       | Command                                           |
-| ------------------------------------------ | ------------------------------------------------- |
-| All unit tests across the repo             | `bun run test`                                    |
-| Core unit tests with coverage              | `bun run --filter=@accesslint/core test:coverage` |
-| Core browser tests (requires Chromium)     | `bun run --filter=@accesslint/core test:browser`  |
-| Core memory/perf benchmarks                | `bun run --filter=@accesslint/core test:memory`   |
-| ACT conformance against W3C fixture corpus | `npx turbo run act --filter=@accesslint/core`     |
+| Task                                       | Command                                             |
+| ------------------------------------------ | --------------------------------------------------- |
+| All unit tests across the repo             | `bun run test`                                      |
+| Core unit tests with coverage              | `bun run --filter=@accesslint/core test:coverage`   |
+| Core browser tests (requires Chromium)     | `bun run --filter=@accesslint/core test:browser`    |
+| Core memory/perf benchmarks                | `bun run --filter=@accesslint/core test:memory`     |
+| ACT conformance against W3C fixture corpus | `npx turbo run act --filter=@accesslint/core`       |
+| CLI end-to-end against a real Chrome       | `node scripts/smoke-scan.mjs`                       |
+| MCP against the real CLI and Chrome bins   | `bun run --filter=@accesslint/mcp test:integration` |
 
 ## Writing a new rule test: which file?
 
