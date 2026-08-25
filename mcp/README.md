@@ -4,6 +4,16 @@ MCP server for accessible agentic coding — WCAG audit tools for AI coding agen
 
 This server is a thin adapter: it holds no Chrome, CDP, or audit engine of its own. Live-page audits shell out to the `@accesslint/chrome` and `@accesslint/cli` binaries (the same path the AccessLint skills use); HTML-string audits run the `@accesslint/cli` engine in-process. The server exposes those as MCP tools and formats the results for an agent.
 
+This server drives a Chrome on your own machine, so it audits whatever that Chrome can reach —
+`localhost`, staging or production alike — plus HTML on disk. What it does not do is remember:
+each call audits and returns, and nothing is stored.
+
+Reach for the hosted connector at `https://mcp.accesslint.com/mcp` instead — a separate MCP
+server you add in a chat client, which cannot reach `localhost` — when the work is a **user
+journey** across several pages, a site **re-checked over time**, findings that **persist**, or a
+**report** someone else will read. There those are flows, runs and violations. Both servers
+register under the name `accesslint`; this is the one with a way into your dev server.
+
 ## Setup
 
 Add to your MCP client configuration:

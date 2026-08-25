@@ -19,7 +19,7 @@ const server = new McpServer(
   },
   {
     instructions:
-      "For URL audits use audit_live — it ensures a debuggable Chrome (auto-launching one headless via @accesslint/chrome if none is reachable, no manual setup needed), then runs the @accesslint/core engine against the live DOM. For raw HTML strings or files, use audit_html (Read the file first, then pass the string). To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt. Use list_rules and explain_rule for rule metadata. To diff a page against a baseline, use the accesslint diff skill (on-disk snapshots), not this server.",
+      "For URL audits use audit_live — it ensures a debuggable Chrome (auto-launching one headless via @accesslint/chrome if none is reachable, no manual setup needed), then runs the @accesslint/core engine against the live DOM. For raw HTML strings or files, use audit_html (Read the file first, then pass the string). To audit React components (.jsx/.tsx) without a running app, use the audit-react-component prompt. Use list_rules and explain_rule for rule metadata. To diff a page against a baseline, use the accesslint diff skill (on-disk snapshots), not this server. audit_live drives a Chrome on this machine, so it reaches whatever that Chrome can — localhost, staging or production alike — but it keeps nothing: each call audits and returns. Reach instead for the hosted AccessLint connector (https://mcp.accesslint.com/mcp, a separate server to add in the client) when the work is a user journey across several pages, a site re-checked over time, findings that outlive the session, or a report someone else will read — there those are flows, runs and violations.",
   },
 );
 
