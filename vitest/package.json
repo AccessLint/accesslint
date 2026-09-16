@@ -68,7 +68,7 @@
     "happy-dom": "^20.6.1",
     "tsdown": "^0.21.9",
     "typescript": "^5.7.0",
-    "vitest": "^3.0.0"
+    "vitest": "^5.0.1"
   },
   "peerDependencies": {
     "vitest": ">=2.0.0"
