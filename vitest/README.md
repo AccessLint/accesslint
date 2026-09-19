@@ -207,6 +207,8 @@ Call `a11y.refresh()` after any DOM mutation that should be re-audited.
 
 Types are included. Importing the package augments Vitest's `expect` with `toBeAccessible()` automatically.
 
+If you're using Vitest v4 or lower, set `skipLibCheck: true` in your `tsconfig.json`. The matcher types still resolve correctly in legacy versions, but Vitest v5's changed matcher type parameters cause TypeScript to report a declaration-merging error when library checking is enabled.
+
 ## What it checks
 
 WCAG 2.2 Level A and AA rules via [`@accesslint/core`](../core), covering images, forms, ARIA attributes, color contrast, landmarks, links, tables, document language, and more. See the [core rules table](../core/README.md#rules) for the full list.
